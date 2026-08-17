@@ -587,51 +587,6 @@ function App() {
       {view === 'checkout' && (
         <main className="checkout-page-shell">
           <section className="checkout-page">
-            <div className="checkout-topbar">
-              <div className="checkout-topbar-actions">
-                {!user ? (
-                  <>
-                    <button
-                      type="button"
-                      className="checkout-icon-action checkout-login-icon"
-                      aria-label="Login"
-                      title="Login"
-                      onClick={() => {
-                        setAuthView('login')
-                        setView('login')
-                        window.history.pushState({}, '', '/login')
-                      }}
-                    >
-                      <span aria-hidden="true">🔐</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="checkout-icon-action checkout-signup-icon"
-                      aria-label="Sign up"
-                      title="Sign up"
-                      onClick={() => {
-                        setAuthView('signup')
-                        setView('login')
-                        window.history.pushState({}, '', '/signup')
-                      }}
-                    >
-                      <span aria-hidden="true">✍️</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="checkout-icon-action checkout-logout-icon"
-                    aria-label="Logout"
-                    title="Logout"
-                    onClick={handleLogout}
-                  >
-                    <span aria-hidden="true">⎋</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
             <div className="checkout-page-header">
               <div>
                 <p className="eyebrow">Review your order</p>
