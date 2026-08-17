@@ -1,6 +1,30 @@
+import { useState } from 'react'
+
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
-function CheckoutModal({ items, total, onClose, onConfirm }) {
+function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '' }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    contactNumber: '',
+    address: '',
+    notes: '',
+    paymentMethod: 'card',
+  })
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.name.trim() || !formData.contactNumber.trim() || !formData.address.trim()) {
+      alert('Please fill in all required fields')
+      return
+    }
+    onConfirm(formData)
+  }
+
   return (
     <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className="checkout-modal">
@@ -15,36 +39,67 @@ function CheckoutModal({ items, total, onClose, onConfirm }) {
         </div>
 
         <div className="checkout-body">
-          <div className="checkout-form">
+          <form className="checkout-form" onSubmit={handleSubmit}>
             <label>
-              Full name
-              <input type="text" placeholder="Your full name" />
+              Full name *
+              <input
+                type="text"
+                name="name"
+                placeholder="Your full name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </label>
 
             <label>
-              Phone number
-              <input type="tel" placeholder="0803 000 0000" />
+              Contact number *
+              <input
+                type="tel"
+                name="contactNumber"
+                placeholder="0803 000 0000"
+                value={formData.contactNumber}
+                onChange={handleChange}
+                required
+              />
             </label>
 
             <label>
-              Delivery address
-              <textarea rows="3" placeholder="Street, area, city" />
+              Delivery address *
+              <textarea
+                name="address"
+                rows="3"
+                placeholder="Street, area, city"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
             </label>
 
             <label>
               Delivery notes
-              <textarea rows="2" placeholder="Extra instructions" />
+              <textarea
+                name="notes"
+                rows="2"
+                placeholder="Extra instructions"
+                value={formData.notes}
+                onChange={handleChange}
+              />
             </label>
 
             <label>
               Payment method
-              <select defaultValue="card">
+              <select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange}>
                 <option value="card">Card payment</option>
                 <option value="cash">Cash on delivery</option>
                 <option value="transfer">Bank transfer</option>
               </select>
             </label>
-          </div>
+
+            <button type="submit" className="primary-btn checkout-confirm-btn">
+              Confirm order
+            </button>
+          </form>
 
           <div className="checkout-summary">
             <h4>Order summary</h4>
@@ -59,10 +114,6 @@ function CheckoutModal({ items, total, onClose, onConfirm }) {
               <span>Total</span>
               <strong>{formatNaira(total)}</strong>
             </div>
-
-            <button type="button" className="primary-btn checkout-confirm-btn" onClick={onConfirm}>
-              Confirm order
-            </button>
           </div>
         </div>
       </div>

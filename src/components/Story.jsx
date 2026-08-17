@@ -15,6 +15,10 @@ function Story() {
             to big family gatherings, every plate is built around local ingredients, honest
             cooking, and the joy of gathering around the table.
           </p>
+          <div className="chef-signoff">
+            <strong>Alexy Mama</strong>
+            <span>Chief Chef</span>
+          </div>
           <ul className="story-points">
             <li>Small-batch ingredients sourced from local farms</li>
             <li>Seasonal menus designed by our in-house chefs</li>
