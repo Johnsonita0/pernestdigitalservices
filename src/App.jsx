@@ -59,8 +59,14 @@ const testimonials = [
 function App() {
   const [view, setView] = useState('home')
   const [cartItems, setCartItems] = useState([])
-  const [showCheckout, setShowCheckout] = useState(false)
   const [activeFaq, setActiveFaq] = useState(0)
+  const [checkoutForm, setCheckoutForm] = useState({
+    name: '',
+    contactNumber: '',
+    address: '',
+    notes: '',
+    paymentMethod: 'card',
+  })
   const [pendingTestimonials, setPendingTestimonials] = useState([])
   const [approvedTestimonials, setApprovedTestimonials] = useState(testimonials)
   const [testimonialSliderIndex, setTestimonialSliderIndex] = useState(0)
@@ -133,6 +139,10 @@ function App() {
         setView('login')
         return
       }
+      if (path === '/checkout') {
+        setView('checkout')
+        return
+      }
       if (path === '/shop') {
         setView('shop')
         return
@@ -168,6 +178,11 @@ function App() {
       setAuthView('login')
       setView('login')
       window.history.pushState({}, '', '/login')
+      return
+    }
+    if (nextView === 'checkout') {
+      setView('checkout')
+      window.history.pushState({}, '', '/checkout')
       return
     }
     setView(nextView)
@@ -235,14 +250,8 @@ function App() {
 
   const handleCheckout = () => {
     if (cartItems.length === 0) return
-    if (!user) {
-      setAuthView('login')
-      setView('login')
-      window.history.pushState({}, '', '/login')
-      alert('Please sign in before confirming and paying for your order.')
-      return
-    }
-    setShowCheckout(true)
+    setView('checkout')
+    window.history.pushState({}, '', '/checkout')
   }
 
   const handleMobileCartAction = () => {
@@ -251,15 +260,13 @@ function App() {
       return
     }
 
-    if (!user) {
-      setAuthView('login')
-      setView('login')
-      window.history.pushState({}, '', '/login')
-      alert('Please sign in before confirming and paying for your order.')
-      return
-    }
+    setView('checkout')
+    window.history.pushState({}, '', '/checkout')
+  }
 
-    setShowCheckout(true)
+  const handleCheckoutInputChange = (event) => {
+    const { name, value } = event.target
+    setCheckoutForm((current) => ({ ...current, [name]: value }))
   }
 
   const handleConfirmOrder = (orderData) => {
@@ -296,8 +303,14 @@ function App() {
       )
     )
     
-    setShowCheckout(false)
     setCartItems([])
+    setCheckoutForm({
+      name: '',
+      contactNumber: '',
+      address: '',
+      notes: '',
+      paymentMethod: 'card',
+    })
     updateRoute('home')
   }
 
@@ -571,16 +584,194 @@ function App() {
         </main>
       )}
 
-      {showCheckout && (
-        <CheckoutModal
-          items={cartItems}
-          total={total}
-          onClose={() => setShowCheckout(false)}
-          onConfirm={handleConfirmOrder}
-        />
+      {view === 'checkout' && (
+        <main className="checkout-page-shell">
+          <section className="checkout-page">
+            <div className="checkout-topbar">
+              <button type="button" className="checkout-cart-badge" onClick={() => updateRoute('shop')} aria-label="Cart overview">
+                <span className="checkout-cart-icon">🛒</span>
+                <span className="checkout-cart-count">{cartItems.length}</span>
+              </button>
+
+              <div className="checkout-topbar-actions">
+                {!user ? (
+                  <>
+                    <button type="button" className="ghost-btn small-btn" onClick={() => {
+                      setAuthView('login')
+                      setView('login')
+                      window.history.pushState({}, '', '/login')
+                    }}>
+                      Login
+                    </button>
+                    <button type="button" className="primary-btn small-btn" onClick={() => {
+                      setAuthView('signup')
+                      setView('login')
+                      window.history.pushState({}, '', '/signup')
+                    }}>
+                      Sign up
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="ghost-btn small-btn" onClick={handleLogout}>
+                    Logout
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="checkout-page-header">
+              <div>
+                <p className="eyebrow">Review your order</p>
+                <h1>Checkout</h1>
+              </div>
+              <button type="button" className="ghost-btn small-btn" onClick={() => updateRoute('shop')}>
+                Continue shopping
+              </button>
+            </div>
+
+            {!user ? (
+              <div className="checkout-login-gate">
+                <div className="checkout-login-card">
+                  <h2>Login to complete payment</h2>
+                  <p>
+                    Please sign in to confirm your delivery address and complete payment for your order.
+                  </p>
+                  <div className="checkout-login-actions">
+                    <button type="button" className="primary-btn" onClick={() => {
+                      setAuthView('login')
+                      setView('login')
+                      window.history.pushState({}, '', '/login')
+                    }}>
+                      Login
+                    </button>
+                    <button type="button" className="ghost-btn" onClick={() => {
+                      setAuthView('signup')
+                      setView('login')
+                      window.history.pushState({}, '', '/signup')
+                    }}>
+                      Create account
+                    </button>
+                  </div>
+                  <div className="checkout-summary-list">
+                    <h3>Order summary</h3>
+                    {cartItems.map((item) => (
+                      <div key={`checkout-${item.id}`} className="checkout-item-row">
+                        <span>{item.title}</span>
+                        <strong>{formatNaira(item.price)}</strong>
+                      </div>
+                    ))}
+                    <div className="checkout-total-row">
+                      <span>Total</span>
+                      <strong>{formatNaira(total)}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="checkout-layout">
+                <form
+                  className="checkout-form-panel"
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    if (!checkoutForm.name.trim() || !checkoutForm.contactNumber.trim() || !checkoutForm.address.trim()) {
+                      alert('Please fill in all required fields')
+                      return
+                    }
+                    handleConfirmOrder(checkoutForm)
+                  }}
+                >
+                  <label>
+                    Full name
+                    <input
+                      type="text"
+                      name="name"
+                      value={checkoutForm.name || user.user_metadata?.fullName || user.email?.split('@')[0] || ''}
+                      onChange={handleCheckoutInputChange}
+                      placeholder="Your full name"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Contact number
+                    <input
+                      type="tel"
+                      name="contactNumber"
+                      value={checkoutForm.contactNumber}
+                      onChange={handleCheckoutInputChange}
+                      placeholder="0803 000 0000"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Delivery address
+                    <textarea
+                      name="address"
+                      rows="3"
+                      value={checkoutForm.address}
+                      onChange={handleCheckoutInputChange}
+                      placeholder="Street, area, city"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Delivery notes
+                    <textarea
+                      name="notes"
+                      rows="2"
+                      value={checkoutForm.notes}
+                      onChange={handleCheckoutInputChange}
+                      placeholder="Extra instructions"
+                    />
+                  </label>
+
+                  <label>
+                    Payment method
+                    <select name="paymentMethod" value={checkoutForm.paymentMethod} onChange={handleCheckoutInputChange}>
+                      <option value="card">Card payment</option>
+                      <option value="cash">Cash on delivery</option>
+                      <option value="transfer">Bank transfer</option>
+                    </select>
+                  </label>
+
+                  <button type="submit" className="primary-btn checkout-confirm-btn">
+                    Confirm and pay {formatNaira(total)}
+                  </button>
+                </form>
+
+                <aside className="checkout-summary-panel">
+                  <h3>Order summary</h3>
+                  {cartItems.map((item) => (
+                    <div key={`summary-${item.id}`} className="checkout-item-row">
+                      <span>{item.title}</span>
+                      <strong>{formatNaira(item.price)}</strong>
+                    </div>
+                  ))}
+
+                  <div className="checkout-total-row">
+                    <span>Subtotal</span>
+                    <strong>{formatNaira(total)}</strong>
+                  </div>
+
+                  <div className="checkout-total-row delivery-row">
+                    <span>Delivery</span>
+                    <strong>₦2,500</strong>
+                  </div>
+
+                  <div className="checkout-total-row grand-total-row">
+                    <span>Total</span>
+                    <strong>{formatNaira(total + 2500)}</strong>
+                  </div>
+                </aside>
+              </div>
+            )}
+          </section>
+        </main>
       )}
 
-      {view !== 'login' && (
+      {view !== 'login' && view !== 'checkout' && (
         <footer className="site-footer">
           <div className="container footer-grid">
             <div>
