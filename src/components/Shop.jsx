@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Hero from './Hero'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
@@ -42,44 +43,7 @@ function Shop({ products, onAddToCart, searchTerm = '' }) {
           </div>
         </div>
 
-        {featuredDish && (
-          <div
-            className="shop-mobile-hero"
-            style={{
-              backgroundImage: `linear-gradient(180deg, rgba(22, 16, 14, 0.12), rgba(22, 16, 14, 0.72)), url(${featuredDish.image})`,
-            }}
-          >
-            <div className="shop-mobile-hero-copy">
-              <p className="eyebrow">Freshly made • Lagos style</p>
-              <h1>{featuredDish.title}</h1>
-              <p className="hero-text">{featuredDish.description}</p>
-
-              <div className="hero-actions">
-                <button type="button" className="primary-btn" onClick={() => onAddToCart(featuredDish)}>
-                  Order now
-                </button>
-                <button type="button" className="ghost-btn">
-                  Explore menu
-                </button>
-              </div>
-
-              <div className="hero-stats" aria-label="Restaurant metrics">
-                <div>
-                  <strong>12+</strong>
-                  <span>Years serving</span>
-                </div>
-                <div>
-                  <strong>4.9/5</strong>
-                  <span>Guest rating</span>
-                </div>
-                <div>
-                  <strong>30 min</strong>
-                  <span>Fast delivery</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <Hero dishes={products} onOrderNow={onAddToCart} />
 
         {filteredProducts.length === 0 ? (
           <div className="empty-state">

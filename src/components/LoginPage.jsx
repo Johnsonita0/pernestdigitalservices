@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEnvelope, faLock, faSignInAlt, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
@@ -44,119 +42,76 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
   }
 
   return (
-    <>
-      <div className="login-page">
-        <div className="login-container">
-          {/* Welcome Section */}
-          <div className="login-welcome-section">
-            <h2>Hello, Welcome</h2>
-            <p>Don't have an Account?</p>
-            <button 
-              type="button" 
-              className="login-register-link"
-              onClick={onSwitchToSignUp}
-            >
-              Register
-            </button>
-          </div>
-
-          <div className="login-card">
-            <h1 className="login-card-title">Login</h1>
-
-            <form onSubmit={handleSubmit} className="login-form">
-              <div className="form-group">
-                <div className="input-wrapper">
-                  <span className="input-icon-text">👤</span>
-                  <input
-                    type="email"
-                    placeholder="Username"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={loading}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <div className="input-wrapper">
-                  <span className="input-icon-text">🔒</span>
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    required
-                    autoComplete="current-password"
-                  />
-                </div>
-              </div>
-
-              <button type="button" className="login-forgot-link">
-                Forgot Password
-              </button>
-
-              {error && (
-                <div className="error-alert">
-                  <p>{error}</p>
-                </div>
-              )}
-
-              <button type="submit" className="login-submit-btn" disabled={loading}>
-                {loading ? (
-                  <>
-                    <FontAwesomeIcon icon={faSpinner} spin className="icon-spin" />
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <span>Login</span>
-                )}
-              </button>
-            </form>
-
-            <div className="login-divider-text">
-              or login with social platforms
-            </div>
-
-            <div className="login-social-buttons">
-              <button type="button" className="social-btn" title="Login with Google">
-                <span>G</span>
-              </button>
-              <button type="button" className="social-btn" title="Login with Facebook">
-                <span>f</span>
-              </button>
-              <button type="button" className="social-btn" title="Login with GitHub">
-                <span>⚡</span>
-              </button>
-              <button type="button" className="social-btn" title="Login with LinkedIn">
-                <span>in</span>
-              </button>
-            </div>
+    <div className="auth-screen">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-logo">T</div>
+          <div>
+            <p className="auth-kicker">Welcome back</p>
+            <h1>Trophy</h1>
           </div>
         </div>
-      </div>
 
-      <nav className="mobile-bottom-nav login-bottom-nav" aria-label="Mobile navigation">
-        <button type="button" className="mobile-nav-btn" disabled>
-          <span className="mobile-nav-icon">🔍</span>
-          <span>Search</span>
+        <div className="auth-header">
+          <h2>Sign in</h2>
+          <p>Order your favorite meals in minutes.</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="login-email">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              required
+              autoComplete="email"
+              className="auth-input"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="login-password">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
+              required
+              autoComplete="current-password"
+              className="auth-input"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          {error && (
+            <div className="error-alert">
+              <p>{error}</p>
+            </div>
+          )}
+
+          <button type="submit" className="primary-action" disabled={loading}>
+            {loading ? 'Signing in...' : 'Login'}
+          </button>
+        </form>
+
+        <button type="button" className="ghost-link" onClick={() => {}}>
+          Forgot password?
         </button>
-        <button type="button" className="mobile-nav-btn" disabled>
-          <span className="mobile-nav-icon">🏠</span>
-          <span>Home</span>
+
+        <div className="auth-divider">
+          <span>or</span>
+        </div>
+
+        <button type="button" className="secondary-action" onClick={onSwitchToSignUp}>
+          Create an account
         </button>
-        <button type="button" className="mobile-nav-btn" disabled>
-          <span className="mobile-nav-icon">🛍️</span>
-          <span>Shop</span>
-        </button>
-        <button type="button" className="mobile-nav-btn" disabled>
-          <span className="mobile-nav-icon">👤</span>
-          <span>Account</span>
-        </button>
-      </nav>
-    </>
+      </div>
+    </div>
   )
 }
 

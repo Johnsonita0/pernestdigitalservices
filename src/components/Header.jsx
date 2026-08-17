@@ -111,11 +111,27 @@ function Header({
                 ))}
               </nav>
 
-              {user ? (
-                <button type="button" className="ghost-btn small-btn" onClick={onLogout}>
-                  Logout
+              <div className="nav-actions mobile-shop-nav-actions">
+                <button type="button" className="cart-pill" onClick={onCartAction || (() => onNavigate('shop'))} aria-label="Cart">
+                  <FontAwesomeIcon icon={faShoppingCart} className="cart-icon" />
+                  {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
                 </button>
-              ) : null}
+
+                {user ? (
+                  <button type="button" className="ghost-btn small-btn" onClick={onLogout}>
+                    Logout
+                  </button>
+                ) : (
+                  <>
+                    <button type="button" className="ghost-btn small-btn" onClick={() => onNavigate('login')}>
+                      Login
+                    </button>
+                    <button type="button" className="primary-btn small-btn" onClick={() => onNavigate('signup')}>
+                      Sign up
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -142,7 +158,7 @@ function Header({
             if (user) {
               onNavigate('dashboard')
             } else {
-              onToggleMobileAccount?.()
+              onNavigate('login')
             }
           }}>
             <span className="mobile-nav-icon">👤</span>
