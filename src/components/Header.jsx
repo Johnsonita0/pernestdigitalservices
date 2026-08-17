@@ -100,42 +100,6 @@ function Header({
           </div>
         )}
 
-        <header className="topbar estore-header">
-          <div className="container estore-shell">
-            <div className="estore-toolbar mobile-only-category-bar">
-              <nav className="estore-categories" aria-label="Store categories">
-                {estoreCategories.map((category) => (
-                  <button key={category} type="button" className="estore-category-btn">
-                    {category}
-                  </button>
-                ))}
-              </nav>
-
-              <div className="nav-actions mobile-shop-nav-actions">
-                <button type="button" className="cart-pill" onClick={onCartAction || (() => onNavigate('shop'))} aria-label="Cart">
-                  <FontAwesomeIcon icon={faShoppingCart} className="cart-icon" />
-                  {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-                </button>
-
-                {user ? (
-                  <button type="button" className="ghost-btn small-btn" onClick={onLogout}>
-                    Logout
-                  </button>
-                ) : (
-                  <>
-                    <button type="button" className="ghost-btn small-btn" onClick={() => onNavigate('login')}>
-                      Login
-                    </button>
-                    <button type="button" className="primary-btn small-btn" onClick={() => onNavigate('signup')}>
-                      Sign up
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-
         <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
           <button type="button" className="mobile-nav-btn" onClick={() => onToggleMobileSearch?.()}>
             <span className="mobile-nav-icon">🔍</span>
@@ -156,7 +120,7 @@ function Header({
           </button>
           <button type="button" className="mobile-nav-btn" onClick={() => {
             if (user) {
-              onNavigate('dashboard')
+              onNavigate('account')
             } else {
               onNavigate('login')
             }

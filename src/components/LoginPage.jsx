@@ -45,7 +45,7 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
     <div className="auth-screen">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="auth-logo">T</div>
+          <img src="/logo/logo1.png" alt="Trophy Logo" className="auth-logo-img" />
           <div>
             <p className="auth-kicker">Welcome back</p>
             <h1>Trophy</h1>

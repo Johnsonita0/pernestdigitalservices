@@ -1,92 +1,225 @@
 import { useState } from 'react'
-import Hero from './Hero'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBell, faHeart, faSearch, faStar, faUser } from '@fortawesome/free-solid-svg-icons'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
-function Shop({ products, onAddToCart, searchTerm = '' }) {
-  const [expandedItems, setExpandedItems] = useState({})
+const getShortDescription = (description = '') => {
+  if (description.length <= 48) return description
+  return `${description.slice(0, 48).trim()}...`
+}
 
-  const toggleExpanded = (id) => {
-    setExpandedItems((current) => ({
-      ...current,
-      [id]: !current[id],
-    }))
-  }
+function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, user = null, onNavigate = null }) {
+  const [selectedItem, setSelectedItem] = useState(null)
+  const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'
+  const displayName = user ? username : 'Guest'
+  const profileImage = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar || user?.user_metadata?.profilePic || user?.user_metadata?.photoURL || user?.avatar_url || user?.picture || user?.photoURL || null
+  const quickMeals = products.slice(0, 5)
+  const topPicks = products.slice(0, 2)
 
-  const normalizedSearch = searchTerm.trim().toLowerCase()
-  const filteredProducts = normalizedSearch
+  const filteredProducts = searchTerm.trim()
     ? products.filter((product) => {
-        const searchableText = [
-          product.title,
-          product.description,
-          product.tag,
-          product.badge,
-          product.category,
-        ]
+        const searchableText = [product.title, product.description, product.tag, product.badge, product.category]
           .filter(Boolean)
           .join(' ')
           .toLowerCase()
 
-        return searchableText.includes(normalizedSearch)
+        return searchableText.includes(searchTerm.trim().toLowerCase())
       })
     : products
 
-  const featuredDish = products[0]
+  const showProducts = filteredProducts.length ? filteredProducts : products
 
   return (
-    <section className="shop-section" id="shop">
-      <div className="shop-full-width">
-        <div className="section-heading shop-heading">
-          <div>
-            <p className="eyebrow">Order online</p>
-            <h2>Fresh picks from our shop.</h2>
+    <section className="mobile-dashboard-shell shop-mobile-shell" id="shop">
+      <div className="mobile-dashboard-phone shop-phone-frame">
+        <header className="mobile-dashboard-header">
+          <div className="mobile-location-row">
+            <div className="mobile-location-pin">
+              {profileImage ? (
+                <img src={profileImage} alt={displayName} className="mobile-user-avatar" />
+              ) : (
+                <FontAwesomeIcon icon={faUser} />
+              )}
+            </div>
+            <div className="mobile-location-copy">
+              {user ? (
+                <strong>{displayName}</strong>
+              ) : (
+                <button type="button" className="mobile-location-name" onClick={() => onNavigate?.('login')}>
+                  <strong>Login</strong>
+                </button>
+              )}
+            </div>
+            <button type="button" className="mobile-bell-btn" aria-label="Notifications">
+              <FontAwesomeIcon icon={faBell} />
+            </button>
           </div>
-        </div>
 
-        <Hero dishes={products} onOrderNow={onAddToCart} />
+          <label className="mobile-search-bar" aria-label="Search food menu">
+            <FontAwesomeIcon icon={faSearch} />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => onSearchChange?.(event.target.value)}
+              placeholder="Search for dishes or restaurants"
+              aria-label="Search food menu"
+            />
+          </label>
+        </header>
 
-        {filteredProducts.length === 0 ? (
-          <div className="empty-state">
-            <p>No dishes match “{searchTerm}”. Try another food, meal, or flavor.</p>
+        <main className="mobile-dashboard-main">
+          <div className="mobile-section-head shop-intro-head">
+            <h2>What are you craving?</h2>
           </div>
-        ) : (
-          <div className="shop-grid">
-            {filteredProducts.map((product) => {
-              const isExpanded = !!expandedItems[product.id]
-              const description = product.description
-              const previewText = description.length > 90 && !isExpanded ? `${description.slice(0, 90)}...` : description
 
-              return (
-                <article key={product.id} className="shop-card">
-                  <img src={product.image} alt={product.title} />
-                  <div className="shop-body">
-                    <div className="shop-row">
-                      <span className="shop-tag">{product.tag}</span>
-                      <strong>{formatNaira(product.price)}</strong>
-                    </div>
+          <div className="mobile-food-row">
+            {quickMeals.map((item, index) => (
+              <div key={item.id || index} className="mobile-food-pill">
+                <img src={item.image} alt={item.title} />
+                <span>{item.title}</span>
+              </div>
+            ))}
+          </div>
 
-                    <h3>{product.title}</h3>
-                    <p className={isExpanded ? 'shop-description expanded' : 'shop-description'}>
-                      {previewText}
-                    </p>
+          <div className="mobile-section-head">
+            <h2>Top Picks Near You</h2>
+            <button type="button" className="mobile-link-btn" onClick={() => onAddToCart?.(showProducts[0])}>
+              See all →
+            </button>
+          </div>
 
-                    {description.length > 90 && (
-                      <button type="button" className="text-btn read-more-btn" onClick={() => toggleExpanded(product.id)}>
-                        {isExpanded ? 'Show less' : 'Read more'}
+          <div className="mobile-restaurant-list">
+            {showProducts.map((item, index) => (
+              <article
+                key={item.id || index}
+                className="mobile-restaurant-card"
+                onClick={() => setSelectedItem(item)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setSelectedItem(item)
+                  }
+                }}
+              >
+                <img src={item.image} alt={item.title} />
+                <div className="mobile-restaurant-meta">
+                  <div className="mobile-restaurant-row">
+                    <h3>{item.title}</h3>
+                    <div className="mobile-favorite-mini">
+                      <button type="button" className="mini-favorite-btn active" aria-label="Favorite item" onClick={(event) => event.stopPropagation()}>
+                        <FontAwesomeIcon icon={faHeart} />
                       </button>
-                    )}
+                    </div>
+                  </div>
 
+                  <div className="mobile-food-status-row">
+                    <span className={`mobile-status-badge ${item.available === false ? 'unavailable' : 'available'}`}>
+                      {item.available === false ? 'Not available' : 'Available'}
+                    </span>
+                  </div>
+
+                  <p>{getShortDescription(item.description)}</p>
+                  <div className="mobile-rating-row">
+                    <span className="mobile-rating">
+                      <FontAwesomeIcon icon={faStar} /> 4.2
+                    </span>
+                    <span>•</span>
+                    <span>25–30 mins</span>
+                  </div>
+                  <div className="mobile-price-row">
+                    <strong>{formatNaira(item.price)}</strong>
                     <button
                       type="button"
-                      className="primary-btn shop-btn"
-                      onClick={() => onAddToCart(product)}
+                      className="mobile-order-btn"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setSelectedItem(item)
+                      }}
+                      disabled={item.available === false}
                     >
-                      Add to cart
+                      {item.available === false ? 'Sold out' : 'Order'}
                     </button>
                   </div>
-                </article>
-              )
-            })}
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mobile-section-head compact">
+            <h2>Popular this week</h2>
+          </div>
+
+          <div className="mobile-favorites-strip">
+            {showProducts.slice(0, 3).map((item, index) => (
+              <div key={item.id || index} className="mobile-favorite-tile">
+                <img src={item.image} alt={item.title} />
+                <span>{item.title}</span>
+              </div>
+            ))}
+          </div>
+        </main>
+
+        <nav className="mobile-bottom-nav dashboard-bottom-nav" aria-label="Mobile navigation">
+          <button type="button" className="mobile-nav-btn active">
+            <span className="mobile-nav-icon">🏠</span>
+            <span>Home</span>
+          </button>
+          <button type="button" className="mobile-nav-btn">
+            <span className="mobile-nav-icon">🔍</span>
+            <span>Search</span>
+          </button>
+          <button type="button" className="mobile-nav-btn" onClick={() => onAddToCart?.(showProducts[0])}>
+            <span className="mobile-nav-icon">📋</span>
+            <span>Menu</span>
+          </button>
+          <button type="button" className="mobile-nav-btn">
+            <span className="mobile-nav-icon">🛒</span>
+            <span>Cart</span>
+          </button>
+          <button type="button" className="mobile-nav-btn" onClick={() => (user ? onNavigate?.('account') : onNavigate?.('login'))}>
+            <span className="mobile-nav-icon">👤</span>
+            <span>Account</span>
+          </button>
+        </nav>
+
+        {selectedItem && (
+          <div className="mobile-product-modal-backdrop" onClick={() => setSelectedItem(null)}>
+            <div className="mobile-product-modal" onClick={(event) => event.stopPropagation()}>
+              <button type="button" className="mobile-product-close" onClick={() => setSelectedItem(null)} aria-label="Close item details">
+                ×
+              </button>
+              <img src={selectedItem.image} alt={selectedItem.title} />
+              <div className="mobile-product-modal-body">
+                <div className="mobile-product-header-row">
+                  <h3>{selectedItem.title}</h3>
+                  <span className={`mobile-status-badge ${selectedItem.available === false ? 'unavailable' : 'available'}`}>
+                    {selectedItem.available === false ? 'Not available' : 'Available'}
+                  </span>
+                </div>
+
+                <p className="mobile-product-modal-tag">{selectedItem.tag || selectedItem.badge}</p>
+                <p className="mobile-product-modal-description">{selectedItem.description}</p>
+
+                <div className="mobile-product-modal-footer">
+                  <strong>{formatNaira(selectedItem.price)}</strong>
+                  <button
+                    type="button"
+                    className="mobile-order-btn"
+                    disabled={selectedItem.available === false}
+                    onClick={() => {
+                      if (selectedItem.available === false) return
+                      onAddToCart?.(selectedItem)
+                      setSelectedItem(null)
+                    }}
+                  >
+                    {selectedItem.available === false ? 'Unavailable' : 'Add to cart'}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

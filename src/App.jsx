@@ -129,6 +129,15 @@ function App() {
         setView('dashboard')
         return
       }
+      if (path === '/account') {
+        if (!user) {
+          setAuthView('login')
+          setView('login')
+          return
+        }
+        setView('account')
+        return
+      }
       if (path === '/login') {
         setAuthView('login')
         setView('login')
@@ -168,6 +177,12 @@ function App() {
       window.history.pushState({}, '', '/login')
       return
     }
+    if (nextView === 'account' && !user) {
+      setAuthView('login')
+      setView('login')
+      window.history.pushState({}, '', '/login')
+      return
+    }
     if (nextView === 'signup') {
       setAuthView('signup')
       setView('login')
@@ -197,9 +212,9 @@ function App() {
     setUser(authUser)
     setFavoriteItems([])
     setUserOrders([])
-    setView('dashboard')
+    setView('account')
     setAuthView('login')
-    window.history.pushState({}, '', '/dashboard')
+    window.history.pushState({}, '', '/account')
   }
 
   const handleSignUpSuccess = (authUser) => {
@@ -220,9 +235,9 @@ function App() {
         orders: [],
       },
     ])
-    setView('dashboard')
+    setView('account')
     setAuthView('login')
-    window.history.pushState({}, '', '/dashboard')
+    window.history.pushState({}, '', '/account')
   }
 
   const handleLogout = async () => {
@@ -533,6 +548,9 @@ function App() {
             onAddToCart={handleAddToCart}
             cartCount={cartItems.length}
             searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            user={user}
+            onNavigate={updateRoute}
           />
         </main>
       )}
@@ -566,6 +584,21 @@ function App() {
           onAddFavorite={handleAddFavorite}
           onRemoveFavorite={handleRemoveFavorite}
           onViewMenu={() => updateRoute('shop')}
+          onOpenAccount={() => updateRoute('account')}
+        />
+      )}
+
+      {view === 'account' && user && (
+        <UserDashboard
+          user={user}
+          favoriteItems={favoriteItems}
+          userOrders={userOrders}
+          onLogout={handleLogout}
+          onAddFavorite={handleAddFavorite}
+          onRemoveFavorite={handleRemoveFavorite}
+          onViewMenu={() => updateRoute('shop')}
+          onOpenAccount={() => updateRoute('account')}
+          isAccountView
         />
       )}
 
