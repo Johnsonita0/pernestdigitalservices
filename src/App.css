@@ -3509,6 +3509,7 @@ a {
   }
 
   .mobile-nav-btn {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3526,6 +3527,29 @@ a {
     cursor: pointer;
     min-height: 54px;
     transition: all 0.3s ease;
+  }
+
+  .cart-nav-btn {
+    position: relative;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 12px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #d21d1d;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 6px 18px rgba(210, 29, 29, 0.25);
   }
 
   .mobile-nav-btn:active {

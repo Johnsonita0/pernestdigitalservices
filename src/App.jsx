@@ -245,6 +245,23 @@ function App() {
     setShowCheckout(true)
   }
 
+  const handleMobileCartAction = () => {
+    if (cartItems.length === 0) {
+      alert('Your cart is empty. Add a few dishes first.')
+      return
+    }
+
+    if (!user) {
+      setAuthView('login')
+      setView('login')
+      window.history.pushState({}, '', '/login')
+      alert('Please sign in before confirming and paying for your order.')
+      return
+    }
+
+    setShowCheckout(true)
+  }
+
   const handleConfirmOrder = (orderData) => {
     if (!user) {
       setAuthView('login')
@@ -362,6 +379,7 @@ function App() {
             setUser(authUser)
             setShowMobileAccount(false)
           }}
+          onCartAction={handleMobileCartAction}
         />
       )}
 

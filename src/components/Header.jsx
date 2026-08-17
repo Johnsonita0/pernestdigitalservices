@@ -25,6 +25,7 @@ function Header({
   mobileAuthView = 'login',
   onMobileAuthViewChange = null,
   onMobileLoginSuccess = null,
+  onCartAction = null,
 }) {
   const handleNavClick = (view) => {
     if (view === 'shop') {
@@ -129,8 +130,13 @@ function Header({
             <span>Home</span>
           </button>
           <button type="button" className="mobile-nav-btn" onClick={() => onNavigate('shop')}>
-            <span className="mobile-nav-icon">🛍️</span>
-            <span>Shop</span>
+            <span className="mobile-nav-icon">🍽️</span>
+            <span>Food</span>
+          </button>
+          <button type="button" className="mobile-nav-btn cart-nav-btn" onClick={onCartAction}>
+            <span className="mobile-nav-icon">🛒</span>
+            <span>Cart</span>
+            {cartCount > 0 && <span className="mobile-nav-badge">{cartCount}</span>}
           </button>
           <button type="button" className="mobile-nav-btn" onClick={() => {
             if (user) {
@@ -209,13 +215,22 @@ function Header({
       </header>
 
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+        <button type="button" className="mobile-nav-btn" onClick={() => onToggleMobileSearch?.()}>
+          <span className="mobile-nav-icon">🔍</span>
+          <span>Search</span>
+        </button>
         <button type="button" className="mobile-nav-btn" onClick={() => onNavigate('home')}>
           <span className="mobile-nav-icon">🏠</span>
           <span>Home</span>
         </button>
         <button type="button" className="mobile-nav-btn" onClick={() => onNavigate('shop')}>
-          <span className="mobile-nav-icon">🛍️</span>
-          <span>Shop</span>
+          <span className="mobile-nav-icon">🍽️</span>
+          <span>Food</span>
+        </button>
+        <button type="button" className="mobile-nav-btn cart-nav-btn" onClick={onCartAction || (() => onNavigate(user ? 'dashboard' : 'login'))}>
+          <span className="mobile-nav-icon">🛒</span>
+          <span>Cart</span>
+          {cartCount > 0 && <span className="mobile-nav-badge">{cartCount}</span>}
         </button>
         <button type="button" className="mobile-nav-btn" onClick={() => onNavigate(user ? 'dashboard' : 'login')}>
           <span className="mobile-nav-icon">👤</span>
