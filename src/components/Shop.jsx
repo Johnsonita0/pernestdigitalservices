@@ -162,29 +162,6 @@ function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, u
           </div>
         </main>
 
-        <nav className="mobile-bottom-nav dashboard-bottom-nav" aria-label="Mobile navigation">
-          <button type="button" className="mobile-nav-btn active">
-            <span className="mobile-nav-icon">🏠</span>
-            <span>Home</span>
-          </button>
-          <button type="button" className="mobile-nav-btn">
-            <span className="mobile-nav-icon">🔍</span>
-            <span>Search</span>
-          </button>
-          <button type="button" className="mobile-nav-btn" onClick={() => onAddToCart?.(showProducts[0])}>
-            <span className="mobile-nav-icon">📋</span>
-            <span>Menu</span>
-          </button>
-          <button type="button" className="mobile-nav-btn">
-            <span className="mobile-nav-icon">🛒</span>
-            <span>Cart</span>
-          </button>
-          <button type="button" className="mobile-nav-btn" onClick={() => (user ? onNavigate?.('account') : onNavigate?.('login'))}>
-            <span className="mobile-nav-icon">👤</span>
-            <span>Account</span>
-          </button>
-        </nav>
-
         {selectedItem && (
           <div className="mobile-product-modal-backdrop" onClick={() => setSelectedItem(null)}>
             <div className="mobile-product-modal" onClick={(event) => event.stopPropagation()}>
