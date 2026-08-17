@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faEnvelope, faLock, faUser, faSpinner, faUserPlus, faPhone, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
-import { supabase } from '../lib/supabase'
+import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
 function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
   const [fullName, setFullName] = useState('')
@@ -17,6 +17,11 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    if (!isSupabaseConfigured) {
+      setError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to continue.')
+      return
+    }
 
     // Validation
     if (!fullName.trim()) {

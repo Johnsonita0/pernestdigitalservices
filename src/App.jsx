@@ -12,7 +12,7 @@ import LoginPage from './components/LoginPage'
 import SignUpPage from './components/SignUpPage'
 import UserDashboard from './components/UserDashboard'
 import { menuItems } from './data/menu'
-import { supabase } from './lib/supabase'
+import { isSupabaseConfigured, supabase } from './lib/supabase'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
@@ -77,6 +77,11 @@ function App() {
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false)
+      return
+    }
+
     const checkAuth = async () => {
       setLoading(true)
       const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -87,7 +92,7 @@ function App() {
     checkAuth()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_, session) => {
         setUser(session?.user || null)
       }
     )
