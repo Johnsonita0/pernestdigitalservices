@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import { menuItems } from '../data/menu'
+import { supabase } from '../lib/supabase'
 
 function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
@@ -12,6 +13,61 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
     preferences: user?.user_metadata?.preferences || 'No dietary preference set',
     deliveryNote: user?.user_metadata?.deliveryNote || 'Leave at the door if I am not available.',
   })
+  const [loading, setLoading] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+
+  // Load profile data from database on component mount
+  useEffect(() => {
+    if (user?.id) {
+      loadProfileData()
+    }
+  }, [user?.id])
+
+  const loadProfileData = async () => {
+    try {
+      // Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.warn('Error loading profile:', profileError)
+      }
+
+      if (profileData) {
+        setProfile({
+          fullName: profileData.full_name || profile.fullName,
+          phone: profileData.phone || profile.phone,
+          address: profileData.address || profile.address,
+          preferences: profile.preferences,
+          deliveryNote: profile.deliveryNote,
+        })
+      }
+
+      // Fetch preferences
+      const { data: prefsData, error: prefsError } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (prefsError && prefsError.code !== 'PGRST116') {
+        console.warn('Error loading preferences:', prefsError)
+      }
+
+      if (prefsData) {
+        setProfile((curr) => ({
+          ...curr,
+          preferences: prefsData.food_preferences || curr.preferences,
+          deliveryNote: prefsData.delivery_notes || curr.deliveryNote,
+        }))
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error)
+    }
+  }
 
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'User'
   const email = user?.email || 'user@example.com'
@@ -21,8 +77,48 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
 
   const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
-  const handleProfileSave = () => {
-    alert('Profile preferences saved locally for this session.')
+  const handleProfileSave = async () => {
+    setLoading(true)
+    setSaveMessage('')
+
+    try {
+      // Update profile table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profile.fullName,
+          phone: profile.phone,
+          address: profile.address,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (profileError) {
+        throw new Error(profileError.message)
+      }
+
+      // Update preferences in user_preferences table
+      const { error: prefsError } = await supabase
+        .from('user_preferences')
+        .update({
+          food_preferences: profile.preferences,
+          delivery_notes: profile.deliveryNote,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+
+      if (prefsError) {
+        throw new Error(prefsError.message)
+      }
+
+      setSaveMessage('✅ Profile saved successfully!')
+      setTimeout(() => setSaveMessage(''), 3000)
+    } catch (error) {
+      console.error('Error saving profile:', error)
+      setSaveMessage(`❌ Error: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -122,8 +218,27 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                     />
                   </label>
 
-                  <button type="button" className="mobile-order-btn" onClick={handleProfileSave}>
-                    Save preferences
+                  {saveMessage && (
+                    <div style={{
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      backgroundColor: saveMessage.includes('✅') ? '#f0fdf4' : '#fef2f2',
+                      color: saveMessage.includes('✅') ? '#166534' : '#991b1b',
+                      fontSize: '0.85rem',
+                      textAlign: 'center'
+                    }}>
+                      {saveMessage}
+                    </div>
+                  )}
+
+                  <button 
+                    type="button" 
+                    className="mobile-order-btn" 
+                    onClick={handleProfileSave}
+                    disabled={loading}
+                    style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+                  >
+                    {loading ? 'Saving...' : 'Save preferences'}
                   </button>
                 </div>
               </div>
