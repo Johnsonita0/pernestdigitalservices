@@ -588,32 +588,45 @@ function App() {
         <main className="checkout-page-shell">
           <section className="checkout-page">
             <div className="checkout-topbar">
-              <button type="button" className="checkout-cart-badge" onClick={() => updateRoute('shop')} aria-label="Cart overview">
-                <span className="checkout-cart-icon">🛒</span>
-                <span className="checkout-cart-count">{cartItems.length}</span>
-              </button>
-
               <div className="checkout-topbar-actions">
                 {!user ? (
                   <>
-                    <button type="button" className="ghost-btn small-btn" onClick={() => {
-                      setAuthView('login')
-                      setView('login')
-                      window.history.pushState({}, '', '/login')
-                    }}>
-                      Login
+                    <button
+                      type="button"
+                      className="checkout-icon-action checkout-login-icon"
+                      aria-label="Login"
+                      title="Login"
+                      onClick={() => {
+                        setAuthView('login')
+                        setView('login')
+                        window.history.pushState({}, '', '/login')
+                      }}
+                    >
+                      <span aria-hidden="true">🔐</span>
                     </button>
-                    <button type="button" className="primary-btn small-btn" onClick={() => {
-                      setAuthView('signup')
-                      setView('login')
-                      window.history.pushState({}, '', '/signup')
-                    }}>
-                      Sign up
+                    <button
+                      type="button"
+                      className="checkout-icon-action checkout-signup-icon"
+                      aria-label="Sign up"
+                      title="Sign up"
+                      onClick={() => {
+                        setAuthView('signup')
+                        setView('login')
+                        window.history.pushState({}, '', '/signup')
+                      }}
+                    >
+                      <span aria-hidden="true">✍️</span>
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="ghost-btn small-btn" onClick={handleLogout}>
-                    Logout
+                  <button
+                    type="button"
+                    className="checkout-icon-action checkout-logout-icon"
+                    aria-label="Logout"
+                    title="Logout"
+                    onClick={handleLogout}
+                  >
+                    <span aria-hidden="true">⎋</span>
                   </button>
                 )}
               </div>
