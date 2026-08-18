@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBox, faCheck, faClipboardCheck, faList, faMapMarkerAlt, faPhone, faSignOutAlt, faTruck } from '@fortawesome/free-solid-svg-icons'
+import { notifyToast } from '../lib/toast'
 
 function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
-  const [message, setMessage] = useState('')
   const [activeView, setActiveView] = useState('orders')
 
   const activeOrders = orders.filter((order) => order.status === 'ready')
@@ -14,11 +14,10 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
   const handleDelivered = async (orderId) => {
     try {
       setUpdatingOrderId(orderId)
-      setMessage('')
       await onUpdateOrderStatus(orderId)
-      setMessage('Order marked as delivered.')
+      notifyToast('Order marked as delivered.', 'success')
     } catch (error) {
-      setMessage(error?.message || 'Could not update this order.')
+      notifyToast(error?.message || 'Could not update this order.', 'error')
     } finally {
       setUpdatingOrderId(null)
     }
@@ -46,8 +45,6 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
           <span>Orders appear here after admin marks them On the way.</span>
         </div>
       </section>
-
-      {message && <p className="rider-message">{message}</p>}
 
       <nav className="rider-bottom-nav" aria-label="Rider order views">
         <button

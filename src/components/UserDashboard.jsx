@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt, faChevronRight, faCog, faCreditCard, faTicketAlt, faClipboardList, faQuestionCircle, faMapPin, faLock, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
+import { notifyToast } from '../lib/toast'
 
 function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
@@ -18,7 +19,6 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
   })
   const [loading, setLoading] = useState(false)
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
-  const [saveMessage, setSaveMessage] = useState('')
 
   // Load profile data from database on component mount
   useEffect(() => {
@@ -61,12 +61,12 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
     if (!file || !user?.id) return
 
     if (!file.type.startsWith('image/')) {
-      setSaveMessage('❌ Please choose an image file.')
+      notifyToast('Please choose an image file.', 'warning')
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setSaveMessage('❌ Profile photos must be 5MB or smaller.')
+      notifyToast('Profile photos must be 5MB or smaller.', 'warning')
       return
     }
 
@@ -79,7 +79,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
 
     try {
       setUploadingProfileImage(true)
-      setSaveMessage('Uploading profile photo...')
+      notifyToast('Uploading profile photo...', 'info')
       const safeName = file.name.replace(/\s+/g, '_')
       const filePath = `${user.id}/profile/${Date.now()}-${safeName}`
 
@@ -110,14 +110,14 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         profileImageUrl: data.publicUrl,
       }))
 
-      setSaveMessage('✅ Profile photo uploaded successfully.')
+      notifyToast('Profile photo uploaded successfully.', 'success')
     } catch (error) {
       console.error('Error uploading profile photo:', error)
       setProfile((current) => ({
         ...current,
         profileImageUrl: previousProfileImageUrl,
       }))
-      setSaveMessage(`❌ Profile photo upload failed: ${error.message}`)
+      notifyToast(`Profile photo upload failed: ${error.message}`, 'error')
     } finally {
       setUploadingProfileImage(false)
       event.target.value = ''
@@ -180,7 +180,6 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
 
   const handleProfileSave = async () => {
     setLoading(true)
-    setSaveMessage('')
 
     try {
       // Update profile table
@@ -213,11 +212,10 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         throw new Error(prefsError.message)
       }
 
-      setSaveMessage('✅ Profile saved successfully!')
-      setTimeout(() => setSaveMessage(''), 3000)
+      notifyToast('Profile saved successfully.', 'success')
     } catch (error) {
       console.error('Error saving profile:', error)
-      setSaveMessage(`❌ Error: ${error.message}`)
+      notifyToast(`Error: ${error.message}`, 'error')
     } finally {
       setLoading(false)
     }
@@ -518,19 +516,6 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                       />
                     </label>
 
-                    {saveMessage && (
-                      <div style={{
-                        padding: '10px 12px',
-                        borderRadius: '12px',
-                        backgroundColor: saveMessage.includes('✅') ? '#f0fdf4' : '#fef2f2',
-                        color: saveMessage.includes('✅') ? '#166534' : '#991b1b',
-                        fontSize: '0.85rem',
-                        textAlign: 'center'
-                      }}>
-                        {saveMessage}
-                      </div>
-                    )}
-
                     <button 
                       type="button" 
                       className="mobile-order-btn" 
@@ -565,19 +550,6 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                         placeholder="Enter your home address"
                       />
                     </label>
-
-                    {saveMessage && (
-                      <div style={{
-                        padding: '10px 12px',
-                        borderRadius: '12px',
-                        backgroundColor: saveMessage.includes('✅') ? '#f0fdf4' : '#fef2f2',
-                        color: saveMessage.includes('✅') ? '#166534' : '#991b1b',
-                        fontSize: '0.85rem',
-                        textAlign: 'center'
-                      }}>
-                        {saveMessage}
-                      </div>
-                    )}
 
                     <button 
                       type="button" 

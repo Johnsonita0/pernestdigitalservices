@@ -13,6 +13,7 @@ import SignUpPage from './components/SignUpPage'
 import UserDashboard from './components/UserDashboard'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { initializePaystackPayment } from './lib/payment'
+import { notifyToast } from './lib/toast'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faSearch, faUser } from '@fortawesome/free-solid-svg-icons'
 import { faFacebookF, faInstagram, faWhatsapp } from '@fortawesome/free-brands-svg-icons'
@@ -124,10 +125,29 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileAccount, setShowMobileAccount] = useState(false)
-  const [checkoutError, setCheckoutError] = useState('')
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false)
   const [successOrder, setSuccessOrder] = useState(null)
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    const handleToast = (event) => {
+      setToast({
+        id: Date.now(),
+        message: event.detail?.message || '',
+        tone: event.detail?.tone || 'info',
+      })
+    }
+
+    window.addEventListener('trophy:toast', handleToast)
+    return () => window.removeEventListener('trophy:toast', handleToast)
+  }, [])
+
+  useEffect(() => {
+    if (!toast) return undefined
+    const timer = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -205,18 +225,37 @@ function App() {
     if (!isSupabaseConfigured || userType !== 'admin' || !user?.id) return
 
     const loadAdminUsers = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, email, phone, address, profile_image_url, is_admin, created_at')
-        .eq('is_admin', false)
-        .order('created_at', { ascending: false })
+      const [{ data: profiles, error: profilesError }, { data: orders, error: ordersError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, username, full_name, email, phone, address, profile_image_url, is_admin, created_at')
+          .eq('is_admin', false)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('orders')
+          .select('id, user_id, order_total, status, created_at, order_items(*)')
+          .order('created_at', { ascending: false }),
+      ])
 
-      if (error) {
-        console.warn('Error loading admin users:', error)
+      if (profilesError || ordersError) {
+        console.warn('Error loading admin users and order counts:', profilesError || ordersError)
         return
       }
 
-      setAllUsers((data || []).map((profile) => ({
+      const ordersByUser = (orders || []).reduce((grouped, order) => {
+        const userOrders = grouped[order.user_id] || []
+        userOrders.push({
+          id: order.id,
+          date: order.created_at,
+          total: Number(order.order_total) || 0,
+          status: order.status,
+          items: order.order_items || [],
+        })
+        grouped[order.user_id] = userOrders
+        return grouped
+      }, {})
+
+      setAllUsers((profiles || []).map((profile) => ({
         id: profile.id,
         username: profile.username,
         fullName: profile.full_name,
@@ -226,7 +265,7 @@ function App() {
         profileImageUrl: profile.profile_image_url || '',
         isAdmin: Boolean(profile.is_admin),
         createdAt: profile.created_at,
-        orders: [],
+        orders: ordersByUser[profile.id] || [],
       })))
     }
 
@@ -564,7 +603,7 @@ function App() {
 
   const handleMobileCartAction = () => {
     if (cartItems.length === 0) {
-      alert('Your cart is empty. Add a few dishes first.')
+      notifyToast('Your cart is empty. Add a few dishes first.', 'warning')
       return
     }
 
@@ -586,7 +625,6 @@ function App() {
 
   const handleCheckoutInputChange = (event) => {
     const { name, value, files } = event.target
-    setCheckoutError('')
     if (files) {
       setCheckoutForm((current) => ({ ...current, [name]: files[0] }))
     } else {
@@ -599,7 +637,7 @@ function App() {
       setAuthView('login')
       setView('login')
       window.history.pushState({}, '', '/login')
-      alert('Please sign in before confirming and paying for your order.')
+      notifyToast('Please sign in before confirming and paying for your order.', 'warning')
       return
     }
 
@@ -627,7 +665,7 @@ function App() {
 
       if (orderData.paymentMethod === 'transfer') {
         if (!orderData.proofOfPayment) {
-          setCheckoutError('Please upload proof of payment for bank transfer')
+          notifyToast('Please upload proof of payment for bank transfer.', 'warning')
           return
         }
 
@@ -635,7 +673,7 @@ function App() {
         const bucketExists = bucketData?.some((bucket) => bucket.name === 'bank_prof')
 
         if (bucketError || !bucketExists) {
-          setCheckoutError('Storage bucket "bank_prof" is missing in Supabase. Create it in Storage > New bucket before uploading proof.')
+          notifyToast('Storage bucket "bank_prof" is missing in Supabase. Create it before uploading proof.', 'error')
           return
         }
 
@@ -676,14 +714,14 @@ function App() {
         .select()
 
       if (orderError) {
-        alert('Failed to create order: ' + orderError.message)
+        notifyToast('Failed to create order: ' + orderError.message, 'error')
         return
       }
 
       const orderId = orderResult?.[0]?.id
 
       if (!orderId) {
-        alert('Failed to create order')
+        notifyToast('Failed to create order.', 'error')
         return
       }
 
@@ -787,7 +825,7 @@ function App() {
       updateRoute('home')
     } catch (error) {
       console.error('Error creating order:', error)
-      alert('Error creating order: ' + error.message)
+      notifyToast('Error creating order: ' + error.message, 'error')
     }
   }
 
@@ -850,6 +888,12 @@ function App() {
 
   return (
     <div className="page-shell">
+      {toast && (
+        <div className={`global-toast global-toast-${toast.tone}`} role="status" aria-live="polite">
+          <span>{toast.message}</span>
+          <button type="button" onClick={() => setToast(null)} aria-label="Dismiss notification">×</button>
+        </div>
+      )}
       {showOrderSuccessModal && successOrder && (
         <div className="success-modal-backdrop" onClick={() => setShowOrderSuccessModal(false)}>
           <div className="success-modal" onClick={(event) => event.stopPropagation()}>
@@ -1220,11 +1264,10 @@ function App() {
                       const address = (checkoutForm.address || user?.user_metadata?.address || '').trim()
 
                       if (!name || !contactNumber || !address) {
-                        setCheckoutError('Please fill in all required fields')
+                        notifyToast('Please fill in all required fields.', 'warning')
                         return
                       }
 
-                      setCheckoutError('')
                       handleConfirmOrder({
                         ...checkoutForm,
                         name,
@@ -1293,7 +1336,6 @@ function App() {
                             type="button"
                             className={`payment-method-option ${checkoutForm.paymentMethod === option.value ? 'active' : ''}`}
                             onClick={() => {
-                              setCheckoutError('')
                               setCheckoutForm((current) => ({ ...current, paymentMethod: option.value }))
                             }}
                             aria-pressed={checkoutForm.paymentMethod === option.value}
@@ -1434,10 +1476,6 @@ function App() {
                         </div>
                         <p>Pay the delivery rider when your order arrives at your location.</p>
                       </div>
-                    )}
-
-                    {checkoutError && (
-                      <div className="checkout-inline-error">{checkoutError}</div>
                     )}
 
                     <button type="submit" className="primary-btn checkout-confirm-btn">

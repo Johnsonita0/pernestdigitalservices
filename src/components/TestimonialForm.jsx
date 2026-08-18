@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { notifyToast } from '../lib/toast'
 
 function TestimonialForm({ onSubmit }) {
   const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ function TestimonialForm({ onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!formData.name || !formData.role || !formData.text) {
-      alert('Please fill in all fields')
+      notifyToast('Please fill in all fields.', 'warning')
       return
     }
     onSubmit(formData)
@@ -29,7 +30,7 @@ function TestimonialForm({ onSubmit }) {
       rating: 5,
       text: '',
     })
-    alert('Thank you! Your review is pending approval.')
+    notifyToast('Thank you! Your review is pending approval.', 'success')
   }
 
   return (
