@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
-function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus }) {
+function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus }) {
   const [activeTab, setActiveTab] = useState('users')
   const [selectedUser, setSelectedUser] = useState(null)
   const [productAvailability, setProductAvailability] = useState(
@@ -24,6 +24,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
   })
   const [menuMessage, setMenuMessage] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [toast, setToast] = useState(null)
 
   // Get user orders
@@ -32,6 +33,20 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
 
   const showToast = (message, tone = 'success') => {
     setToast({ message, tone })
+  }
+
+  const handleRefresh = async () => {
+    if (typeof onRefresh !== 'function') return
+
+    try {
+      setRefreshing(true)
+      await onRefresh()
+      showToast('Dashboard refreshed.', 'success')
+    } catch (error) {
+      showToast(error?.message || 'Could not refresh dashboard.', 'error')
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   useEffect(() => {
@@ -246,11 +261,17 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
       <div className="admin-topbar">
         <div className="container admin-topbar-wrap">
           <div>
-            <p className="admin-greeting">Welcome, {user?.email}</p>
+            <p className="admin-greeting">Welcome, {user?.user_metadata?.username || 'admin'}</p>
           </div>
-          <button type="button" className="ghost-btn" onClick={onLogout}>
-            Logout
-          </button>
+          <div className="admin-topbar-actions">
+            <button type="button" className="ghost-btn" onClick={handleRefresh} disabled={refreshing}>
+              <FontAwesomeIcon icon={faSyncAlt} spin={refreshing} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <button type="button" className="ghost-btn" onClick={onLogout}>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
 

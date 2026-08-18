@@ -1742,6 +1742,12 @@ textarea {
   min-height: 60px;
 }
 
+.admin-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .admin-greeting {
   color: #f3e8dd;
   font-size: 1rem;

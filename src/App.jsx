@@ -118,6 +118,7 @@ function App() {
   const [allUsers, setAllUsers] = useState([])
   const [allOrders, setAllOrders] = useState([])
   const [riderOrders, setRiderOrders] = useState([])
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileAccount, setShowMobileAccount] = useState(false)
@@ -196,7 +197,7 @@ function App() {
     }
 
     loadMenuCatalog()
-  }, [user?.id])
+  }, [user?.id, dashboardRefreshKey])
 
   useEffect(() => {
     if (!isSupabaseConfigured || userType !== 'admin' || !user?.id) return
@@ -228,7 +229,7 @@ function App() {
     }
 
     loadAdminUsers()
-  }, [user?.id, userType])
+  }, [user?.id, userType, dashboardRefreshKey])
 
   useEffect(() => {
     if (!isSupabaseConfigured || userType !== 'rider' || !user?.id) return
@@ -269,7 +270,7 @@ function App() {
     return () => {
       supabase.removeChannel(riderOrderChannel)
     }
-  }, [user?.id, userType])
+  }, [user?.id, userType, dashboardRefreshKey])
 
   useEffect(() => {
     if (!isSupabaseConfigured || userType !== 'admin' || !user?.id) return
@@ -298,7 +299,7 @@ function App() {
     }
 
     loadAdminOrders()
-  }, [user?.id, userType])
+  }, [user?.id, userType, dashboardRefreshKey])
 
   useEffect(() => {
     const syncViewFromPath = () => {
@@ -468,6 +469,10 @@ function App() {
     setRiderOrders([])
     setView('home')
     window.history.pushState({}, '', '/')
+  }
+
+  const handleAdminRefresh = async () => {
+    setDashboardRefreshKey((current) => current + 1)
   }
 
   const handleUpdateRiderOrderStatus = async (orderId) => {
@@ -1140,6 +1145,7 @@ function App() {
             onRejectTestimonial={handleRejectTestimonial}
             user={user}
             onLogout={handleLogout}
+            onRefresh={handleAdminRefresh}
             allUsers={allUsers}
             allOrders={allOrders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
