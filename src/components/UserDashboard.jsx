@@ -77,9 +77,27 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
 
   // Load profile data from database on component mount
   useEffect(() => {
-    if (user?.id) {
-      loadProfileData()
-      loadOrders()
+    if (!user?.id) return undefined
+
+    loadProfileData()
+    loadOrders()
+
+    const orderChannel = supabase
+      .channel(`customer-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${user.id}`,
+        },
+        loadOrders,
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(orderChannel)
     }
   }, [user?.id])
 
@@ -109,6 +127,32 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
     } catch (error) {
       console.error('Error loading orders:', error)
     }
+  }
+
+  const handleCancelOrder = async (orderId) => {
+    const order = orders.find((item) => item.id === orderId)
+    const canCancel = order?.payment_method === 'cash' && ['pending', 'confirmed'].includes(order.status || 'pending')
+
+    if (!canCancel) {
+      notifyToast('This payment-on-delivery order can no longer be cancelled.', 'warning')
+      return
+    }
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .eq('user_id', user.id)
+
+    if (error) {
+      notifyToast('This order can no longer be cancelled.', 'error')
+      await loadOrders()
+      return
+    }
+
+    setExpandedOrderId(null)
+    notifyToast('Order cancelled successfully.', 'success')
+    await loadOrders()
   }
 
   useEffect(() => {
@@ -773,6 +817,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                             delivered: 3,
                           }[orderStatus] ?? 0
                           const isExpanded = expandedOrderId === order.id
+                          const canCancelOrder = order.payment_method === 'cash' && ['pending', 'confirmed'].includes(orderStatus)
 
                           return (
                             <div 
@@ -824,25 +869,45 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                                     ₦{order.order_total.toLocaleString('en-NG')}
                                   </p>
                                 </div>
-                                <button 
-                                  type="button"
-                                  style={{
-                                    padding: '8px 16px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #ff6b35',
-                                    backgroundColor: 'transparent',
-                                    color: '#ff6b35',
-                                    fontSize: '0.85rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease'
-                                  }}
-                                  onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#ff6b35'; e.target.style.color = '#fff'; }}
-                                  onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#ff6b35'; }}
-                                >
-                                  {isExpanded ? 'Hide details' : 'Track'}
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  {canCancelOrder && (
+                                    <button
+                                      type="button"
+                                      style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #dc2626',
+                                        backgroundColor: 'transparent',
+                                        color: '#dc2626',
+                                        fontSize: '0.8rem',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                      }}
+                                      onClick={() => handleCancelOrder(order.id)}
+                                    >
+                                      Cancel order
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    style={{
+                                      padding: '8px 16px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #ff6b35',
+                                      backgroundColor: 'transparent',
+                                      color: '#ff6b35',
+                                      fontSize: '0.85rem',
+                                      fontWeight: '600',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                    onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                                    onMouseEnter={(e) => { e.target.style.backgroundColor = '#ff6b35'; e.target.style.color = '#fff'; }}
+                                    onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#ff6b35'; }}
+                                  >
+                                    {isExpanded ? 'Hide details' : 'Track'}
+                                  </button>
+                                </div>
                               </div>
 
                               {isExpanded && (

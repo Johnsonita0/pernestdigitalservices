@@ -48,6 +48,9 @@ CREATE TABLE IF NOT EXISTS order_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
+
 -- Ensure the shared storage bucket for user profile photos and bank proof uploads exists.
 -- Store files using a user-scoped path such as:
 -- profiles/{auth.uid()}/avatar.jpg
@@ -152,6 +155,7 @@ DROP POLICY IF EXISTS "Users can update their own preferences" ON user_preferenc
 DROP POLICY IF EXISTS "Users can insert their own preferences" ON user_preferences;
 DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
+DROP POLICY IF EXISTS "Users can cancel eligible cash orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
 DROP POLICY IF EXISTS "Riders can view ready orders" ON orders;
 DROP POLICY IF EXISTS "Riders can view delivered orders" ON orders;
@@ -196,6 +200,19 @@ CREATE POLICY "Users can view their own orders"
 CREATE POLICY "Users can insert their own orders"
   ON orders FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can cancel eligible cash orders"
+  ON orders FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    AND payment_method = 'cash'
+    AND status IN ('pending', 'confirmed')
+  )
+  WITH CHECK (
+    auth.uid() = user_id
+    AND payment_method = 'cash'
+    AND status = 'cancelled'
+  );
 
 -- Create RLS policy: users can only see items from their own orders
 CREATE POLICY "Users can view order items from their orders"
