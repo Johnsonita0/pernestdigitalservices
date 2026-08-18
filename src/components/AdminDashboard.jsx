@@ -278,7 +278,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
         <div className="section-heading">
           <div>
             <p className="eyebrow">Admin</p>
-            <h2>Back office dashboard.</h2>
+            <h2>Back Office Dashboard.</h2>
           </div>
         </div>
 

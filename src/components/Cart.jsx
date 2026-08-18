@@ -11,7 +11,7 @@ function Cart({ items, onRemoveFromCart, onCheckout }) {
       </div>
 
       {items.length === 0 ? (
-        <p className="empty-cart">Your cart is empty.</p>
+        <p className="empty-cart">Kindly add items to your cart.</p>
       ) : (
         <>
           <div className="cart-items">
