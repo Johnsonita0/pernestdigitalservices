@@ -1011,7 +1011,11 @@ function App() {
             <header className="mobile-dashboard-header">
               <div className="mobile-location-row">
                 <div className="mobile-location-pin">
-                  <FontAwesomeIcon icon={faUser} />
+                  {profileImageUrl ? (
+                    <img src={profileImageUrl} alt="Profile" className="mobile-user-avatar" />
+                  ) : (
+                    <FontAwesomeIcon icon={faUser} />
+                  )}
                 </div>
                 <div className="mobile-location-copy">
                   <strong>{user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'}</strong>
