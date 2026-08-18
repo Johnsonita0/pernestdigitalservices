@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt, faSignOutAlt, faChartLine, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
 function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus }) {
   const [activeTab, setActiveTab] = useState('users')
+  const [reportTab, setReportTab] = useState('transfers')
+  const [transferNotifications, setTransferNotifications] = useState([])
+  const [selectedTransfer, setSelectedTransfer] = useState(null)
+  const [cashPeriod, setCashPeriod] = useState('daily')
   const [selectedUser, setSelectedUser] = useState(null)
   const [productAvailability, setProductAvailability] = useState(
     products.reduce((acc, p) => ({ ...acc, [p.id]: true }), {})
@@ -55,6 +59,50 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
     const timer = setTimeout(() => setToast(null), 4000)
     return () => clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    if (activeTab !== 'reports' || !user?.id) return
+
+    const loadTransferNotifications = async () => {
+      const { data, error } = await supabase
+        .from('admin_notifications')
+        .select('*')
+        .eq('notification_type', 'bank_transfer_payment')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        showToast(error.message || 'Could not load transfer reports.', 'error')
+        return
+      }
+
+      setTransferNotifications(data || [])
+    }
+
+    loadTransferNotifications()
+  }, [activeTab, user?.id])
+
+  const completedCashOrders = allOrders.filter((order) => order.paymentMethod === 'cash' && order.status === 'delivered')
+  const getPeriodKey = (dateValue, period) => {
+    const date = new Date(dateValue)
+    if (period === 'monthly') return date.toLocaleDateString('en-NG', { month: 'short', year: 'numeric' })
+    if (period === 'weekly') {
+      const start = new Date(date)
+      start.setDate(date.getDate() - date.getDay())
+      return start.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' })
+    }
+    return date.toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric' })
+  }
+  const cashReport = completedCashOrders.reduce((groups, order) => {
+    const key = getPeriodKey(order.date, cashPeriod)
+    const current = groups[key] || { label: key, amount: 0, orders: 0 }
+    current.amount += Number(order.total) || 0
+    current.orders += 1
+    groups[key] = current
+    return groups
+  }, {})
+  const cashChartData = Object.values(cashReport).slice(-8)
+  const cashTotal = completedCashOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0)
+  const maxCashAmount = Math.max(...cashChartData.map((item) => item.amount), 1)
 
   const toggleProductAvailability = (productId) => {
     setProductAvailability((current) => ({
@@ -281,6 +329,17 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
             <h2>Back Office Dashboard.</h2>
           </div>
         </div>
+
+        {activeTab === 'reports' && (
+          <div className="admin-report-tabs" role="tablist" aria-label="Reports">
+            <button type="button" className={reportTab === 'transfers' ? 'active' : ''} onClick={() => setReportTab('transfers')}>
+              <FontAwesomeIcon icon={faFileInvoiceDollar} /> Bank transfers
+            </button>
+            <button type="button" className={reportTab === 'cash' ? 'active' : ''} onClick={() => setReportTab('cash')}>
+              <FontAwesomeIcon icon={faChartLine} /> Cash analysis
+            </button>
+          </div>
+        )}
 
         <div className="admin-stats">
           <div className="stat-card">
@@ -613,6 +672,44 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
               </div>
             </div>
           )}
+
+          {activeTab === 'reports' && reportTab === 'transfers' && (
+            <div className="tab-content report-content">
+              <div className="report-heading-row">
+                <div><p className="eyebrow">Payment review</p><h3>Bank transfer payments</h3></div>
+                <span className="report-count">{transferNotifications.length} submissions</span>
+              </div>
+              {transferNotifications.length === 0 ? <p className="empty-state">No bank transfer submissions yet.</p> : (
+                <div className="transfer-report-list">
+                  {transferNotifications.map((notification) => (
+                    <button type="button" className="transfer-report-row" key={notification.id} onClick={() => setSelectedTransfer(notification)}>
+                      <span className="transfer-report-main"><strong>{notification.user_name}</strong><small>{notification.user_email}</small></span>
+                      <span className="transfer-report-meta"><strong>{formatNaira(Number(notification.order_total) || 0)}</strong><small>{new Date(notification.created_at).toLocaleString('en-NG')}</small></span>
+                      <FontAwesomeIcon icon={faChevronRight} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'reports' && reportTab === 'cash' && (
+            <div className="tab-content report-content">
+              <div className="report-heading-row">
+                <div><p className="eyebrow">Completed orders</p><h3>Cash collection analysis</h3></div>
+                <select className="report-period-select" value={cashPeriod} onChange={(event) => setCashPeriod(event.target.value)} aria-label="Cash report period">
+                  <option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div className="report-summary-grid"><div><span>Completed cash orders</span><strong>{completedCashOrders.length}</strong></div><div><span>Total collected</span><strong>{formatNaira(cashTotal)}</strong></div></div>
+              <div className="cash-report-chart" aria-label={`${cashPeriod} cash collection chart`}>
+                {cashChartData.length === 0 ? <p className="empty-state">No completed cash orders yet.</p> : cashChartData.map((item) => (
+                  <div className="cash-chart-column" key={item.label} title={`${item.label}: ${formatNaira(item.amount)}`}><div className="cash-chart-bar" style={{ height: `${Math.max((item.amount / maxCashAmount) * 100, 8)}%` }} /><small>{item.label}</small></div>
+                ))}
+              </div>
+              <div className="report-table-wrapper"><table className="admin-table report-table"><thead><tr><th>Period</th><th>Orders</th><th>Amount collected</th></tr></thead><tbody>{cashChartData.map((item) => <tr key={item.label}><td>{item.label}</td><td>{item.orders}</td><td className="amount">{formatNaira(item.amount)}</td></tr>)}</tbody></table></div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -655,7 +752,25 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
           <FontAwesomeIcon icon={faUtensils} />
           <span>Menu</span>
         </button>
+        <button
+          type="button"
+          className={`admin-bottom-nav-item ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reports')}
+        >
+          <FontAwesomeIcon icon={faChartLine} />
+          <span>Reports</span>
+        </button>
       </nav>
+      {selectedTransfer && (
+        <div className="transfer-proof-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setSelectedTransfer(null)}>
+          <div className="transfer-proof-modal" role="dialog" aria-modal="true" aria-labelledby="transfer-proof-title">
+            <div className="report-heading-row"><div><p className="eyebrow">Transfer submission</p><h3 id="transfer-proof-title">Payment proof</h3></div><button type="button" className="close-btn" onClick={() => setSelectedTransfer(null)}>✕</button></div>
+            <div className="transfer-sender-card"><strong>{selectedTransfer.user_name}</strong><span>{selectedTransfer.user_email}</span><span>{selectedTransfer.user_phone}</span><b>{formatNaira(Number(selectedTransfer.order_total) || 0)}</b></div>
+            {selectedTransfer.proof_of_payment_url ? <img className="transfer-proof-image" src={selectedTransfer.proof_of_payment_url} alt={`Payment proof from ${selectedTransfer.user_name}`} /> : <p className="empty-state">No proof image attached.</p>}
+            <p className="transfer-file-name">{selectedTransfer.proof_of_payment_filename || 'Bank transfer proof'}</p>
+          </div>
+        </div>
+      )}
       </section>
     </>
   )

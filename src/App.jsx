@@ -385,6 +385,7 @@ function App() {
         total: Number(order.order_total) || 0,
         date: order.created_at,
         updatedAt: order.updated_at,
+        paymentMethod: order.payment_method,
         cancellationReason: order.cancellation_reason,
         cancellationNote: order.cancellation_note,
         items: order.order_items || [],
