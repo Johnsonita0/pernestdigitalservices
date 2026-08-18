@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
-function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, allUsers = [], allOrders = [], onCreateMenuItem }) {
+function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus }) {
   const [activeTab, setActiveTab] = useState('users')
   const [selectedUser, setSelectedUser] = useState(null)
   const [productAvailability, setProductAvailability] = useState(
@@ -350,9 +350,24 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                             <td className="address-cell">{order.address}</td>
                             <td className="amount">{formatNaira(order.total)}</td>
                             <td>
-                              <span className={`status-badge ${(order.status || 'pending').toLowerCase()}`}>
-                                {order.status || 'Pending'}
-                              </span>
+                              <select
+                                className="admin-order-status-select"
+                                value={order.status || 'pending'}
+                                onChange={async (event) => {
+                                  try {
+                                    await onUpdateOrderStatus(order.id, event.target.value)
+                                    showToast('Order status updated.', 'success')
+                                  } catch (error) {
+                                    showToast(error?.message || 'Could not update order status.', 'error')
+                                  }
+                                }}
+                              >
+                                <option value="pending_payment_confirmation">Awaiting payment</option>
+                                <option value="pending">Confirmed</option>
+                                <option value="preparing">Preparing</option>
+                                <option value="ready">On the way</option>
+                                <option value="delivered">Delivered</option>
+                              </select>
                             </td>
                           </tr>
                         )

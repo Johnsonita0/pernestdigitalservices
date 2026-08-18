@@ -227,6 +227,35 @@ function App() {
   }, [user?.id, userType])
 
   useEffect(() => {
+    if (!isSupabaseConfigured || userType !== 'admin' || !user?.id) return
+
+    const loadAdminOrders = async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*), profiles:user_id(full_name, email)')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.warn('Error loading admin orders:', error)
+        return
+      }
+
+      setAllOrders((data || []).map((order) => ({
+        ...order,
+        userId: order.user_id,
+        name: order.profiles?.full_name || 'Unknown user',
+        email: order.profiles?.email || '',
+        address: order.delivery_address || '',
+        total: Number(order.order_total) || 0,
+        date: order.created_at,
+        items: order.order_items || [],
+      })))
+    }
+
+    loadAdminOrders()
+  }, [user?.id, userType])
+
+  useEffect(() => {
     const syncViewFromPath = () => {
       const path = window.location.pathname.replace(/\/+$/, '') || '/'
       if (path === '/admin') {
@@ -419,6 +448,22 @@ function App() {
       },
       ...current,
     ])
+  }
+
+  const handleUpdateOrderStatus = async (orderId, status) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+
+    if (error) throw new Error(error.message)
+
+    setAllOrders((current) => current.map((order) => (
+      order.id === orderId ? { ...order, status } : order
+    )))
+    setUserOrders((current) => current.map((order) => (
+      order.id === orderId ? { ...order, status } : order
+    )))
   }
 
   const handleOrderNow = (product) => {
@@ -1016,6 +1061,7 @@ function App() {
             onLogout={handleLogout}
             allUsers={allUsers}
             allOrders={allOrders}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
             onCreateMenuItem={handleCreateMenuItem}
           />
         </main>
