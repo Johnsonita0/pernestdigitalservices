@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt, faChevronRight, faCog, faCreditCard, faTicketAlt, faClipboardList, faQuestionCircle, faMapPin, faLock, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons'
-import { menuItems } from '../data/menu'
 import { supabase } from '../lib/supabase'
 
-function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
+function UserDashboard({ user, menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
   const [expandedOrderId, setExpandedOrderId] = useState(null)
@@ -18,6 +17,7 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
     profileImageUrl: user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.profile_image_url || '',
   })
   const [loading, setLoading] = useState(false)
+  const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
   // Load profile data from database on component mount
@@ -60,7 +60,26 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
     const file = event.target.files?.[0]
     if (!file || !user?.id) return
 
+    if (!file.type.startsWith('image/')) {
+      setSaveMessage('❌ Please choose an image file.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveMessage('❌ Profile photos must be 5MB or smaller.')
+      return
+    }
+
+    const previousProfileImageUrl = profile.profileImageUrl
+    const previewUrl = URL.createObjectURL(file)
+    setProfile((current) => ({
+      ...current,
+      profileImageUrl: previewUrl,
+    }))
+
     try {
+      setUploadingProfileImage(true)
+      setSaveMessage('Uploading profile photo...')
       const safeName = file.name.replace(/\s+/g, '_')
       const filePath = `${user.id}/profile/${Date.now()}-${safeName}`
 
@@ -74,15 +93,34 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
 
       const { data } = supabase.storage.from('bank_prof').getPublicUrl(filePath)
 
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          profile_image_url: data.publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id)
+
+      if (profileError) {
+        throw new Error(profileError.message)
+      }
+
       setProfile((current) => ({
         ...current,
         profileImageUrl: data.publicUrl,
       }))
 
-      setSaveMessage('✅ Profile photo ready to save.')
+      setSaveMessage('✅ Profile photo uploaded successfully.')
     } catch (error) {
       console.error('Error uploading profile photo:', error)
-      setSaveMessage(`❌ Upload failed: ${error.message}`)
+      setProfile((current) => ({
+        ...current,
+        profileImageUrl: previousProfileImageUrl,
+      }))
+      setSaveMessage(`❌ Profile photo upload failed: ${error.message}`)
+    } finally {
+      setUploadingProfileImage(false)
+      event.target.value = ''
     }
   }
 
@@ -437,6 +475,7 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                           type="file"
                           accept="image/*"
                           onChange={handleProfileImageUpload}
+                          disabled={uploadingProfileImage}
                           style={{ display: 'block', marginTop: '8px', width: '100%' }}
                         />
                       </label>

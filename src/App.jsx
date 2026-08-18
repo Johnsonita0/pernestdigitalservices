@@ -10,7 +10,6 @@ import TestimonialForm from './components/TestimonialForm'
 import LoginPage from './components/LoginPage'
 import SignUpPage from './components/SignUpPage'
 import UserDashboard from './components/UserDashboard'
-import { menuItems } from './data/menu'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { initializePaystackPayment } from './lib/payment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -95,7 +94,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [favoriteItems, setFavoriteItems] = useState([])
   const [userOrders, setUserOrders] = useState([])
-  const [menuCatalog, setMenuCatalog] = useState(menuItems)
+  const [menuCatalog, setMenuCatalog] = useState([])
   const [authView, setAuthView] = useState('login') // 'login' or 'signup'
   const [allUsers, setAllUsers] = useState([])
   const [allOrders, setAllOrders] = useState([])
@@ -136,6 +135,40 @@ function App() {
       subscription?.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return
+
+    const loadMenuCatalog = async () => {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.warn('Error loading menu items:', error)
+        return
+      }
+
+      const persistedItems = (data || []).map((item) => ({
+        id: item.id,
+        title: item.title,
+        name: item.title,
+        description: item.description,
+        price: Number(item.price) || 0,
+        tag: item.tag || 'Chef special',
+        badge: item.badge || 'New',
+        image: item.image_url || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80',
+        featured: Boolean(item.featured),
+        feature: Boolean(item.featured),
+        available: Boolean(item.available),
+      }))
+
+      setMenuCatalog(persistedItems)
+    }
+
+    loadMenuCatalog()
+  }, [user?.id])
 
   useEffect(() => {
     const syncViewFromPath = () => {
@@ -884,6 +917,7 @@ function App() {
       {view === 'dashboard' && user && (
         <UserDashboard
           user={user}
+          menuItems={menuCatalog}
           favoriteItems={favoriteItems}
           userOrders={userOrders}
           onLogout={handleLogout}
@@ -897,6 +931,7 @@ function App() {
       {view === 'account' && user && (
         <UserDashboard
           user={user}
+          menuItems={menuCatalog}
           favoriteItems={favoriteItems}
           userOrders={userOrders}
           onLogout={handleLogout}

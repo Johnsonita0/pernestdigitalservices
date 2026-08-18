@@ -83,6 +83,34 @@ CREATE TABLE IF NOT EXISTS menu_items (
 
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_menu_items_title_unique
+  ON menu_items(title);
+
+-- Seed the original menu into Supabase. Existing rows with the same title are kept.
+INSERT INTO menu_items (title, description, price, tag, badge, featured, available, image_url)
+VALUES
+  ('Jollof Rice & Chicken', 'Tomato stew rice, grilled chicken, roasted peppers, and fiery pepper sauce.', 12000, 'Chef special', 'Hot today', true, true, 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80'),
+  ('Egusi Soup Deluxe', 'Thick melon seed soup with spinach, goat meat, and pounded yam.', 15000, 'Fresh pick', 'Popular', true, true, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80'),
+  ('Suya Bowl', 'Spiced grilled meat, fried plantain, rice, slaw, and spicy suya sauce.', 13500, 'Bestseller', 'Best seller', true, false, 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80'),
+  ('Plantain & Fish', 'Golden plantain served with peppered fish, onions, and fresh tomato relish.', 9000, 'Side', 'Add-on', false, true, 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80'),
+  ('Amala & Ewedu', 'Smooth amala with ewedu, gbegiri, and a choice of beef or fish.', 11000, 'Starter', 'Classic', false, false, 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=900&q=80'),
+  ('Chin Chin & Zobo', 'Crispy Nigerian snack bites with chilled hibiscus zobo drink.', 6000, 'Dessert', 'Sweet', false, true, 'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=900&q=80'),
+  ('Yam Porridge Special', 'Creamy yam porridge with smoked fish, onions, and green pepper.', 9800, 'Comfort food', 'Cozy', false, true, 'https://images.unsplash.com/photo-1670381543120-b5e6d0ca9f1c?auto=format&fit=crop&w=900&q=80'),
+  ('Beef Shawarma Wrap', 'Juicy beef wraps with lettuce, tomatoes, and garlic sauce drizzle.', 8500, 'Grab & go', 'Lunch', false, true, 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=900&q=80'),
+  ('Spicy Chicken Pasta', 'Creamy pasta with grilled chicken, chilli flakes, and herbs.', 12500, 'Fusion', 'New', false, false, 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=900&q=80'),
+  ('Pepper Soup Mix', 'Hot, savory pepper soup with assorted meats and fresh herbs.', 10500, 'Soup', 'Warm', false, true, 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80'),
+  ('Crispy Chicken Burger', 'Double-patty burger with crispy chicken, cheese, and house sauce.', 11500, 'Fast bite', 'Popular', false, true, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80'),
+  ('Fruit Salad Bowl', 'Fresh seasonal fruit mix with yogurt and honey drizzle.', 7000, 'Fresh', 'Light', false, true, 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80'),
+  ('Turkey Rice Skillet', 'Flavour-packed rice with turkey strips, bell peppers, and onion.', 13000, 'Tonight', 'Chef pick', false, true, 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=80'),
+  ('Moi Moi & Plantain', 'Soft steamed bean pudding served with golden plantain and pepper sauce.', 8200, 'Local favorite', 'Classic', false, false, 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80'),
+  ('Noodles & Chicken', 'Stir-fried noodles with chicken, vegetables, and savory sauce.', 11500, 'Wok', 'Quick', false, true, 'https://images.unsplash.com/photo-1525755662778-989d0524087e?auto=format&fit=crop&w=900&q=80'),
+  ('Coconut Rice Bowl', 'Aromatic coconut rice with grilled prawns and herb garnish.', 14500, 'Seafood', 'Fresh', false, true, 'https://images.unsplash.com/photo-1559847844-5315695dadae?auto=format&fit=crop&w=900&q=80'),
+  ('Beef & Veggie Stew', 'Rich stew with tender beef, vegetables, and warm traditional spices.', 12800, 'Comfort', 'Home style', false, true, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80'),
+  ('Crunchy Chicken Salad', 'Crisp greens, grilled chicken, carrots, cucumber, and tangy dressing.', 9200, 'Healthy', 'Fresh', false, true, 'https://images.unsplash.com/photo-1546793665-c74683f339c1?auto=format&fit=crop&w=900&q=80'),
+  ('Puff Puff & Tea', 'Soft and airy dough bites with a warm cup of local tea.', 5500, 'Snack', 'Sweet', false, true, 'https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?auto=format&fit=crop&w=900&q=80'),
+  ('Banga Soup Combo', 'Palm nut soup with catfish, assorted meats, and soft starch.', 16000, 'Traditional', 'Special', false, false, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=900&q=80')
+ON CONFLICT (title) DO NOTHING;
+
 -- Helper function for admin checks inside RLS policies.
 CREATE OR REPLACE FUNCTION public.is_admin_user(p_user_id UUID)
 RETURNS BOOLEAN AS $$
