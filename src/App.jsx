@@ -397,6 +397,31 @@ function App() {
         console.warn('Error saving order items:', itemsError)
       }
 
+      // Create admin notification for bank transfer payments
+      if (orderData.paymentMethod === 'transfer') {
+        const { error: notifError } = await supabase
+          .from('admin_notifications')
+          .insert([
+            {
+              order_id: orderId,
+              notification_type: 'bank_transfer_payment',
+              title: `Bank Transfer Payment - Order #${String(orderId).slice(0, 8)}`,
+              message: `${orderData.name} submitted a bank transfer payment proof for order ₦${(total + 2500).toLocaleString('en-NG')}. Please verify the payment.`,
+              proof_of_payment_url: proofOfPaymentUrl,
+              user_name: orderData.name,
+              user_email: user.email,
+              user_phone: orderData.contactNumber,
+              order_total: total + 2500,
+              is_read: false,
+              created_at: new Date().toISOString(),
+            }
+          ])
+
+        if (notifError) {
+          console.warn('Error creating admin notification:', notifError)
+        }
+      }
+
       const newOrder = {
         id: orderId,
         date: new Date().toISOString(),
@@ -947,35 +972,113 @@ function App() {
                     )}
 
                     {checkoutForm.paymentMethod === 'transfer' && (
-                      <div className="payment-inline-box">
+                      <div className="payment-inline-box bank-transfer-section">
                         <div className="payment-inline-header">
                           <strong>Bank transfer</strong>
-                          <span>Transfer to Trophy account</span>
+                          <span>Manual payment approval</span>
                         </div>
-                        <p>Account name: Trophy Sip &amp; Savor<br />Account number: 1234567890</p>
                         
-                        <label style={{ marginTop: '12px', display: 'grid', gap: '6px' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#201814' }}>Upload proof of payment</span>
-                          <input
-                            type="file"
-                            name="proofOfPayment"
-                            onChange={handleCheckoutInputChange}
-                            accept="image/*,.pdf"
-                            required
-                            style={{
-                              padding: '8px',
-                              borderRadius: '8px',
-                              border: '1px solid rgba(32, 24, 20, 0.14)',
-                              fontSize: '0.9rem'
-                            }}
-                          />
-                          <small style={{ color: '#7d6056' }}>Upload screenshot or PDF of your bank transfer (JPG, PNG, or PDF)</small>
-                          {checkoutForm.proofOfPayment && (
-                            <span style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: '600' }}>
-                              ✓ {checkoutForm.proofOfPayment.name}
-                            </span>
-                          )}
-                        </label>
+                        <div className="bank-account-details">
+                          <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem', fontWeight: '600', color: '#201814' }}>Transfer details:</p>
+                          <p style={{ margin: '0', fontSize: '0.85rem', color: '#333' }}>
+                            <strong>Account name:</strong> Trophy Sip &amp; Savor<br />
+                            <strong>Account number:</strong> 1234567890<br />
+                            <strong>Bank:</strong> First Bank
+                          </p>
+                        </div>
+
+                        <div className="payment-confirmation-notice" style={{ marginTop: '12px', padding: '10px', backgroundColor: '#f0f9ff', border: '1px solid #bfdbfe', borderRadius: '8px' }}>
+                          <p style={{ margin: '0', fontSize: '0.85rem', color: '#1e40af', lineHeight: '1.5' }}>
+                            ℹ️ <strong>Your payment will be confirmed by our admin within 1-2 hours.</strong> We will contact you at <strong>{user?.email}</strong> to confirm.
+                          </p>
+                          <p style={{ margin: '6px 0 0 0', fontSize: '0.8rem', color: '#1e40af' }}>
+                            <strong>Admin contact:</strong> +234 906 331 6300 | support@trophysip.com
+                          </p>
+                        </div>
+
+                        <div className="proof-upload-container" style={{ marginTop: '14px' }}>
+                          <label style={{ display: 'grid', gap: '10px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#201814' }}>Upload proof of payment</span>
+                            
+                            <div 
+                              className="image-upload-box"
+                              onClick={() => document.getElementById('proofOfPaymentInput').click()}
+                              style={{
+                                cursor: 'pointer',
+                                border: '2px dashed rgba(255, 107, 53, 0.4)',
+                                borderRadius: '12px',
+                                padding: '20px',
+                                textAlign: 'center',
+                                backgroundColor: '#fff8f4',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(255, 107, 53, 0.8)'
+                                e.currentTarget.style.backgroundColor = '#fffbf8'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'rgba(255, 107, 53, 0.4)'
+                                e.currentTarget.style.backgroundColor = '#fff8f4'
+                              }}
+                            >
+                              {checkoutForm.proofOfPayment ? (
+                                <div style={{ display: 'grid', gap: '8px', alignItems: 'center' }}>
+                                  <img 
+                                    src={URL.createObjectURL(checkoutForm.proofOfPayment)} 
+                                    alt="proof preview"
+                                    style={{
+                                      maxWidth: '100%',
+                                      maxHeight: '200px',
+                                      borderRadius: '8px',
+                                      objectFit: 'contain'
+                                    }}
+                                  />
+                                  <p style={{ margin: '0', fontSize: '0.85rem', color: '#4ade80', fontWeight: '600' }}>
+                                    ✓ {checkoutForm.proofOfPayment.name}
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setCheckoutForm((current) => ({ ...current, proofOfPayment: null }))
+                                    }}
+                                    style={{
+                                      fontSize: '0.8rem',
+                                      padding: '4px 12px',
+                                      border: '1px solid #ccc',
+                                      borderRadius: '6px',
+                                      background: '#fff',
+                                      cursor: 'pointer',
+                                      color: '#666'
+                                    }}
+                                  >
+                                    Change image
+                                  </button>
+                                </div>
+                              ) : (
+                                <div>
+                                  <p style={{ margin: '0 0 8px 0', fontSize: '1.4rem' }}>📸</p>
+                                  <p style={{ margin: '0', fontSize: '0.9rem', fontWeight: '600', color: '#201814' }}>
+                                    Click to upload proof of payment
+                                  </p>
+                                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#7d6056' }}>
+                                    PNG, JPG, or PDF (Max 5MB)
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            <input
+                              id="proofOfPaymentInput"
+                              type="file"
+                              name="proofOfPayment"
+                              onChange={handleCheckoutInputChange}
+                              accept="image/*,.pdf"
+                              required
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                        </div>
                       </div>
                     )}
 

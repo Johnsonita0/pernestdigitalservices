@@ -136,3 +136,45 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Add payment method and proof of payment columns to orders table if they don't exist
+ALTER TABLE orders
+ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
+ADD COLUMN IF NOT EXISTS proof_of_payment TEXT;
+
+-- Create admin notifications table for payment confirmations
+CREATE TABLE IF NOT EXISTS admin_notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  notification_type TEXT NOT NULL, -- 'bank_transfer_payment', 'order_update', etc.
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  proof_of_payment_url TEXT,
+  user_name TEXT NOT NULL,
+  user_email TEXT NOT NULL,
+  user_phone TEXT NOT NULL,
+  order_total DECIMAL(10, 2),
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS on admin_notifications
+ALTER TABLE admin_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Admin can view all notifications
+CREATE POLICY "Admin can view all notifications"
+  ON admin_notifications FOR SELECT
+  USING (true);
+
+-- Admin can update notification status
+CREATE POLICY "Admin can update notifications"
+  ON admin_notifications FOR UPDATE
+  USING (true);
+
+-- Create index for faster queries
+CREATE INDEX IF NOT EXISTS idx_admin_notifications_created_at 
+  ON admin_notifications(created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_admin_notifications_is_read 
+  ON admin_notifications(is_read);

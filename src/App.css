@@ -3702,6 +3702,59 @@ a {
   font-size: 0.9rem;
 }
 
+.bank-transfer-section {
+  display: grid;
+  gap: 12px;
+}
+
+.bank-account-details {
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  border-left: 3px solid #ff6b35;
+}
+
+.bank-account-details p {
+  margin: 0;
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.payment-confirmation-notice {
+  background: #f0f9ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 8px;
+  padding: 10px !important;
+}
+
+.payment-confirmation-notice p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.image-upload-box {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+  justify-items: center;
+}
+
+.image-upload-box img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.proof-upload-container {
+  display: grid;
+  gap: 8px;
+}
+
 .payment-method-option:hover {
   border-color: rgba(255, 107, 53, 0.45);
   transform: translateY(-1px);
