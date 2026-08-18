@@ -23,6 +23,7 @@ const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 const ADMIN_USER_ID = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
 const ADMIN_EMAIL = 'admin@trophysip.com'
 const RIDER_USER_ID = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
+const BROWSER_NOTIFICATION_PROMPT_KEY = 'trophy-browser-notification-prompted'
 
 const resolveStoredProfileImageUrl = async (storedValue) => {
   if (!storedValue) return ''
@@ -170,6 +171,18 @@ function App() {
     const timer = setTimeout(() => setToast(null), 4000)
     return () => clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+
+    const currentPermission = window.Notification.permission
+    const hasPrompted = window.localStorage.getItem(BROWSER_NOTIFICATION_PROMPT_KEY) === 'true'
+
+    if (currentPermission !== 'default' || hasPrompted) return
+
+    window.localStorage.setItem(BROWSER_NOTIFICATION_PROMPT_KEY, 'true')
+    window.Notification.requestPermission().catch(() => undefined)
+  }, [])
 
   useEffect(() => {
     if (!isSupabaseConfigured || !user?.id) {
