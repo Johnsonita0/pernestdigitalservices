@@ -286,7 +286,7 @@ function App() {
     setCheckoutForm((current) => ({ ...current, [name]: value }))
   }
 
-  const handleConfirmOrder = (orderData) => {
+  const handleConfirmOrder = async (orderData) => {
     if (!user) {
       setAuthView('login')
       setView('login')
@@ -295,40 +295,92 @@ function App() {
       return
     }
 
-    const newOrder = {
-      id: Date.now(),
-      date: new Date().toISOString(),
-      items: cartItems,
-      total,
-      name: orderData.name,
-      contactNumber: orderData.contactNumber,
-      address: orderData.address,
-      notes: orderData.notes,
-      paymentMethod: orderData.paymentMethod,
-      status: 'pending',
-      userId: user?.id || null,
-    }
-    setUserOrders((current) => [newOrder, ...current])
-    
-    // Add to all orders
-    setAllOrders((current) => [newOrder, ...current])
-    
-    // Update user's orders in allUsers
-    setAllUsers((current) =>
-      current.map((u) =>
-        u.id === user?.id ? { ...u, orders: [newOrder, ...(u.orders || [])] } : u
+    try {
+      // Save order to database
+      const { data: orderResult, error: orderError } = await supabase
+        .from('orders')
+        .insert([
+          {
+            user_id: user.id,
+            order_total: total,
+            status: 'pending',
+            delivery_address: orderData.address,
+            delivery_notes: orderData.notes,
+          }
+        ])
+        .select()
+
+      if (orderError) {
+        alert('Failed to create order: ' + orderError.message)
+        return
+      }
+
+      const orderId = orderResult?.[0]?.id
+
+      if (!orderId) {
+        alert('Failed to create order')
+        return
+      }
+
+      // Save order items to database
+      const orderItems = cartItems.map((item) => ({
+        order_id: orderId,
+        food_name: item.title,
+        food_id: item.id,
+        quantity: item.quantity || 1,
+        price: item.price,
+      }))
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems)
+
+      if (itemsError) {
+        console.warn('Error saving order items:', itemsError)
+      }
+
+      // Create local order object for display
+      const newOrder = {
+        id: orderId,
+        date: new Date().toISOString(),
+        items: cartItems,
+        total,
+        name: orderData.name,
+        contactNumber: orderData.contactNumber,
+        address: orderData.address,
+        notes: orderData.notes,
+        paymentMethod: orderData.paymentMethod,
+        status: 'pending',
+        userId: user?.id || null,
+      }
+      
+      setUserOrders((current) => [newOrder, ...current])
+      
+      // Add to all orders
+      setAllOrders((current) => [newOrder, ...current])
+      
+      // Update user's orders in allUsers
+      setAllUsers((current) =>
+        current.map((u) =>
+          u.id === user?.id ? { ...u, orders: [newOrder, ...(u.orders || [])] } : u
+        )
       )
-    )
-    
-    setCartItems([])
-    setCheckoutForm({
-      name: '',
-      contactNumber: '',
-      address: '',
-      notes: '',
-      paymentMethod: 'card',
-    })
-    updateRoute('home')
+      
+      setCartItems([])
+      setCheckoutForm({
+        name: '',
+        contactNumber: '',
+        address: '',
+        notes: '',
+        paymentMethod: 'card',
+      })
+      
+      alert('Order created successfully! You can track it in your profile.')
+      updateRoute('home')
+    } catch (error) {
+      console.error('Error creating order:', error)
+      alert('Error creating order: ' + error.message)
+    }
   }
 
   const handleAddFavorite = (product) => {
