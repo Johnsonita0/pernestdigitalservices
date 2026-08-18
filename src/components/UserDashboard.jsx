@@ -753,9 +753,14 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                           const statusSteps = orderStatus === 'pending_payment_confirmation' 
                             ? ['Awaiting payment confirmation', 'Confirmed', 'Preparing', 'On the way', 'Delivered']
                             : ['Confirmed', 'Preparing', 'On the way', 'Delivered']
-                          const statusIndexMap = ['pending_payment_confirmation', 'pending', 'preparing', 'ready', 'delivered']
-                          const statusIndex = statusIndexMap.indexOf(orderStatus)
-                          const currentStep = statusIndex >= 0 ? statusIndex : 0
+                          const currentStep = {
+                            pending_payment_confirmation: 0,
+                            pending: 0,
+                            confirmed: 0,
+                            preparing: 1,
+                            ready: 2,
+                            delivered: 3,
+                          }[orderStatus] ?? 0
                           const isExpanded = expandedOrderId === order.id
 
                           return (
