@@ -24,6 +24,25 @@ const ADMIN_USER_ID = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
 const ADMIN_EMAIL = 'admin@trophysip.com'
 const RIDER_USER_ID = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
 
+const resolveStoredProfileImageUrl = async (storedValue) => {
+  if (!storedValue) return ''
+
+  const publicPathMarker = '/storage/v1/object/public/bank_prof/'
+  const path = storedValue.includes(publicPathMarker)
+    ? decodeURIComponent(storedValue.split(publicPathMarker)[1])
+    : storedValue.startsWith('http')
+      ? ''
+      : storedValue
+
+  if (!path) return storedValue
+
+  const { data, error } = await supabase.storage
+    .from('bank_prof')
+    .createSignedUrl(path, 60 * 60)
+
+  return error ? '' : data?.signedUrl || ''
+}
+
 const isAdminUser = (authUser) => {
   if (!authUser) return false
 
@@ -150,6 +169,34 @@ function App() {
     const timer = setTimeout(() => setToast(null), 4000)
     return () => clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user?.id) {
+      setProfileImageUrl('')
+      return undefined
+    }
+
+    let cancelled = false
+
+    const loadProfileImage = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('profile_image_url')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (cancelled || error) return
+
+      const imageUrl = await resolveStoredProfileImageUrl(data?.profile_image_url)
+      if (!cancelled) setProfileImageUrl(imageUrl)
+    }
+
+    loadProfileImage()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
