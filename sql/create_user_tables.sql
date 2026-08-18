@@ -132,13 +132,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION public.is_rider_user(p_user_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1
-    FROM public.profiles
-    WHERE id = p_user_id
-      AND role = 'rider'
-      AND is_admin = false
-  );
+  RETURN p_user_id = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
+    AND EXISTS (
+      SELECT 1
+      FROM public.profiles
+      WHERE id = p_user_id
+        AND email = 'rider@trophy.com'
+        AND role = 'rider'
+        AND is_admin = false
+    );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

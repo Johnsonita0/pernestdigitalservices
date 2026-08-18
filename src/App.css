@@ -2710,7 +2710,7 @@ a {
 
 .rider-app-shell {
   min-height: 100vh;
-  padding: 42px max(20px, 5vw) 64px;
+  padding: 42px max(20px, 5vw) 140px;
   background: #fff8f3;
   color: #1a1516;
 }
@@ -2780,18 +2780,24 @@ a {
   color: #237942;
 }
 
-.rider-view-switcher {
+.rider-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 1000;
   display: flex;
   gap: 10px;
-  width: min(980px, 100%);
-  margin: 0 auto 18px;
+  width: min(560px, calc(100% - 28px));
+  transform: translateX(-50%);
   padding: 6px;
   border: 1px solid #f0dfd6;
-  border-radius: 15px;
-  background: #fff;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 36px rgba(58, 37, 28, 0.16);
+  backdrop-filter: blur(16px);
 }
 
-.rider-view-switcher button {
+.rider-bottom-nav button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2809,12 +2815,12 @@ a {
   font-weight: 700;
 }
 
-.rider-view-switcher button.active {
+.rider-bottom-nav button.active {
   background: #fff0e8;
   color: #e95d2d;
 }
 
-.rider-view-switcher button span {
+.rider-bottom-nav button span {
   display: grid;
   min-width: 20px;
   height: 20px;

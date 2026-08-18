@@ -20,6 +20,7 @@ const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
 const ADMIN_USER_ID = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
 const ADMIN_EMAIL = 'admin@trophysip.com'
+const RIDER_USER_ID = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
 
 const isAdminUser = (authUser) => {
   if (!authUser) return false
@@ -50,7 +51,7 @@ const resolveUserType = async (authUser) => {
   }
 
   if (data?.is_admin || isAdminUser(authUser)) return 'admin'
-  return data?.role === 'rider' ? 'rider' : 'customer'
+  return data?.role === 'rider' && authUser.id === RIDER_USER_ID ? 'rider' : 'customer'
 }
 
 const faqItems = [

@@ -48,7 +48,7 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
 
       {message && <p className="rider-message">{message}</p>}
 
-      <nav className="rider-view-switcher" aria-label="Rider order views">
+      <nav className="rider-bottom-nav" aria-label="Rider order views">
         <button
           type="button"
           className={activeView === 'orders' ? 'active' : ''}
