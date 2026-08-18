@@ -25,6 +25,7 @@ const ADMIN_EMAIL = 'admin@trophysip.com'
 const RIDER_USER_ID = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
 const BROWSER_NOTIFICATION_PROMPT_KEY = 'trophy-browser-notification-prompted'
 const CART_STORAGE_KEY = 'trophy-cart-items'
+const getProofStorageKey = (userId) => `trophy-proof-of-payment-${userId || 'guest'}`
 
 const resolveStoredProfileImageUrl = async (storedValue) => {
   if (!storedValue) return ''
@@ -137,6 +138,10 @@ function App() {
     notes: '',
     paymentMethod: 'paystack',
     proofOfPayment: null,
+    proofOfPaymentUrl: '',
+    proofOfPaymentFilename: '',
+    proofOfPaymentMimeType: '',
+    proofOfPaymentSize: null,
   })
   const [pendingTestimonials, setPendingTestimonials] = useState([])
   const [approvedTestimonials, setApprovedTestimonials] = useState(testimonials)
@@ -829,19 +834,59 @@ function App() {
   useEffect(() => {
     if (!user) return
 
+    let savedProof = {}
+    try {
+      savedProof = JSON.parse(window.localStorage.getItem(getProofStorageKey(user.id)) || '{}')
+    } catch {
+      savedProof = {}
+    }
+
     setCheckoutForm((current) => ({
       name: current.name || user.user_metadata?.fullName || user.user_metadata?.name || user.email?.split('@')[0] || '',
       contactNumber: current.contactNumber || user.user_metadata?.phone || '',
       address: current.address || user.user_metadata?.address || '',
       notes: current.notes || '',
       paymentMethod: current.paymentMethod || 'card',
+      proofOfPaymentUrl: current.proofOfPaymentUrl || savedProof.url || '',
+      proofOfPaymentFilename: current.proofOfPaymentFilename || savedProof.filename || '',
+      proofOfPaymentMimeType: current.proofOfPaymentMimeType || savedProof.mimeType || '',
+      proofOfPaymentSize: current.proofOfPaymentSize || savedProof.size || null,
     }))
   }, [user])
 
-  const handleCheckoutInputChange = (event) => {
+  const handleCheckoutInputChange = async (event) => {
     const { name, value, files } = event.target
     if (files) {
-      setCheckoutForm((current) => ({ ...current, [name]: files[0] }))
+      const file = files[0]
+      if (!file || !user?.id) return
+
+      const fileName = `${user.id}/bank-proof/${Date.now()}-${file.name.replace(/\s+/g, '_')}`
+      const { error: uploadError } = await supabase.storage
+        .from('bank_prof')
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) {
+        notifyToast('Failed to upload proof of payment: ' + uploadError.message, 'error')
+        return
+      }
+
+      const proofUrl = supabase.storage.from('bank_prof').getPublicUrl(fileName).data.publicUrl
+      const proofDetails = {
+        url: proofUrl,
+        filename: file.name,
+        mimeType: file.type,
+        size: file.size,
+      }
+
+      window.localStorage.setItem(getProofStorageKey(user.id), JSON.stringify(proofDetails))
+      setCheckoutForm((current) => ({
+        ...current,
+        [name]: file,
+        proofOfPaymentUrl: proofDetails.url,
+        proofOfPaymentFilename: proofDetails.filename,
+        proofOfPaymentMimeType: proofDetails.mimeType,
+        proofOfPaymentSize: proofDetails.size,
+      }))
     } else {
       setCheckoutForm((current) => ({ ...current, [name]: value }))
     }
@@ -879,25 +924,29 @@ function App() {
       }
 
       if (orderData.paymentMethod === 'transfer') {
-        if (!orderData.proofOfPayment) {
+        if (!orderData.proofOfPayment && !orderData.proofOfPaymentUrl) {
           notifyToast('Please upload proof of payment for bank transfer.', 'warning')
           return
         }
 
-        proofFilename = orderData.proofOfPayment.name
-        proofMimeType = orderData.proofOfPayment.type
-        proofFileSize = orderData.proofOfPayment.size
+        proofFilename = orderData.proofOfPaymentFilename || orderData.proofOfPayment?.name
+        proofMimeType = orderData.proofOfPaymentMimeType || orderData.proofOfPayment?.type
+        proofFileSize = orderData.proofOfPaymentSize || orderData.proofOfPayment?.size
+        proofOfPaymentUrl = orderData.proofOfPaymentUrl
 
-        const fileName = `${user.id}/bank-proof/${Date.now()}-${proofFilename.replace(/\s+/g, '_')}`
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('bank_prof')
-          .upload(fileName, orderData.proofOfPayment, { upsert: true })
+        if (!proofOfPaymentUrl && orderData.proofOfPayment) {
+          const fileName = `${user.id}/bank-proof/${Date.now()}-${proofFilename.replace(/\s+/g, '_')}`
+          const { error: uploadError } = await supabase.storage
+            .from('bank_prof')
+            .upload(fileName, orderData.proofOfPayment, { upsert: true })
 
-        if (uploadError) {
-          throw new Error('Failed to upload proof of payment: ' + uploadError.message)
+          if (uploadError) {
+            throw new Error('Failed to upload proof of payment: ' + uploadError.message)
+          }
+
+          proofOfPaymentUrl = supabase.storage.from('bank_prof').getPublicUrl(fileName).data.publicUrl
         }
 
-        proofOfPaymentUrl = `${supabase.storage.from('bank_prof').getPublicUrl(fileName).data.publicUrl}`
         orderStatus = 'pending_payment_confirmation'
       }
 
@@ -1035,6 +1084,7 @@ function App() {
       )
 
       setCartItems([])
+      window.localStorage.removeItem(getProofStorageKey(user.id))
       setCheckoutForm({
         name: '',
         contactNumber: '',
@@ -1042,6 +1092,10 @@ function App() {
         notes: '',
         paymentMethod: 'paystack',
         proofOfPayment: null,
+        proofOfPaymentUrl: '',
+        proofOfPaymentFilename: '',
+        proofOfPaymentMimeType: '',
+        proofOfPaymentSize: null,
       })
 
       setSuccessOrder(newOrder)
@@ -1650,7 +1704,7 @@ function App() {
                               {checkoutForm.proofOfPayment ? (
                                 <div style={{ display: 'grid', gap: '8px', alignItems: 'center' }}>
                                   <img 
-                                    src={URL.createObjectURL(checkoutForm.proofOfPayment)} 
+                                    src={checkoutForm.proofOfPayment ? URL.createObjectURL(checkoutForm.proofOfPayment) : checkoutForm.proofOfPaymentUrl}
                                     alt="proof preview"
                                     style={{
                                       maxWidth: '100%',
@@ -1665,8 +1719,17 @@ function App() {
                                   <button
                                     type="button"
                                     onClick={(e) => {
+                                      e.preventDefault()
                                       e.stopPropagation()
-                                      setCheckoutForm((current) => ({ ...current, proofOfPayment: null }))
+                                      window.localStorage.removeItem(getProofStorageKey(user?.id))
+                                      setCheckoutForm((current) => ({
+                                        ...current,
+                                        proofOfPayment: null,
+                                        proofOfPaymentUrl: '',
+                                        proofOfPaymentFilename: '',
+                                        proofOfPaymentMimeType: '',
+                                        proofOfPaymentSize: null,
+                                      }))
                                     }}
                                     style={{
                                       fontSize: '0.8rem',
@@ -1700,7 +1763,7 @@ function App() {
                               name="proofOfPayment"
                               onChange={handleCheckoutInputChange}
                               accept="image/*,.pdf"
-                              required
+                              required={!checkoutForm.proofOfPaymentUrl}
                               style={{ display: 'none' }}
                             />
                           </label>
