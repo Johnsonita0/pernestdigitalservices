@@ -2734,6 +2734,25 @@ a {
   color: #765c52;
 }
 
+.rider-header-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #f0cdbd;
+  border-radius: 50%;
+  background: #fff;
+  color: #e95d2d;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.rider-header-icon:hover {
+  background: #fff0e8;
+  transform: translateY(-1px);
+}
+
 .rider-summary,
 .rider-order-list,
 .rider-message {
@@ -2783,7 +2802,7 @@ a {
 .rider-bottom-nav {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: max(18px, env(safe-area-inset-bottom));
   z-index: 1000;
   display: flex;
   gap: 10px;
@@ -2835,6 +2854,46 @@ a {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 18px;
+}
+
+@media (max-width: 640px) {
+  .rider-app-shell {
+    padding: 24px 14px 180px;
+  }
+
+  .rider-app-header {
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .rider-app-header h1 {
+    font-size: 2rem;
+  }
+
+  .rider-app-header p:last-child {
+    font-size: 0.8rem;
+  }
+
+  .rider-summary {
+    margin-bottom: 16px;
+    padding: 14px;
+  }
+
+  .rider-bottom-nav {
+    width: calc(100% - 20px);
+    padding: 8px;
+  }
+
+  .rider-bottom-nav button {
+    min-height: 50px;
+    padding: 7px 5px;
+    font-size: 0.72rem;
+  }
+
+  .rider-order-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .rider-order-card,

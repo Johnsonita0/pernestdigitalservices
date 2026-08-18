@@ -32,9 +32,8 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
           <h1>Delivery desk</h1>
           <p>{user?.user_metadata?.username || 'rider'} · Delivery partner</p>
         </div>
-        <button type="button" className="ghost-btn" onClick={onLogout}>
+        <button type="button" className="rider-header-icon" onClick={onLogout} aria-label="Log out" title="Log out">
           <FontAwesomeIcon icon={faSignOutAlt} />
-          Logout
         </button>
       </header>
 
