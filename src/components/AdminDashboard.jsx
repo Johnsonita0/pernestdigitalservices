@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons'
+import { supabase } from '../lib/supabase'
 
-function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, allUsers = [], allOrders = [] }) {
+function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, allUsers = [], allOrders = [], onCreateMenuItem }) {
   const [activeTab, setActiveTab] = useState('users')
   const [selectedUser, setSelectedUser] = useState(null)
   const [productAvailability, setProductAvailability] = useState(
@@ -11,6 +12,18 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
   const [featuredProducts, setFeaturedProducts] = useState(
     products.slice(0, 3).map((p) => p.id)
   )
+  const [menuForm, setMenuForm] = useState({
+    title: '',
+    description: '',
+    price: '',
+    tag: '',
+    badge: '',
+    imageUrl: '',
+    available: true,
+    featured: false,
+  })
+  const [menuMessage, setMenuMessage] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   // Get user orders
   const userOrders = selectedUser ? (selectedUser.orders || []) : allOrders
@@ -30,6 +43,66 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
       }
       return [...current, productId]
     })
+  }
+
+  const handleMenuImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file || !user?.id) return
+
+    try {
+      setUploadingImage(true)
+      const safeName = file.name.replace(/\s+/g, '_')
+      const filePath = `${user.id}/food-images/${Date.now()}-${safeName}`
+
+      const { error } = await supabase.storage.from('food_img').upload(filePath, file, { upsert: true })
+      if (error) throw new Error(error.message)
+
+      const { data } = supabase.storage.from('food_img').getPublicUrl(filePath)
+      setMenuForm((current) => ({ ...current, imageUrl: data.publicUrl }))
+      setMenuMessage('✅ Food image uploaded successfully.')
+    } catch (error) {
+      console.error('Error uploading food image:', error)
+      setMenuMessage(`❌ Upload failed: ${error.message}`)
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleCreateMenuItem = () => {
+    if (!menuForm.title || !menuForm.description || !menuForm.price) {
+      setMenuMessage('Please fill in title, description, and price.')
+      return
+    }
+
+    const newProduct = {
+      id: Date.now(),
+      title: menuForm.title,
+      name: menuForm.title,
+      description: menuForm.description,
+      price: Number(menuForm.price),
+      tag: menuForm.tag || 'Chef special',
+      badge: menuForm.badge || 'New',
+      feature: menuForm.featured,
+      featured: menuForm.featured,
+      available: menuForm.available,
+      image: menuForm.imageUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80',
+    }
+
+    if (typeof onCreateMenuItem === 'function') {
+      onCreateMenuItem(newProduct)
+    }
+
+    setMenuForm({
+      title: '',
+      description: '',
+      price: '',
+      tag: '',
+      badge: '',
+      imageUrl: '',
+      available: true,
+      featured: false,
+    })
+    setMenuMessage('✅ Menu item created successfully.')
   }
 
   return (
@@ -325,14 +398,100 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
           {activeTab === 'menu' && (
             <div className="tab-content">
               <h3>Menu Items Management</h3>
+
+              <div className="menu-form" style={{ marginBottom: '20px', padding: '20px', border: '1px solid #e5d7c5', borderRadius: '16px', background: '#fffaf5' }}>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ width: '72px', height: '72px', borderRadius: '12px', overflow: 'hidden', background: '#f3efe9', border: '1px solid #e5d7c5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {menuForm.imageUrl ? (
+                        <img src={menuForm.imageUrl} alt="Food preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ color: '#6b4f3c', fontSize: '0.8rem', fontWeight: 700 }}>Image</span>
+                      )}
+                    </div>
+                    <label style={{ flex: 1, cursor: 'pointer', color: '#6b4f3c', fontWeight: 700 }}>
+                      Upload food image
+                      <input type="file" accept="image/*" onChange={handleMenuImageUpload} style={{ display: 'block', marginTop: '8px', width: '100%' }} />
+                    </label>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={menuForm.title}
+                    placeholder="Food title"
+                    onChange={(event) => setMenuForm((current) => ({ ...current, title: event.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                  />
+                  <textarea
+                    value={menuForm.description}
+                    placeholder="Description"
+                    rows="3"
+                    onChange={(event) => setMenuForm((current) => ({ ...current, description: event.target.value }))}
+                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                    <input
+                      type="number"
+                      value={menuForm.price}
+                      placeholder="Price"
+                      onChange={(event) => setMenuForm((current) => ({ ...current, price: event.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                    />
+                    <input
+                      type="text"
+                      value={menuForm.tag}
+                      placeholder="Tag"
+                      onChange={(event) => setMenuForm((current) => ({ ...current, tag: event.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                    />
+                    <input
+                      type="text"
+                      value={menuForm.badge}
+                      placeholder="Badge"
+                      onChange={(event) => setMenuForm((current) => ({ ...current, badge: event.target.value }))}
+                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: '#4a352b' }}>
+                      <input
+                        type="checkbox"
+                        checked={menuForm.available}
+                        onChange={(event) => setMenuForm((current) => ({ ...current, available: event.target.checked }))}
+                      />
+                      Available
+                    </label>
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: '#4a352b' }}>
+                      <input
+                        type="checkbox"
+                        checked={menuForm.featured}
+                        onChange={(event) => setMenuForm((current) => ({ ...current, featured: event.target.checked }))}
+                      />
+                      Featured
+                    </label>
+                  </div>
+
+                  {menuMessage && (
+                    <div style={{ padding: '10px 12px', borderRadius: '10px', backgroundColor: menuMessage.includes('✅') ? '#f0fdf4' : '#fef2f2', color: menuMessage.includes('✅') ? '#166534' : '#991b1b' }}>
+                      {menuMessage}
+                    </div>
+                  )}
+
+                  <button type="button" className="primary-btn" onClick={handleCreateMenuItem} disabled={uploadingImage}>
+                    {uploadingImage ? 'Uploading...' : 'Create menu item'}
+                  </button>
+                </div>
+              </div>
+
               <div className="menu-controls">
                 <div className="menu-list">
                   {products.map((product) => (
                     <div key={product.id} className="menu-item">
                       <div className="item-info">
                         <div className="item-header">
-                          <h4>{product.name}</h4>
-                          <span className="item-price">₦{product.price.toLocaleString()}</span>
+                          <h4>{product.title || product.name}</h4>
+                          <span className="item-price">₦{Number(product.price || 0).toLocaleString()}</span>
                         </div>
                         <p className="item-description">{product.description}</p>
                       </div>
@@ -342,14 +501,14 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                           <label>Availability</label>
                           <button
                             type="button"
-                            className={`toggle-btn ${productAvailability[product.id] ? 'available' : 'unavailable'}`}
+                            className={`toggle-btn ${productAvailability[product.id] ?? product.available ?? true ? 'available' : 'unavailable'}`}
                             onClick={() => toggleProductAvailability(product.id)}
-                            title={productAvailability[product.id] ? 'Available' : 'Not Available'}
+                            title={productAvailability[product.id] ?? product.available ?? true ? 'Available' : 'Not Available'}
                           >
                             <FontAwesomeIcon
-                              icon={productAvailability[product.id] ? faToggleOn : faToggleOff}
+                              icon={productAvailability[product.id] ?? product.available ?? true ? faToggleOn : faToggleOff}
                             />
-                            <span>{productAvailability[product.id] ? 'Available' : 'Not Available'}</span>
+                            <span>{productAvailability[product.id] ?? product.available ?? true ? 'Available' : 'Not Available'}</span>
                           </button>
                         </div>
 
@@ -357,12 +516,12 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                           <label>Featured</label>
                           <button
                             type="button"
-                            className={`feature-btn ${featuredProducts.includes(product.id) ? 'featured' : ''}`}
+                            className={`feature-btn ${featuredProducts.includes(product.id) || product.featured ? 'featured' : ''}`}
                             onClick={() => toggleFeaturedProduct(product.id)}
-                            title={featuredProducts.includes(product.id) ? 'Remove from featured' : 'Add to featured'}
+                            title={featuredProducts.includes(product.id) || product.featured ? 'Remove from featured' : 'Add to featured'}
                           >
                             <FontAwesomeIcon icon={faStar} />
-                            <span>{featuredProducts.includes(product.id) ? 'Featured' : 'Add to Featured'}</span>
+                            <span>{featuredProducts.includes(product.id) || product.featured ? 'Featured' : 'Add to Featured'}</span>
                           </button>
                         </div>
                       </div>

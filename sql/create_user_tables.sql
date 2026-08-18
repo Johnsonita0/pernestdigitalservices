@@ -56,11 +56,32 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('bank_prof', 'bank_prof', true)
 ON CONFLICT (id) DO NOTHING;
 
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('food_img', 'food_img', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+
+-- Create menu_items table for admin-managed food menu items.
+CREATE TABLE IF NOT EXISTS menu_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  tag TEXT,
+  badge TEXT,
+  featured BOOLEAN DEFAULT FALSE,
+  available BOOLEAN DEFAULT TRUE,
+  image_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies so the script can be re-run safely
 DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
@@ -71,6 +92,8 @@ DROP POLICY IF EXISTS "Users can insert their own preferences" ON user_preferenc
 DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
+DROP POLICY IF EXISTS "Admin can manage menu items" ON menu_items;
+DROP POLICY IF EXISTS "Admin can manage food_img files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can view their own bank_prof files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload their own bank_prof files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own bank_prof files" ON storage.objects;
@@ -117,7 +140,6 @@ CREATE POLICY "Users can view order items from their orders"
   );
 
 -- Admin access to all profile/order data
--- Admin access to all profile/order data
 DROP POLICY IF EXISTS "Admin can view all profiles" ON profiles;
 DROP POLICY IF EXISTS "Admin can update all profiles" ON profiles;
 DROP POLICY IF EXISTS "Admin can view all orders" ON orders;
@@ -154,6 +176,39 @@ CREATE POLICY "Admin can update all orders"
   ON orders FOR UPDATE
   USING (
     EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admin can manage menu items"
+  ON menu_items FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+-- Admin can upload food images to food_img bucket
+CREATE POLICY "Admin can manage food_img files"
+  ON storage.objects FOR ALL
+  USING (
+    bucket_id = 'food_img'
+    AND EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    bucket_id = 'food_img'
+    AND EXISTS (
       SELECT 1 FROM profiles p
       WHERE p.id = auth.uid() AND p.is_admin = true
     )

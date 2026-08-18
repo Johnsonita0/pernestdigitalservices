@@ -95,6 +95,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [favoriteItems, setFavoriteItems] = useState([])
   const [userOrders, setUserOrders] = useState([])
+  const [menuCatalog, setMenuCatalog] = useState(menuItems)
   const [authView, setAuthView] = useState('login') // 'login' or 'signup'
   const [allUsers, setAllUsers] = useState([])
   const [allOrders, setAllOrders] = useState([])
@@ -290,6 +291,19 @@ function App() {
   const handleAddToCart = (product) => {
     setCartItems((current) => [...current, product])
     updateRoute('shop')
+  }
+
+  const handleCreateMenuItem = (newItem) => {
+    setMenuCatalog((current) => [
+      {
+        ...newItem,
+        id: newItem.id || Date.now(),
+        featured: Boolean(newItem.featured),
+        available: Boolean(newItem.available),
+        price: Number(newItem.price) || 0,
+      },
+      ...current,
+    ])
   }
 
   const handleOrderNow = (product) => {
@@ -681,10 +695,10 @@ function App() {
             </header>
 
             <main className="mobile-dashboard-main">
-              <Hero dishes={menuItems} onOrderNow={handleOrderNow} />
+              <Hero dishes={menuCatalog} onOrderNow={handleOrderNow} />
               <Story />
 
-          <FeaturedDishes items={menuItems} onAddToCart={handleAddToCart} onViewMenu={() => updateRoute('shop')} />
+          <FeaturedDishes items={menuCatalog} onAddToCart={handleAddToCart} onViewMenu={() => updateRoute('shop')} />
 
           <section className="faq-section" id="faq">
             <div className="container">
@@ -814,7 +828,7 @@ function App() {
       {view === 'shop' && (
         <main className="shop-page" id="shop">
           <Shop
-            products={menuItems}
+            products={menuCatalog}
             onAddToCart={handleAddToCart}
             cartCount={cartItems.length}
             searchTerm={searchTerm}
@@ -875,7 +889,7 @@ function App() {
       {view === 'admin' && user && (
         <main>
           <AdminDashboard
-            products={menuItems}
+            products={menuCatalog}
             pendingTestimonials={pendingTestimonials}
             onApproveTestimonial={handleApproveTestimonial}
             onRejectTestimonial={handleRejectTestimonial}
@@ -883,6 +897,7 @@ function App() {
             onLogout={handleLogout}
             allUsers={allUsers}
             allOrders={allOrders}
+            onCreateMenuItem={handleCreateMenuItem}
           />
         </main>
       )}
