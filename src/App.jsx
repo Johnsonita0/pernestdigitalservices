@@ -318,6 +318,9 @@ function App() {
 
     try {
       let proofOfPaymentUrl = null
+      let proofFilename = null
+      let proofMimeType = null
+      let proofFileSize = null
       let orderStatus = 'pending'
 
       if (orderData.paymentMethod === 'paystack') {
@@ -341,7 +344,12 @@ function App() {
           return
         }
 
-        const fileName = `${user.id}-${Date.now()}-${orderData.proofOfPayment.name}`
+        // Capture file metadata
+        proofFilename = orderData.proofOfPayment.name
+        proofMimeType = orderData.proofOfPayment.type
+        proofFileSize = orderData.proofOfPayment.size
+
+        const fileName = `${user.id}-${Date.now()}-${proofFilename}`
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('payment_proofs')
           .upload(fileName, orderData.proofOfPayment)
@@ -365,6 +373,10 @@ function App() {
             delivery_notes: orderData.notes,
             payment_method: orderData.paymentMethod,
             proof_of_payment: proofOfPaymentUrl,
+            proof_of_payment_filename: proofFilename,
+            proof_of_payment_mime_type: proofMimeType,
+            proof_of_payment_size: proofFileSize,
+            proof_of_payment_uploaded_at: orderData.paymentMethod === 'transfer' ? new Date().toISOString() : null,
           }
         ])
         .select()
@@ -408,6 +420,9 @@ function App() {
               title: `Bank Transfer Payment - Order #${String(orderId).slice(0, 8)}`,
               message: `${orderData.name} submitted a bank transfer payment proof for order ₦${(total + 2500).toLocaleString('en-NG')}. Please verify the payment.`,
               proof_of_payment_url: proofOfPaymentUrl,
+              proof_of_payment_filename: proofFilename,
+              proof_of_payment_mime_type: proofMimeType,
+              proof_of_payment_size: proofFileSize,
               user_name: orderData.name,
               user_email: user.email,
               user_phone: orderData.contactNumber,

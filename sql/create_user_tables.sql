@@ -140,7 +140,11 @@ CREATE TRIGGER on_auth_user_created
 -- Add payment method and proof of payment columns to orders table if they don't exist
 ALTER TABLE orders
 ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
-ADD COLUMN IF NOT EXISTS proof_of_payment TEXT;
+ADD COLUMN IF NOT EXISTS proof_of_payment TEXT,
+ADD COLUMN IF NOT EXISTS proof_of_payment_filename TEXT,
+ADD COLUMN IF NOT EXISTS proof_of_payment_mime_type TEXT,
+ADD COLUMN IF NOT EXISTS proof_of_payment_size INTEGER,
+ADD COLUMN IF NOT EXISTS proof_of_payment_uploaded_at TIMESTAMP WITH TIME ZONE;
 
 -- Create admin notifications table for payment confirmations
 CREATE TABLE IF NOT EXISTS admin_notifications (
@@ -150,6 +154,9 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
   title TEXT NOT NULL,
   message TEXT NOT NULL,
   proof_of_payment_url TEXT,
+  proof_of_payment_filename TEXT,
+  proof_of_payment_mime_type TEXT,
+  proof_of_payment_size INTEGER,
   user_name TEXT NOT NULL,
   user_email TEXT NOT NULL,
   user_phone TEXT NOT NULL,
