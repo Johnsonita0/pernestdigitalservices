@@ -195,6 +195,37 @@ function App() {
   }, [user?.id])
 
   useEffect(() => {
+    if (!isSupabaseConfigured || userType !== 'admin' || !user?.id) return
+
+    const loadAdminUsers = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, email, phone, address, profile_image_url, is_admin, created_at')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.warn('Error loading admin users:', error)
+        return
+      }
+
+      setAllUsers((data || []).map((profile) => ({
+        id: profile.id,
+        username: profile.username,
+        fullName: profile.full_name,
+        email: profile.email,
+        phone: profile.phone,
+        address: profile.address,
+        profileImageUrl: profile.profile_image_url || '',
+        isAdmin: Boolean(profile.is_admin),
+        createdAt: profile.created_at,
+        orders: [],
+      })))
+    }
+
+    loadAdminUsers()
+  }, [user?.id, userType])
+
+  useEffect(() => {
     const syncViewFromPath = () => {
       const path = window.location.pathname.replace(/\/+$/, '') || '/'
       if (path === '/admin') {
