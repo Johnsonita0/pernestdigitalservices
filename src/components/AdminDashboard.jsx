@@ -351,8 +351,9 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                             <td className="amount">{formatNaira(order.total)}</td>
                             <td>
                               <select
-                                className="admin-order-status-select"
+                                className={`admin-order-status-select status-${order.status || 'pending'}`}
                                 value={order.status || 'pending'}
+                                aria-label={`Update order ${order.id} status`}
                                 onChange={async (event) => {
                                   try {
                                     await onUpdateOrderStatus(order.id, event.target.value)

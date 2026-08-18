@@ -2928,6 +2928,49 @@ a {
   color: #22b14c;
 }
 
+.admin-order-status-select {
+  min-width: 150px;
+  padding: 7px 30px 7px 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  appearance: auto;
+  background-color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+}
+
+.admin-order-status-select:focus {
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.18);
+}
+
+.admin-order-status-select.status-pending_payment_confirmation {
+  background: #fff1df;
+  color: #b45309;
+}
+
+.admin-order-status-select.status-pending {
+  background: #fff8dc;
+  color: #986b00;
+}
+
+.admin-order-status-select.status-preparing {
+  background: #eaf2ff;
+  color: #2457a6;
+}
+
+.admin-order-status-select.status-ready {
+  background: #eaf9ef;
+  color: #237942;
+}
+
+.admin-order-status-select.status-delivered {
+  background: #dcf7e5;
+  color: #176b36;
+}
+
 /* Users Management Styles */
 .users-container {
   display: block;
