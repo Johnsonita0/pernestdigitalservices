@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body,
 button,
 input,
@@ -3749,19 +3755,70 @@ a {
   font-weight: 800;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+  .checkout-page-shell {
+    padding: 16px 8px 72px;
+  }
   .checkout-layout {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .checkout-page-shell {
+    padding: 12px 6px 72px;
+    min-height: 100vh;
+  }
+  
+  .checkout-page {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .checkout-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .checkout-form-panel,
   .checkout-summary-panel,
   .checkout-login-card {
-    padding: 18px 16px;
+    border-radius: 16px;
+    padding: 14px 12px;
+    width: 100%;
   }
 
   .checkout-page-header {
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .checkout-page-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .checkout-form-panel {
+    gap: 10px;
+  }
+
+  .checkout-form-panel label {
+    font-size: 0.85rem;
+  }
+
+  .checkout-form-panel input,
+  .checkout-form-panel textarea {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.94rem;
+  }
+
+  .payment-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-method-option {
+    padding: 10px 8px;
   }
 
   .checkout-login-actions {
@@ -3829,12 +3886,58 @@ a {
   }
 
   .checkout-confirm-btn {
-    min-height: 52px;
+    min-height: 44px;
+    font-size: 0.88rem;
   }
 
   .ghost-btn.small-btn {
     width: 100%;
-    justify-content: center;
+    min-height: 44px;
+    font-size: 0.82rem;
+  }
+
+  .checkout-summary-list h3,
+  .checkout-summary-panel h3 {
+    font-size: 0.88rem;
+    margin: 0 0 8px;
+  }
+
+  .primary-btn,
+  .ghost-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 400px) {
+  .checkout-page-shell {
+    padding: 6px 2px 72px;
+  }
+
+  .checkout-page {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .checkout-form-panel,
+  .checkout-summary-panel,
+  .checkout-login-card {
+    border-radius: 10px;
+    padding: 8px 6px;
+  }
+
+  .checkout-page-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .checkout-form-panel input,
+  .checkout-form-panel textarea {
+    padding: 0.6rem 0.7rem;
+    font-size: 0.88rem;
+  }
+
+  .payment-method-option {
+    padding: 6px 4px;
+    font-size: 0.75rem;
   }
 }
 
