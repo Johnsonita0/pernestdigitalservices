@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 
+const usernamePattern = /^[a-z0-9]+$/
+
 function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
@@ -12,11 +14,13 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
+  const [usernameSuggestion, setUsernameSuggestion] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setUsernameSuggestion('')
 
     if (!isSupabaseConfigured) {
       setError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to continue.')
@@ -28,8 +32,20 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
       return
     }
 
-    if (!username.trim()) {
+    const normalizedUsername = username.trim().toLowerCase()
+
+    if (!normalizedUsername) {
       setError('Username is required')
+      return
+    }
+
+    if (!usernamePattern.test(normalizedUsername)) {
+      setError('Username can contain only letters and numbers, with no spaces or email addresses.')
+      return
+    }
+
+    if (!email.trim()) {
+      setError('Email is required')
       return
     }
 
@@ -56,12 +72,40 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
     setLoading(true)
 
     try {
+      const { data: usernameAvailable, error: usernameCheckError } = await supabase
+        .rpc('is_username_available', { candidate: normalizedUsername })
+
+      if (usernameCheckError) {
+        setError('We could not verify that username. Please try again.')
+        setLoading(false)
+        return
+      }
+
+      if (!usernameAvailable) {
+        let suggestedUsername = `${normalizedUsername}${Math.floor(100 + Math.random() * 900)}`
+
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          const { data: suggestionAvailable, error: suggestionError } = await supabase
+            .rpc('is_username_available', { candidate: suggestedUsername })
+
+          if (suggestionError) break
+          if (suggestionAvailable) break
+          suggestedUsername = `${normalizedUsername}${Math.floor(100 + Math.random() * 900)}`
+        }
+
+        setUsernameSuggestion(suggestedUsername)
+        setError('That username is already taken. Please choose another username.')
+        setLoading(false)
+        return
+      }
+
+      const normalizedEmail = email.trim().toLowerCase()
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           data: {
-            username,
+            username: normalizedUsername,
             fullName,
             phone,
             address,
@@ -91,7 +135,7 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
         onSignUpSuccess({
           ...data.user,
           user_metadata: {
-            username,
+            username: normalizedUsername,
             fullName,
             phone,
             address,
@@ -149,6 +193,22 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
               className="auth-input"
               placeholder="yourname"
             />
+            {usernameSuggestion && (
+              <p className="username-suggestion" role="status">
+                Username unavailable. Try{' '}
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => {
+                    setUsername(usernameSuggestion)
+                    setUsernameSuggestion('')
+                    setError('')
+                  }}
+                >
+                  {usernameSuggestion}
+                </button>
+              </p>
+            )}
           </div>
 
           <div className="auth-field auth-field-full">

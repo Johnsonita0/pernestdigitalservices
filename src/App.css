@@ -164,6 +164,12 @@ textarea {
   cursor: not-allowed;
 }
 
+.username-suggestion {
+  margin: -2px 2px 0;
+  color: #a34b2c;
+  font-size: 0.82rem;
+}
+
 .password-input-wrapper {
   position: relative;
   display: flex;

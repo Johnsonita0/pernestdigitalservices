@@ -13,6 +13,12 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_username_lower_unique
+  ON profiles (LOWER(username));
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_email_lower_unique
+  ON profiles (LOWER(email));
+
 -- Create user preferences table
 CREATE TABLE IF NOT EXISTS user_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -146,6 +152,21 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.is_username_available(candidate TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN candidate IS NOT NULL
+    AND candidate ~ '^[A-Za-z0-9]+$'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM public.profiles
+      WHERE LOWER(username) = LOWER(TRIM(candidate))
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION public.is_username_available(TEXT) TO anon, authenticated;
 
 -- Drop existing policies so the script can be re-run safely
 DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
