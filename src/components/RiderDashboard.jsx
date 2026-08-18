@@ -28,13 +28,15 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
     <main className="rider-app-shell">
       <header className="rider-app-header">
         <div>
-          <p className="eyebrow">Rider account</p>
+          <div className="rider-header-topline">
+            <p className="rider-account-label">Rider account</p>
+            <button type="button" className="rider-header-icon" onClick={onLogout} aria-label="Log out" title="Log out">
+              <FontAwesomeIcon icon={faSignOutAlt} />
+            </button>
+          </div>
           <h1>Delivery desk</h1>
           <p>{user?.user_metadata?.username || 'rider'} · Delivery partner</p>
         </div>
-        <button type="button" className="rider-header-icon" onClick={onLogout} aria-label="Log out" title="Log out">
-          <FontAwesomeIcon icon={faSignOutAlt} />
-        </button>
       </header>
 
       <section className="rider-summary" aria-label="Rider summary">
