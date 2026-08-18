@@ -146,6 +146,18 @@ ADD COLUMN IF NOT EXISTS proof_of_payment_mime_type TEXT,
 ADD COLUMN IF NOT EXISTS proof_of_payment_size INTEGER,
 ADD COLUMN IF NOT EXISTS proof_of_payment_uploaded_at TIMESTAMP WITH TIME ZONE;
 
+-- Create dedicated payment proof table to store uploaded proof metadata
+CREATE TABLE IF NOT EXISTS payment_proofs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  storage_path TEXT NOT NULL,
+  filename TEXT,
+  mime_type TEXT,
+  size_bytes INTEGER,
+  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create admin notifications table for payment confirmations
 CREATE TABLE IF NOT EXISTS admin_notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,8 +178,9 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable RLS on admin_notifications
+-- Enable RLS on admin_notifications and payment_proofs
 ALTER TABLE admin_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_proofs ENABLE ROW LEVEL SECURITY;
 
 -- Admin can view all notifications
 CREATE POLICY "Admin can view all notifications"
@@ -179,9 +192,31 @@ CREATE POLICY "Admin can update notifications"
   ON admin_notifications FOR UPDATE
   USING (true);
 
+-- Users can view their own payment proof records
+CREATE POLICY "Users can view their own payment proof"
+  ON payment_proofs FOR SELECT
+  USING (
+    order_id IN (
+      SELECT id FROM orders WHERE user_id = auth.uid()
+    )
+  );
+
+-- Users can insert their own payment proof records
+CREATE POLICY "Users can insert their own payment proof"
+  ON payment_proofs FOR INSERT
+  WITH CHECK (
+    order_id IN (
+      SELECT id FROM orders WHERE user_id = auth.uid()
+    )
+  );
+
 -- Create index for faster queries
 CREATE INDEX IF NOT EXISTS idx_admin_notifications_created_at 
   ON admin_notifications(created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_admin_notifications_is_read 
   ON admin_notifications(is_read);
+
+CREATE INDEX IF NOT EXISTS idx_payment_proofs_order_id
+  ON payment_proofs(order_id);
+

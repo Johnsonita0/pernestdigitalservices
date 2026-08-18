@@ -344,7 +344,14 @@ function App() {
           return
         }
 
-        // Capture file metadata
+        const { data: bucketData, error: bucketError } = await supabase.storage.listBuckets()
+        const bucketExists = bucketData?.some((bucket) => bucket.name === 'payment_proofs')
+
+        if (bucketError || !bucketExists) {
+          setCheckoutError('Storage bucket "payment_proofs" is missing in Supabase. Create it in Storage > New bucket before uploading proof.')
+          return
+        }
+
         proofFilename = orderData.proofOfPayment.name
         proofMimeType = orderData.proofOfPayment.type
         proofFileSize = orderData.proofOfPayment.size
@@ -391,6 +398,25 @@ function App() {
       if (!orderId) {
         alert('Failed to create order')
         return
+      }
+
+      if (orderData.paymentMethod === 'transfer' && proofOfPaymentUrl) {
+        const { error: proofInsertError } = await supabase
+          .from('payment_proofs')
+          .insert([
+            {
+              order_id: orderId,
+              storage_path: proofOfPaymentUrl,
+              filename: proofFilename,
+              mime_type: proofMimeType,
+              size_bytes: proofFileSize,
+              uploaded_at: new Date().toISOString(),
+            }
+          ])
+
+        if (proofInsertError) {
+          console.warn('Error saving payment proof metadata:', proofInsertError)
+        }
       }
 
       const orderItems = cartItems.map((item) => ({
