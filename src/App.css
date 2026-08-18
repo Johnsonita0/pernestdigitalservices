@@ -1732,7 +1732,11 @@ textarea {
 .admin-topbar {
   background: linear-gradient(180deg, rgba(29, 18, 14, 0.95), rgba(20, 13, 9, 0.95));
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 16px 0;
+  padding: 14px 0;
+}
+
+.admin-section {
+  padding-top: 0;
 }
 
 .admin-topbar-wrap {
@@ -1746,6 +1750,32 @@ textarea {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.admin-header-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff8f3;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1rem;
+  transition: background 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.admin-header-icon:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 107, 53, 0.82);
+  transform: translateY(-1px);
+}
+
+.admin-header-icon:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .admin-greeting {

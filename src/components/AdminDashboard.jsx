@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
 function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus }) {
@@ -264,12 +264,11 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
             <p className="admin-greeting">Welcome, {user?.user_metadata?.username || 'admin'}</p>
           </div>
           <div className="admin-topbar-actions">
-            <button type="button" className="ghost-btn" onClick={handleRefresh} disabled={refreshing}>
+            <button type="button" className="admin-header-icon" onClick={handleRefresh} disabled={refreshing} aria-label="Refresh dashboard" title="Refresh dashboard">
               <FontAwesomeIcon icon={faSyncAlt} spin={refreshing} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
             </button>
-            <button type="button" className="ghost-btn" onClick={onLogout}>
-              Logout
+            <button type="button" className="admin-header-icon" onClick={onLogout} aria-label="Log out" title="Log out">
+              <FontAwesomeIcon icon={faSignOutAlt} />
             </button>
           </div>
         </div>
