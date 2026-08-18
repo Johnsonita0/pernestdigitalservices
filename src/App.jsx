@@ -18,6 +18,24 @@ import { faBell, faSearch, faUser } from '@fortawesome/free-solid-svg-icons'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
+const ADMIN_USER_ID = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
+const ADMIN_EMAIL = 'admin@trophysip.com'
+
+const isAdminUser = (authUser) => {
+  if (!authUser) return false
+
+  const emailLower = authUser.email?.toLowerCase?.() || ''
+  const role = authUser.user_metadata?.role || authUser.app_metadata?.role || ''
+
+  return (
+    authUser.id === ADMIN_USER_ID ||
+    emailLower === ADMIN_EMAIL.toLowerCase() ||
+    role === 'admin' ||
+    authUser.user_metadata?.is_admin === true ||
+    authUser.app_metadata?.is_admin === true
+  )
+}
+
 const faqItems = [
   {
     question: 'Do you offer delivery in Lagos?',
@@ -98,6 +116,10 @@ function App() {
       setLoading(true)
       const { data: { user: authUser } } = await supabase.auth.getUser()
       setUser(authUser)
+      if (authUser && isAdminUser(authUser)) {
+        setView('admin')
+        window.history.pushState({}, '', '/admin')
+      }
       setLoading(false)
     }
 
@@ -121,6 +143,12 @@ function App() {
         if (!user) {
           setAuthView('login')
           setView('login')
+          return
+        }
+        if (!isAdminUser(user)) {
+          setAuthView('login')
+          setView('account')
+          window.history.pushState({}, '', '/account')
           return
         }
         setView('admin')
@@ -218,9 +246,13 @@ function App() {
     setUser(authUser)
     setFavoriteItems([])
     setUserOrders([])
-    setView('account')
+
+    const nextView = isAdminUser(authUser) ? 'admin' : 'account'
+    const route = nextView === 'admin' ? '/admin' : '/account'
+
+    setView(nextView)
     setAuthView('login')
-    window.history.pushState({}, '', '/account')
+    window.history.pushState({}, '', route)
   }
 
   const handleSignUpSuccess = (authUser) => {
@@ -345,10 +377,10 @@ function App() {
         }
 
         const { data: bucketData, error: bucketError } = await supabase.storage.listBuckets()
-        const bucketExists = bucketData?.some((bucket) => bucket.name === 'payment_proofs')
+        const bucketExists = bucketData?.some((bucket) => bucket.name === 'bank_prof')
 
         if (bucketError || !bucketExists) {
-          setCheckoutError('Storage bucket "payment_proofs" is missing in Supabase. Create it in Storage > New bucket before uploading proof.')
+          setCheckoutError('Storage bucket "bank_prof" is missing in Supabase. Create it in Storage > New bucket before uploading proof.')
           return
         }
 
@@ -356,16 +388,16 @@ function App() {
         proofMimeType = orderData.proofOfPayment.type
         proofFileSize = orderData.proofOfPayment.size
 
-        const fileName = `${user.id}-${Date.now()}-${proofFilename}`
+        const fileName = `${user.id}/bank-proof/${Date.now()}-${proofFilename.replace(/\s+/g, '_')}`
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('payment_proofs')
-          .upload(fileName, orderData.proofOfPayment)
+          .from('bank_prof')
+          .upload(fileName, orderData.proofOfPayment, { upsert: true })
 
         if (uploadError) {
           throw new Error('Failed to upload proof of payment: ' + uploadError.message)
         }
 
-        proofOfPaymentUrl = uploadData.path
+        proofOfPaymentUrl = `${supabase.storage.from('bank_prof').getPublicUrl(fileName).data.publicUrl}`
         orderStatus = 'pending_payment_confirmation'
       }
 

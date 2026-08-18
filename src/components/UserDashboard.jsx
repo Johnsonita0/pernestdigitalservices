@@ -15,6 +15,7 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
     address: user?.user_metadata?.address || '',
     preferences: user?.user_metadata?.preferences || 'No dietary preference set',
     deliveryNote: user?.user_metadata?.deliveryNote || 'Leave at the door if I am not available.',
+    profileImageUrl: user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.profile_image_url || '',
   })
   const [loading, setLoading] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
@@ -55,6 +56,36 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
     }
   }
 
+  const handleProfileImageUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file || !user?.id) return
+
+    try {
+      const safeName = file.name.replace(/\s+/g, '_')
+      const filePath = `${user.id}/profile/${Date.now()}-${safeName}`
+
+      const { error } = await supabase.storage
+        .from('bank_prof')
+        .upload(filePath, file, { upsert: true })
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      const { data } = supabase.storage.from('bank_prof').getPublicUrl(filePath)
+
+      setProfile((current) => ({
+        ...current,
+        profileImageUrl: data.publicUrl,
+      }))
+
+      setSaveMessage('✅ Profile photo ready to save.')
+    } catch (error) {
+      console.error('Error uploading profile photo:', error)
+      setSaveMessage(`❌ Upload failed: ${error.message}`)
+    }
+  }
+
   const loadProfileData = async () => {
     try {
       // Fetch profile data
@@ -69,13 +100,13 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
       }
 
       if (profileData) {
-        setProfile({
-          fullName: profileData.full_name || profile.fullName,
-          phone: profileData.phone || profile.phone,
-          address: profileData.address || profile.address,
-          preferences: profile.preferences,
-          deliveryNote: profile.deliveryNote,
-        })
+        setProfile((current) => ({
+          ...current,
+          fullName: profileData.full_name || current.fullName,
+          phone: profileData.phone || current.phone,
+          address: profileData.address || current.address,
+          profileImageUrl: profileData.profile_image_url || current.profileImageUrl,
+        }))
       }
 
       // Fetch preferences
@@ -121,6 +152,7 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
           full_name: profile.fullName,
           phone: profile.phone,
           address: profile.address,
+          profile_image_url: profile.profileImageUrl,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id)
@@ -376,6 +408,40 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                   </div>
 
                   <div className="mobile-profile-form">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
+                      <div style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        overflow: 'hidden',
+                        backgroundColor: '#f3efe9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #e5d7c5'
+                      }}>
+                        {profile.profileImageUrl ? (
+                          <img
+                            src={profile.profileImageUrl}
+                            alt="Profile"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <FontAwesomeIcon icon={faUser} style={{ color: '#6b4f3c', fontSize: '1.5rem' }} />
+                        )}
+                      </div>
+
+                      <label style={{ flex: 1, cursor: 'pointer', color: '#6b4f3c', fontWeight: 600 }}>
+                        Upload profile photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfileImageUpload}
+                          style={{ display: 'block', marginTop: '8px', width: '100%' }}
+                        />
+                      </label>
+                    </div>
+
                     <label>
                       Full name
                       <input

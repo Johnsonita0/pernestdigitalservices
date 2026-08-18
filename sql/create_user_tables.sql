@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
   address TEXT NOT NULL,
-  profile_image_url TEXT,
+  profile_image_url TEXT, -- path/URL stored in the Supabase 'bank_prof' bucket
+  is_admin BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -46,6 +47,15 @@ CREATE TABLE IF NOT EXISTS order_items (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Ensure the shared storage bucket for user profile photos and bank proof uploads exists.
+-- Store files using a user-scoped path such as:
+-- profiles/{auth.uid()}/avatar.jpg
+-- bank-proof/{auth.uid()}/proof-{timestamp}.jpg
+-- Example: supabase.storage.from('bank_prof').upload(`${user.id}/bank-proof/${Date.now()}.jpg`, file)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('bank_prof', 'bank_prof', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
@@ -61,6 +71,10 @@ DROP POLICY IF EXISTS "Users can insert their own preferences" ON user_preferenc
 DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
+DROP POLICY IF EXISTS "Users can view their own bank_prof files" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload their own bank_prof files" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update their own bank_prof files" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete their own bank_prof files" ON storage.objects;
 
 -- Create RLS policy: users can only see their own profile
 CREATE POLICY "Users can view their own profile"
@@ -102,6 +116,97 @@ CREATE POLICY "Users can view order items from their orders"
     )
   );
 
+-- Admin access to all profile/order data
+-- Admin access to all profile/order data
+DROP POLICY IF EXISTS "Admin can view all profiles" ON profiles;
+DROP POLICY IF EXISTS "Admin can update all profiles" ON profiles;
+DROP POLICY IF EXISTS "Admin can view all orders" ON orders;
+DROP POLICY IF EXISTS "Admin can update all orders" ON orders;
+
+CREATE POLICY "Admin can view all profiles"
+  ON profiles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admin can update all profiles"
+  ON profiles FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admin can view all orders"
+  ON orders FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "Admin can update all orders"
+  ON orders FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+-- Users can read only files they uploaded to the shared bank_prof bucket.
+-- Files should be stored inside a folder like: {auth.uid()}/profile/*.jpg or {auth.uid()}/bank-proof/*.jpg
+CREATE POLICY "Users can view their own bank_prof files"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'bank_prof'
+    AND name LIKE auth.uid()::text || '/%'
+  );
+
+CREATE POLICY "Users can upload their own bank_prof files"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'bank_prof'
+    AND name LIKE auth.uid()::text || '/%'
+  );
+
+CREATE POLICY "Users can update their own bank_prof files"
+  ON storage.objects FOR UPDATE
+  USING (
+    bucket_id = 'bank_prof'
+    AND name LIKE auth.uid()::text || '/%'
+  )
+  WITH CHECK (
+    bucket_id = 'bank_prof'
+    AND name LIKE auth.uid()::text || '/%'
+  );
+
+CREATE POLICY "Users can delete their own bank_prof files"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'bank_prof'
+    AND name LIKE auth.uid()::text || '/%'
+  );
+
+-- Helper function for checking if the current auth user is the app admin
+CREATE OR REPLACE FUNCTION public.is_admin_user(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN p_user_id = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
+    OR EXISTS (
+      SELECT 1
+      FROM public.profiles
+      WHERE id = p_user_id
+        AND is_admin = true
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Create function to automatically create a profile entry when user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -136,6 +241,33 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Ensure the app admin profile exists and is marked as admin
+INSERT INTO public.profiles (
+  id,
+  username,
+  full_name,
+  email,
+  phone,
+  address,
+  is_admin
+)
+VALUES (
+  '58876079-3e57-4b35-9a54-b7f3d00a18c7',
+  'admin',
+  'Trophy Admin',
+  'admin@trophysip.com',
+  '0000000000',
+  'Head Office',
+  true
+)
+ON CONFLICT (id)
+DO UPDATE SET
+  username = EXCLUDED.username,
+  full_name = EXCLUDED.full_name,
+  email = EXCLUDED.email,
+  is_admin = true,
+  updated_at = NOW();
 
 -- Add payment method and proof of payment columns to orders table if they don't exist
 ALTER TABLE orders
@@ -181,6 +313,12 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
 -- Enable RLS on admin_notifications and payment_proofs
 ALTER TABLE admin_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_proofs ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies so the script can be re-run safely
+DROP POLICY IF EXISTS "Admin can view all notifications" ON admin_notifications;
+DROP POLICY IF EXISTS "Admin can update notifications" ON admin_notifications;
+DROP POLICY IF EXISTS "Users can view their own payment proof" ON payment_proofs;
+DROP POLICY IF EXISTS "Users can insert their own payment proof" ON payment_proofs;
 
 -- Admin can view all notifications
 CREATE POLICY "Admin can view all notifications"
