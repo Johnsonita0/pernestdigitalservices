@@ -4,6 +4,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase'
 function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -75,17 +76,28 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
 
           <div className="auth-field">
             <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              required
-              autoComplete="current-password"
-              className="auth-input"
-              placeholder="Enter your password"
-            />
+            <div className="password-input-wrapper">
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required
+                autoComplete="current-password"
+                className="auth-input"
+                placeholder="Enter your password"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
 
           {error && (

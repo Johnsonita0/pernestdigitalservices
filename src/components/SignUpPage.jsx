@@ -9,6 +9,8 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
   const [address, setAddress] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -57,6 +59,15 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username,
+            fullName,
+            phone,
+            address,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        }
       })
 
       if (signUpError) {
@@ -66,18 +77,8 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
       }
 
       if (data?.user) {
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: {
-            username,
-            fullName,
-            phone,
-            address,
-          },
-        })
-
-        if (updateError) {
-          console.warn('Could not save profile data:', updateError)
-        }
+        // Data is already saved as user_metadata from the options above
+        // The trigger will create the profile automatically
 
         setFullName('')
         setUsername('')
@@ -180,21 +181,6 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
             />
           </div>
 
-          <div className="auth-field">
-            <label htmlFor="signup-password">Password</label>
-            <input
-              id="signup-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              required
-              autoComplete="new-password"
-              className="auth-input"
-              placeholder="Minimum 6 characters"
-            />
-          </div>
-
           <div className="auth-field auth-field-full">
             <label htmlFor="signup-address">Delivery address</label>
             <textarea
@@ -210,19 +196,56 @@ function SignUpPage({ onSignUpSuccess, onSwitchToLogin }) {
             />
           </div>
 
-          <div className="auth-field auth-field-full">
+          <div className="auth-field">
+            <label htmlFor="signup-password">Password</label>
+            <div className="password-input-wrapper">
+              <input
+                id="signup-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required
+                autoComplete="new-password"
+                className="auth-input"
+                placeholder="Minimum 6 characters"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
+          </div>
+
+          <div className="auth-field">
             <label htmlFor="signup-confirm-password">Confirm password</label>
-            <input
-              id="signup-confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
-              required
-              autoComplete="new-password"
-              className="auth-input"
-              placeholder="Repeat your password"
-            />
+            <div className="password-input-wrapper">
+              <input
+                id="signup-confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+                required
+                autoComplete="new-password"
+                className="auth-input"
+                placeholder="Repeat your password"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={loading}
+                title={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
 
           {error && (

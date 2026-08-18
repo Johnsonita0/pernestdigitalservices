@@ -158,6 +158,39 @@ textarea {
   cursor: not-allowed;
 }
 
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .auth-input {
+  padding-right: 48px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease;
+}
+
+.password-toggle-btn:hover:not(:disabled) {
+  opacity: 0.7;
+}
+
+.password-toggle-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .primary-action,
 .secondary-action,
 .ghost-link,
@@ -4297,6 +4330,249 @@ a {
   .tab-content {
     padding: 24px;
   }
+}
+
+/* Account Menu Styles */
+.mobile-account-header {
+  padding: 20px;
+  border-bottom: 1px solid rgba(29, 23, 20, 0.06);
+}
+
+.mobile-profile-card {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(29, 23, 20, 0.06);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mobile-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mobile-profile-avatar {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF6B35, #ff8a60);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
+}
+
+.mobile-profile-header div {
+  flex: 1;
+}
+
+.mobile-profile-header strong {
+  display: block;
+  color: #1d1714;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.mobile-profile-header small {
+  display: block;
+  color: #7c655e;
+  font-size: 0.8rem;
+}
+
+.mobile-greeting-label {
+  margin: 0 0 4px;
+  font-size: 0.75rem;
+  color: #7c655e;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.mobile-account-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(29, 23, 20, 0.02);
+}
+
+.mobile-account-menu-item {
+  width: 100%;
+  border: none;
+  background: rgba(255, 255, 255, 0.8);
+  color: #1d1714;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.mobile-account-menu-item:hover {
+  background: rgba(255, 107, 53, 0.06);
+}
+
+.mobile-account-menu-item.danger {
+  color: #dc2626;
+}
+
+.menu-item-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 50%;
+  color: #FF6B35;
+  font-size: 1rem;
+}
+
+.mobile-account-menu-item.danger .menu-item-icon {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.menu-item-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item-text span {
+  display: block;
+  color: inherit;
+  font-weight: 500;
+}
+
+.menu-item-arrow {
+  font-size: 0.9rem;
+  color: #a0847d;
+}
+
+.menu-item-icon-right {
+  font-size: 0.85rem;
+  color: #a0847d;
+}
+
+.mobile-account-section {
+  margin-top: 16px;
+  padding: 0;
+  background: transparent;
+}
+
+.mobile-account-section-title {
+  padding: 12px 16px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #7c655e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(29, 23, 20, 0.02);
+}
+
+.mobile-account-footer {
+  padding: 20px 16px;
+  border-top: 1px solid rgba(29, 23, 20, 0.06);
+}
+
+.mobile-account-logout {
+  width: 100%;
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  background: rgba(255, 107, 53, 0.08);
+  color: #FF6B35;
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.mobile-account-logout:hover {
+  background: rgba(255, 107, 53, 0.15);
+}
+
+.mobile-account-submenu {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mobile-submenu-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(29, 23, 20, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-submenu-back {
+  border: none;
+  background: transparent;
+  color: #FF6B35;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.mobile-submenu-header h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.05rem;
+  color: #1d1714;
+}
+
+.mobile-profile-form {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mobile-profile-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  color: #1d1714;
+  font-size: 0.85rem;
+}
+
+.mobile-profile-form input,
+.mobile-profile-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(29, 23, 20, 0.12);
+  border-radius: 10px;
+  font: inherit;
+  color: #1d1714;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.mobile-profile-form input:disabled {
+  background: rgba(29, 23, 20, 0.04);
+  color: #7c655e;
+}
+
+.mobile-profile-form input::placeholder,
+.mobile-profile-form textarea::placeholder {
+  color: #a0847d;
 }
 
 @media (min-width: 601px) {

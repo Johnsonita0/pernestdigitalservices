@@ -52,6 +52,16 @@ ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies so the script can be re-run safely
+DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+DROP POLICY IF EXISTS "Users can view their own preferences" ON user_preferences;
+DROP POLICY IF EXISTS "Users can update their own preferences" ON user_preferences;
+DROP POLICY IF EXISTS "Users can insert their own preferences" ON user_preferences;
+DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
+DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
+DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
+
 -- Create RLS policy: users can only see their own profile
 CREATE POLICY "Users can view their own profile"
   ON profiles FOR SELECT
@@ -105,15 +115,17 @@ BEGIN
     address
   ) VALUES (
     NEW.id,
-    NEW.raw_user_meta_data->>'username',
-    NEW.raw_user_meta_data->>'fullName',
+    COALESCE(NEW.raw_user_meta_data->>'username', 'user_' || LEFT(NEW.id::text, 8)),
+    COALESCE(NEW.raw_user_meta_data->>'fullName', NEW.email),
     NEW.email,
-    NEW.raw_user_meta_data->>'phone',
-    NEW.raw_user_meta_data->>'address'
-  );
+    COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+    COALESCE(NEW.raw_user_meta_data->>'address', '')
+  ) ON CONFLICT (id) DO NOTHING;
   
   -- Also create an empty preferences entry
-  INSERT INTO public.user_preferences (user_id) VALUES (NEW.id);
+  INSERT INTO public.user_preferences (user_id) 
+  VALUES (NEW.id) 
+  ON CONFLICT (user_id) DO NOTHING;
   
   RETURN NEW;
 END;

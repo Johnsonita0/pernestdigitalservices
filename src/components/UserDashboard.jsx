@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt, faChevronRight, faCog, faCreditCard, faTicketAlt, faClipboardList, faQuestionCircle, faMapPin, faLock, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons'
 import { menuItems } from '../data/menu'
 import { supabase } from '../lib/supabase'
 
 function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
+  const [accountSubmenu, setAccountSubmenu] = useState(null)
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.fullName || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User',
     phone: user?.user_metadata?.phone || '',
@@ -127,121 +128,409 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
         <header className="mobile-dashboard-header">
           <div className="mobile-location-row">
             <div className="mobile-location-pin">
-              <FontAwesomeIcon icon={faMapMarkerAlt} />
+              <FontAwesomeIcon icon={faUser} />
             </div>
             <div className="mobile-location-copy">
-              <span className="mobile-label">Old City</span>
-              <strong>{location}</strong>
+              <strong>{username}</strong>
             </div>
             <button type="button" className="mobile-bell-btn" aria-label="Notifications">
               <FontAwesomeIcon icon={faBell} />
             </button>
           </div>
 
-          <div className="mobile-search-bar">
+          <label className="mobile-search-bar" aria-label="Search food menu">
             <FontAwesomeIcon icon={faSearch} />
-            <span>Search for dishes or restaurants</span>
-          </div>
+            <input
+              type="text"
+              placeholder="Search for dishes or restaurants"
+              aria-label="Search food menu"
+              disabled
+            />
+          </label>
         </header>
 
         <main className="mobile-dashboard-main">
           {activeNav === 'account' ? (
             <div className="mobile-account-profile-wrap">
-              <div className="mobile-greeting-row">
-                <div>
-                  <p className="mobile-greeting-label">Profile</p>
-                  <h1>Account settings</h1>
-                </div>
-                <button type="button" className="mobile-logout-btn" onClick={onLogout}>
-                  <FontAwesomeIcon icon={faSignOutAlt} />
-                </button>
-              </div>
-
-              <div className="mobile-profile-card">
-                <div className="mobile-profile-header">
-                  <div className="mobile-profile-avatar">
-                    <FontAwesomeIcon icon={faUser} />
-                  </div>
-                  <div>
-                    <strong>{username}</strong>
-                    <small>{email}</small>
-                  </div>
-                </div>
-
-                <div className="mobile-profile-form">
-                  <label>
-                    Username
-                    <input type="text" value={username} disabled />
-                  </label>
-                  <label>
-                    Email
-                    <input type="email" value={email} disabled />
-                  </label>
-                  <label>
-                    Full name
-                    <input
-                      type="text"
-                      value={profile.fullName}
-                      onChange={(event) => setProfile((current) => ({ ...current, fullName: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Phone number
-                    <input
-                      type="tel"
-                      value={profile.phone}
-                      onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Address
-                    <input
-                      type="text"
-                      value={profile.address}
-                      onChange={(event) => setProfile((current) => ({ ...current, address: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Food preferences
-                    <input
-                      type="text"
-                      value={profile.preferences}
-                      onChange={(event) => setProfile((current) => ({ ...current, preferences: event.target.value }))}
-                    />
-                  </label>
-                  <label>
-                    Delivery note
-                    <textarea
-                      rows="3"
-                      value={profile.deliveryNote}
-                      onChange={(event) => setProfile((current) => ({ ...current, deliveryNote: event.target.value }))}
-                    />
-                  </label>
-
-                  {saveMessage && (
-                    <div style={{
-                      padding: '10px 12px',
-                      borderRadius: '12px',
-                      backgroundColor: saveMessage.includes('✅') ? '#f0fdf4' : '#fef2f2',
-                      color: saveMessage.includes('✅') ? '#166534' : '#991b1b',
-                      fontSize: '0.85rem',
-                      textAlign: 'center'
-                    }}>
-                      {saveMessage}
+              {!accountSubmenu ? (
+                <>
+                  {/* Profile Card */}
+                  <div className="mobile-account-header">
+                    <div className="mobile-profile-card">
+                      <div className="mobile-profile-header">
+                        <div className="mobile-profile-avatar">
+                          <FontAwesomeIcon icon={faUser} />
+                        </div>
+                        <div>
+                          <p className="mobile-greeting-label">Hello</p>
+                          <strong>{username}</strong>
+                          <small>{email}</small>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  </div>
 
-                  <button 
-                    type="button" 
-                    className="mobile-order-btn" 
-                    onClick={handleProfileSave}
-                    disabled={loading}
-                    style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
-                  >
-                    {loading ? 'Saving...' : 'Save preferences'}
-                  </button>
+                  {/* Main Menu Items */}
+                  <div className="mobile-account-menu">
+                    <button 
+                      type="button" 
+                      className="mobile-account-menu-item"
+                      onClick={() => setAccountSubmenu('orders')}
+                    >
+                      <div className="menu-item-icon">
+                        <FontAwesomeIcon icon={faShoppingBag} />
+                      </div>
+                      <div className="menu-item-text">
+                        <span>My Orders</span>
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                    </button>
+
+                    <button 
+                      type="button" 
+                      className="mobile-account-menu-item"
+                      onClick={() => setAccountSubmenu('saved')}
+                    >
+                      <div className="menu-item-icon">
+                        <FontAwesomeIcon icon={faHeart} />
+                      </div>
+                      <div className="menu-item-text">
+                        <span>Saved Items</span>
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                    </button>
+
+                    <button 
+                      type="button" 
+                      className="mobile-account-menu-item"
+                      onClick={() => setAccountSubmenu('vouchers')}
+                    >
+                      <div className="menu-item-icon">
+                        <FontAwesomeIcon icon={faTicketAlt} />
+                      </div>
+                      <div className="menu-item-text">
+                        <span>Vouchers</span>
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                    </button>
+
+                    <button 
+                      type="button" 
+                      className="mobile-account-menu-item"
+                      onClick={() => setAccountSubmenu('faq')}
+                    >
+                      <div className="menu-item-icon">
+                        <FontAwesomeIcon icon={faQuestionCircle} />
+                      </div>
+                      <div className="menu-item-text">
+                        <span>FAQs</span>
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                    </button>
+
+                    <button 
+                      type="button" 
+                      className="mobile-account-menu-item"
+                      onClick={() => setAccountSubmenu('notifications')}
+                    >
+                      <div className="menu-item-icon">
+                        <FontAwesomeIcon icon={faBell} />
+                      </div>
+                      <div className="menu-item-text">
+                        <span>Notifications</span>
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                    </button>
+
+                    <button 
+                      type="button" 
+                      className="mobile-account-menu-item"
+                      onClick={() => setAccountSubmenu('payment')}
+                    >
+                      <div className="menu-item-icon">
+                        <FontAwesomeIcon icon={faCreditCard} />
+                      </div>
+                      <div className="menu-item-text">
+                        <span>Payment Information</span>
+                      </div>
+                      <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                    </button>
+                  </div>
+
+                  {/* Settings Section */}
+                  <div className="mobile-account-section">
+                    <div className="mobile-account-section-title">MY SETTINGS</div>
+                    <div className="mobile-account-menu">
+                      <button 
+                        type="button" 
+                        className="mobile-account-menu-item"
+                        onClick={() => setAccountSubmenu('profile')}
+                      >
+                        <div className="menu-item-icon">
+                          <FontAwesomeIcon icon={faUser} />
+                        </div>
+                        <div className="menu-item-text">
+                          <span>My Information</span>
+                        </div>
+                        <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                      </button>
+
+                      <button 
+                        type="button" 
+                        className="mobile-account-menu-item"
+                        onClick={() => setAccountSubmenu('address')}
+                      >
+                        <div className="menu-item-icon">
+                          <FontAwesomeIcon icon={faMapPin} />
+                        </div>
+                        <div className="menu-item-text">
+                          <span>Address Book</span>
+                        </div>
+                        <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                      </button>
+
+                      <button 
+                        type="button" 
+                        className="mobile-account-menu-item"
+                        onClick={() => setAccountSubmenu('password')}
+                      >
+                        <div className="menu-item-icon">
+                          <FontAwesomeIcon icon={faLock} />
+                        </div>
+                        <div className="menu-item-text">
+                          <span>Change Password</span>
+                        </div>
+                        <FontAwesomeIcon icon={faChevronRight} className="menu-item-arrow" />
+                      </button>
+
+                      <button 
+                        type="button" 
+                        className="mobile-account-menu-item danger"
+                        onClick={() => setAccountSubmenu('delete')}
+                      >
+                        <div className="menu-item-icon">
+                          <FontAwesomeIcon icon={faTrash} />
+                        </div>
+                        <div className="menu-item-text">
+                          <span>Delete my Account and Data</span>
+                        </div>
+                        <FontAwesomeIcon icon={faPencilAlt} className="menu-item-icon-right" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Logout Button */}
+                  <div className="mobile-account-footer">
+                    <button 
+                      type="button" 
+                      className="mobile-account-logout"
+                      onClick={onLogout}
+                    >
+                      <FontAwesomeIcon icon={faSignOutAlt} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </>
+              ) : accountSubmenu === 'profile' ? (
+                <div className="mobile-account-submenu">
+                  <div className="mobile-submenu-header">
+                    <button 
+                      type="button" 
+                      className="mobile-submenu-back"
+                      onClick={() => setAccountSubmenu(null)}
+                    >
+                      ← Back
+                    </button>
+                    <h2>My Information</h2>
+                  </div>
+
+                  <div className="mobile-profile-form">
+                    <label>
+                      Full name
+                      <input
+                        type="text"
+                        value={profile.fullName}
+                        onChange={(event) => setProfile((current) => ({ ...current, fullName: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Phone number
+                      <input
+                        type="tel"
+                        value={profile.phone}
+                        onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Email
+                      <input type="email" value={email} disabled />
+                    </label>
+                    <label>
+                      Food preferences
+                      <input
+                        type="text"
+                        value={profile.preferences}
+                        onChange={(event) => setProfile((current) => ({ ...current, preferences: event.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      Delivery note
+                      <textarea
+                        rows="3"
+                        value={profile.deliveryNote}
+                        onChange={(event) => setProfile((current) => ({ ...current, deliveryNote: event.target.value }))}
+                      />
+                    </label>
+
+                    {saveMessage && (
+                      <div style={{
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        backgroundColor: saveMessage.includes('✅') ? '#f0fdf4' : '#fef2f2',
+                        color: saveMessage.includes('✅') ? '#166534' : '#991b1b',
+                        fontSize: '0.85rem',
+                        textAlign: 'center'
+                      }}>
+                        {saveMessage}
+                      </div>
+                    )}
+
+                    <button 
+                      type="button" 
+                      className="mobile-order-btn" 
+                      onClick={handleProfileSave}
+                      disabled={loading}
+                      style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+                    >
+                      {loading ? 'Saving...' : 'Save changes'}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : accountSubmenu === 'address' ? (
+                <div className="mobile-account-submenu">
+                  <div className="mobile-submenu-header">
+                    <button 
+                      type="button" 
+                      className="mobile-submenu-back"
+                      onClick={() => setAccountSubmenu(null)}
+                    >
+                      ← Back
+                    </button>
+                    <h2>Address Book</h2>
+                  </div>
+
+                  <div className="mobile-profile-form">
+                    <label>
+                      Home Address
+                      <input
+                        type="text"
+                        value={profile.address}
+                        onChange={(event) => setProfile((current) => ({ ...current, address: event.target.value }))}
+                        placeholder="Enter your home address"
+                      />
+                    </label>
+
+                    {saveMessage && (
+                      <div style={{
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        backgroundColor: saveMessage.includes('✅') ? '#f0fdf4' : '#fef2f2',
+                        color: saveMessage.includes('✅') ? '#166534' : '#991b1b',
+                        fontSize: '0.85rem',
+                        textAlign: 'center'
+                      }}>
+                        {saveMessage}
+                      </div>
+                    )}
+
+                    <button 
+                      type="button" 
+                      className="mobile-order-btn" 
+                      onClick={handleProfileSave}
+                      disabled={loading}
+                      style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+                    >
+                      {loading ? 'Saving...' : 'Save address'}
+                    </button>
+                  </div>
+                </div>
+              ) : accountSubmenu === 'password' ? (
+                <div className="mobile-account-submenu">
+                  <div className="mobile-submenu-header">
+                    <button 
+                      type="button" 
+                      className="mobile-submenu-back"
+                      onClick={() => setAccountSubmenu(null)}
+                    >
+                      ← Back
+                    </button>
+                    <h2>Change Password</h2>
+                  </div>
+
+                  <div className="mobile-profile-form">
+                    <p style={{ color: '#666', marginBottom: '20px' }}>
+                      To change your password, you will receive a password reset link via email.
+                    </p>
+                    <button 
+                      type="button" 
+                      className="mobile-order-btn"
+                    >
+                      Send Password Reset Email
+                    </button>
+                  </div>
+                </div>
+              ) : accountSubmenu === 'delete' ? (
+                <div className="mobile-account-submenu">
+                  <div className="mobile-submenu-header">
+                    <button 
+                      type="button" 
+                      className="mobile-submenu-back"
+                      onClick={() => setAccountSubmenu(null)}
+                    >
+                      ← Back
+                    </button>
+                    <h2>Delete Account</h2>
+                  </div>
+
+                  <div className="mobile-profile-form">
+                    <div style={{
+                      padding: '15px',
+                      borderRadius: '12px',
+                      backgroundColor: '#fef2f2',
+                      borderLeft: '4px solid #dc2626',
+                      marginBottom: '20px'
+                    }}>
+                      <p style={{ color: '#991b1b', margin: 0 }}>
+                        <strong>⚠️ Warning:</strong> This action cannot be undone. All your data will be permanently deleted.
+                      </p>
+                    </div>
+                    <button 
+                      type="button" 
+                      className="mobile-order-btn" 
+                      style={{ backgroundColor: '#dc2626' }}
+                    >
+                      Delete my account
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mobile-account-submenu">
+                  <div className="mobile-submenu-header">
+                    <button 
+                      type="button" 
+                      className="mobile-submenu-back"
+                      onClick={() => setAccountSubmenu(null)}
+                    >
+                      ← Back
+                    </button>
+                    <h2>{accountSubmenu === 'orders' ? 'My Orders' : accountSubmenu === 'saved' ? 'Saved Items' : accountSubmenu === 'vouchers' ? 'Vouchers' : accountSubmenu === 'faq' ? 'FAQs' : accountSubmenu === 'notifications' ? 'Notifications' : 'Payment Information'}</h2>
+                  </div>
+
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                    <p>Coming soon...</p>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>

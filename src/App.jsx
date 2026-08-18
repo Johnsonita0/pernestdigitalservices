@@ -13,6 +13,8 @@ import SignUpPage from './components/SignUpPage'
 import UserDashboard from './components/UserDashboard'
 import { menuItems } from './data/menu'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBell, faSearch, faUser } from '@fortawesome/free-solid-svg-icons'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
@@ -394,7 +396,6 @@ function App() {
           cartCount={cartItems.length}
           user={user}
           onLogout={handleLogout}
-          isShop={view === 'shop'}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           showMobileSearch={showMobileSearch}
@@ -412,9 +413,36 @@ function App() {
       )}
 
       {view === 'home' && (
-        <main>
-          <Hero dishes={menuItems} onOrderNow={handleOrderNow} />
-          <Story />
+        <section className="mobile-dashboard-shell">
+          <div className="mobile-dashboard-phone">
+            <header className="mobile-dashboard-header">
+              <div className="mobile-location-row">
+                <div className="mobile-location-pin">
+                  <FontAwesomeIcon icon={faUser} />
+                </div>
+                <div className="mobile-location-copy">
+                  <strong>{user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'}</strong>
+                </div>
+                <button type="button" className="mobile-bell-btn" aria-label="Notifications">
+                  <FontAwesomeIcon icon={faBell} />
+                </button>
+              </div>
+
+              <label className="mobile-search-bar" aria-label="Search food menu">
+                <FontAwesomeIcon icon={faSearch} />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  placeholder="Search for dishes or restaurants"
+                  aria-label="Search food menu"
+                />
+              </label>
+            </header>
+
+            <main className="mobile-dashboard-main">
+              <Hero dishes={menuItems} onOrderNow={handleOrderNow} />
+              <Story />
 
           <FeaturedDishes items={menuItems} onAddToCart={handleAddToCart} onViewMenu={() => updateRoute('shop')} />
 
@@ -538,7 +566,9 @@ function App() {
               </div>
             </div>
           </section>
-        </main>
+            </main>
+          </div>
+        </section>
       )}
 
       {view === 'shop' && (
