@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
-function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '' }) {
+function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '', userId = null }) {
   const [formData, setFormData] = useState({
     name: '',
     contactNumber: '',
@@ -10,19 +11,80 @@ function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '' }) {
     notes: '',
     paymentMethod: 'card',
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    
     if (!formData.name.trim() || !formData.contactNumber.trim() || !formData.address.trim()) {
-      alert('Please fill in all required fields')
+      setError('Please fill in all required fields')
       return
     }
-    onConfirm(formData)
+
+    if (!userId) {
+      setError('User ID not found. Please log in again.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      // Save order to database
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([
+          {
+            user_id: userId,
+            order_total: total,
+            status: 'pending',
+            delivery_address: formData.address,
+            delivery_notes: formData.notes,
+          }
+        ])
+        .select()
+
+      if (orderError) {
+        throw new Error(orderError.message)
+      }
+
+      const orderId = orderData?.[0]?.id
+
+      if (!orderId) {
+        throw new Error('Failed to create order')
+      }
+
+      // Save order items
+      const orderItems = items.map((item) => ({
+        order_id: orderId,
+        food_name: item.title,
+        food_id: item.id,
+        quantity: item.quantity || 1,
+        price: item.price,
+      }))
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems)
+
+      if (itemsError) {
+        throw new Error(itemsError.message)
+      }
+
+      // Call original onConfirm callback
+      onConfirm(formData)
+      setLoading(false)
+    } catch (err) {
+      console.error('Error creating order:', err)
+      setError(err.message || 'Failed to create order')
+      setLoading(false)
+    }
   }
 
   return (
@@ -96,9 +158,22 @@ function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '' }) {
               </select>
             </label>
 
-            <button type="submit" className="primary-btn checkout-confirm-btn">
-              Confirm order
+            <button type="submit" className="primary-btn checkout-confirm-btn" disabled={loading}>
+              {loading ? 'Creating order...' : 'Confirm order'}
             </button>
+
+            {error && (
+              <div style={{
+                padding: '12px',
+                marginTop: '12px',
+                backgroundColor: '#fef2f2',
+                color: '#991b1b',
+                borderRadius: '8px',
+                fontSize: '0.9rem'
+              }}>
+                {error}
+              </div>
+            )}
           </form>
 
           <div className="checkout-summary">

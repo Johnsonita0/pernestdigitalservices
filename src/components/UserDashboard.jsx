@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
+  const [orders, setOrders] = useState([])
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.fullName || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User',
     phone: user?.user_metadata?.phone || '',
@@ -21,8 +22,37 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
   useEffect(() => {
     if (user?.id) {
       loadProfileData()
+      loadOrders()
     }
   }, [user?.id])
+
+  const loadOrders = async () => {
+    try {
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items (
+            id,
+            food_name,
+            quantity,
+            price
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (ordersError && ordersError.code !== 'PGRST116') {
+        console.warn('Error loading orders:', ordersError)
+      }
+
+      if (ordersData) {
+        setOrders(ordersData)
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error)
+    }
+  }
 
   const loadProfileData = async () => {
     try {
@@ -526,9 +556,117 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                     <h2>{accountSubmenu === 'orders' ? 'My Orders' : accountSubmenu === 'saved' ? 'Saved Items' : accountSubmenu === 'vouchers' ? 'Vouchers' : accountSubmenu === 'faq' ? 'FAQs' : accountSubmenu === 'notifications' ? 'Notifications' : 'Payment Information'}</h2>
                   </div>
 
-                  <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-                    <p>Coming soon...</p>
-                  </div>
+                  {accountSubmenu === 'orders' ? (
+                    <div style={{ padding: '20px' }}>
+                      {orders.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: '#999', padding: '40px 20px' }}>
+                          <p style={{ fontSize: '1rem', marginBottom: '10px' }}>📋 No orders yet</p>
+                          <p style={{ fontSize: '0.9rem' }}>Your orders will appear here</p>
+                          <button 
+                            type="button"
+                            className="mobile-order-btn"
+                            onClick={() => { setAccountSubmenu(null); onViewMenu(); }}
+                            style={{ marginTop: '20px', width: '100%' }}
+                          >
+                            Start ordering
+                          </button>
+                        </div>
+                      ) : (
+                        orders.map((order) => (
+                          <div 
+                            key={order.id}
+                            style={{
+                              borderRadius: '12px',
+                              border: '1px solid #e5e7eb',
+                              padding: '16px',
+                              marginBottom: '16px',
+                              backgroundColor: '#fafafa'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                              <div>
+                                <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#666' }}>
+                                  Order #{order.id.slice(0, 8)}
+                                </p>
+                                <p style={{ margin: '0', fontSize: '0.9rem', color: '#999' }}>
+                                  {new Date(order.created_at).toLocaleDateString('en-NG', { 
+                                    month: 'short', 
+                                    day: 'numeric', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                              </div>
+                              <div style={{
+                                padding: '6px 12px',
+                                borderRadius: '20px',
+                                backgroundColor: order.status === 'pending' ? '#fef3c7' : order.status === 'preparing' ? '#dbeafe' : order.status === 'ready' ? '#dcfce7' : '#f3e8ff',
+                                color: order.status === 'pending' ? '#92400e' : order.status === 'preparing' ? '#1e40af' : order.status === 'ready' ? '#166534' : '#6b21a8',
+                                fontSize: '0.75rem',
+                                fontWeight: '600',
+                                textTransform: 'capitalize',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {order.status}
+                              </div>
+                            </div>
+
+                            <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                              {order.order_items.map((item, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.9rem' }}>
+                                  <span>
+                                    {item.food_name} <span style={{ color: '#999' }}>×{item.quantity}</span>
+                                  </span>
+                                  <span style={{ fontWeight: '600' }}>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div style={{ marginBottom: '12px' }}>
+                              <p style={{ margin: '0 0 6px 0', fontSize: '0.85rem', color: '#666' }}>
+                                <strong>Delivery Address:</strong>
+                              </p>
+                              <p style={{ margin: '0', fontSize: '0.9rem', color: '#333' }}>
+                                {order.delivery_address}
+                              </p>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <p style={{ margin: '0', fontSize: '0.85rem', color: '#666' }}>Total</p>
+                                <p style={{ margin: '0', fontSize: '1.1rem', fontWeight: '700', color: '#ff6b35' }}>
+                                  ₦{order.order_total.toLocaleString('en-NG')}
+                                </p>
+                              </div>
+                              <button 
+                                type="button"
+                                style={{
+                                  padding: '8px 16px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #ff6b35',
+                                  backgroundColor: 'transparent',
+                                  color: '#ff6b35',
+                                  fontSize: '0.85rem',
+                                  fontWeight: '600',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => { e.target.style.backgroundColor = '#ff6b35'; e.target.style.color = '#fff'; }}
+                                onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#ff6b35'; }}
+                              >
+                                Track
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                      <p>Coming soon...</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
