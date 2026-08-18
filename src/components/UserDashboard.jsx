@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt, faChevronRight, faCog, faCreditCard, faTicketAlt, faClipboardList, faQuestionCircle, faMapPin, faLock, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
@@ -61,6 +61,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
   const [accountSubmenu, setAccountSubmenu] = useState(initialAccountSubmenu)
   const [expandedOrderId, setExpandedOrderId] = useState(initialExpandedOrderId)
   const [orders, setOrders] = useState([])
+  const orderCardRefs = useRef({})
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.fullName || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User',
     phone: user?.user_metadata?.phone || '',
@@ -109,6 +110,16 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
       console.error('Error loading orders:', error)
     }
   }
+
+  useEffect(() => {
+    if (accountSubmenu !== 'orders' || !expandedOrderId || !orders.some((order) => order.id === expandedOrderId)) return
+
+    const frameId = requestAnimationFrame(() => {
+      orderCardRefs.current[expandedOrderId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+
+    return () => cancelAnimationFrame(frameId)
+  }, [accountSubmenu, expandedOrderId, orders])
 
   const handleProfileImageSelect = (event) => {
     const file = event.target.files?.[0]
@@ -766,6 +777,9 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                           return (
                             <div 
                               key={order.id}
+                              ref={(element) => {
+                                if (element) orderCardRefs.current[order.id] = element
+                              }}
                               style={{
                                 borderRadius: '12px',
                                 border: '1px solid #e5e7eb',
