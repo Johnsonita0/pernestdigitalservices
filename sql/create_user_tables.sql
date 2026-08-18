@@ -152,8 +152,10 @@ DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
 DROP POLICY IF EXISTS "Riders can view ready orders" ON orders;
+DROP POLICY IF EXISTS "Riders can view delivered orders" ON orders;
 DROP POLICY IF EXISTS "Riders can mark ready orders delivered" ON orders;
 DROP POLICY IF EXISTS "Riders can view ready order items" ON order_items;
+DROP POLICY IF EXISTS "Riders can view delivered order items" ON order_items;
 DROP POLICY IF EXISTS "Admin can manage menu items" ON menu_items;
 DROP POLICY IF EXISTS "Anyone can view available menu items" ON menu_items;
 DROP POLICY IF EXISTS "Admin can manage food_img files" ON storage.objects;
@@ -209,6 +211,13 @@ CREATE POLICY "Riders can view ready orders"
     AND status = 'ready'
   );
 
+CREATE POLICY "Riders can view delivered orders"
+  ON orders FOR SELECT
+  USING (
+    public.is_rider_user(auth.uid())
+    AND status = 'delivered'
+  );
+
 CREATE POLICY "Riders can mark ready orders delivered"
   ON orders FOR UPDATE
   USING (
@@ -226,6 +235,15 @@ CREATE POLICY "Riders can view ready order items"
     public.is_rider_user(auth.uid())
     AND order_id IN (
       SELECT id FROM orders WHERE status = 'ready'
+    )
+  );
+
+CREATE POLICY "Riders can view delivered order items"
+  ON order_items FOR SELECT
+  USING (
+    public.is_rider_user(auth.uid())
+    AND order_id IN (
+      SELECT id FROM orders WHERE status = 'delivered'
     )
   );
 

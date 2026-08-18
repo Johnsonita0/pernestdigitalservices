@@ -2780,6 +2780,51 @@ a {
   color: #237942;
 }
 
+.rider-view-switcher {
+  display: flex;
+  gap: 10px;
+  width: min(980px, 100%);
+  margin: 0 auto 18px;
+  padding: 6px;
+  border: 1px solid #f0dfd6;
+  border-radius: 15px;
+  background: #fff;
+}
+
+.rider-view-switcher button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #765c52;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.rider-view-switcher button.active {
+  background: #fff0e8;
+  color: #e95d2d;
+}
+
+.rider-view-switcher button span {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 999px;
+  background: currentColor;
+  color: #fff;
+  font-size: 0.68rem;
+}
+
 .rider-order-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -2856,6 +2901,18 @@ a {
 .rider-delivered-btn:disabled {
   cursor: wait;
   opacity: 0.6;
+}
+
+.rider-delivered-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #eaf9ef;
+  color: #237942;
+  font-weight: 700;
 }
 
 .rider-empty-state {

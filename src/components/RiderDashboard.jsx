@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBox, faCheck, faMapMarkerAlt, faPhone, faSignOutAlt, faTruck } from '@fortawesome/free-solid-svg-icons'
+import { faBox, faCheck, faClipboardCheck, faList, faMapMarkerAlt, faPhone, faSignOutAlt, faTruck } from '@fortawesome/free-solid-svg-icons'
 
 function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [message, setMessage] = useState('')
+  const [activeView, setActiveView] = useState('orders')
+
+  const activeOrders = orders.filter((order) => order.status === 'ready')
+  const deliveredOrders = orders.filter((order) => order.status === 'delivered')
+  const visibleOrders = activeView === 'orders' ? activeOrders : deliveredOrders
 
   const handleDelivered = async (orderId) => {
     try {
@@ -23,9 +28,9 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
     <main className="rider-app-shell">
       <header className="rider-app-header">
         <div>
-          <p className="eyebrow">Rider delivery desk</p>
-          <h1>Ready for delivery</h1>
-          <p>{user?.email}</p>
+          <p className="eyebrow">Rider account</p>
+          <h1>Delivery desk</h1>
+          <p>{user?.user_metadata?.username || 'rider'} · Delivery partner</p>
         </div>
         <button type="button" className="ghost-btn" onClick={onLogout}>
           <FontAwesomeIcon icon={faSignOutAlt} />
@@ -36,22 +41,41 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
       <section className="rider-summary" aria-label="Rider summary">
         <FontAwesomeIcon icon={faTruck} />
         <div>
-          <strong>{orders.length} order{orders.length === 1 ? '' : 's'} to deliver</strong>
+          <strong>{activeOrders.length} order{activeOrders.length === 1 ? '' : 's'} ready for delivery</strong>
           <span>Orders appear here after admin marks them On the way.</span>
         </div>
       </section>
 
       {message && <p className="rider-message">{message}</p>}
 
+      <nav className="rider-view-switcher" aria-label="Rider order views">
+        <button
+          type="button"
+          className={activeView === 'orders' ? 'active' : ''}
+          onClick={() => setActiveView('orders')}
+        >
+          <FontAwesomeIcon icon={faList} />
+          Orders <span>{activeOrders.length}</span>
+        </button>
+        <button
+          type="button"
+          className={activeView === 'delivered' ? 'active' : ''}
+          onClick={() => setActiveView('delivered')}
+        >
+          <FontAwesomeIcon icon={faClipboardCheck} />
+          Delivered records <span>{deliveredOrders.length}</span>
+        </button>
+      </nav>
+
       <section className="rider-order-list">
-        {orders.length === 0 ? (
+        {visibleOrders.length === 0 ? (
           <div className="rider-empty-state">
             <FontAwesomeIcon icon={faBox} />
-            <h2>No deliveries yet</h2>
-            <p>New orders will appear here when they are ready for delivery.</p>
+            <h2>{activeView === 'orders' ? 'No active orders' : 'No delivered records'}</h2>
+            <p>{activeView === 'orders' ? 'New orders appear here when the admin sends them On the way.' : 'Completed deliveries will be recorded here.'}</p>
           </div>
         ) : (
-          orders.map((order) => (
+          visibleOrders.map((order) => (
             <article className="rider-order-card" key={order.id}>
               <div className="rider-order-heading">
                 <div>
@@ -80,15 +104,21 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
                 ))}
               </div>
 
-              <button
-                type="button"
-                className="rider-delivered-btn"
-                disabled={updatingOrderId === order.id}
-                onClick={() => handleDelivered(order.id)}
-              >
-                <FontAwesomeIcon icon={faCheck} />
-                {updatingOrderId === order.id ? 'Updating...' : 'Mark delivered'}
-              </button>
+              {activeView === 'orders' ? (
+                <button
+                  type="button"
+                  className="rider-delivered-btn"
+                  disabled={updatingOrderId === order.id}
+                  onClick={() => handleDelivered(order.id)}
+                >
+                  <FontAwesomeIcon icon={faCheck} />
+                  {updatingOrderId === order.id ? 'Updating...' : 'Mark delivered'}
+                </button>
+              ) : (
+                <div className="rider-delivered-label">
+                  <FontAwesomeIcon icon={faCheck} /> Delivered
+                </div>
+              )}
             </article>
           ))
         )}

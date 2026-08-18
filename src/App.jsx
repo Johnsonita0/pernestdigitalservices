@@ -238,7 +238,7 @@ function App() {
       const { data, error } = await supabase
         .from('orders')
         .select('*, order_items(*), profiles:user_id(full_name, phone)')
-        .eq('status', 'ready')
+        .in('status', ['ready', 'delivered'])
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -484,7 +484,9 @@ function App() {
 
     if (error) throw new Error(error.message)
 
-    setRiderOrders((current) => current.filter((order) => order.id !== orderId))
+    setRiderOrders((current) => current.map((order) => (
+      order.id === orderId ? { ...order, status: 'delivered' } : order
+    )))
   }
 
   const handleAddToCart = (product) => {
