@@ -870,14 +870,6 @@ function App() {
           return
         }
 
-        const { data: bucketData, error: bucketError } = await supabase.storage.listBuckets()
-        const bucketExists = bucketData?.some((bucket) => bucket.name === 'bank_prof')
-
-        if (bucketError || !bucketExists) {
-          notifyToast('Storage bucket "bank_prof" is missing in Supabase. Create it before uploading proof.', 'error')
-          return
-        }
-
         proofFilename = orderData.proofOfPayment.name
         proofMimeType = orderData.proofOfPayment.type
         proofFileSize = orderData.proofOfPayment.size
