@@ -201,6 +201,7 @@ function App() {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, email, phone, address, profile_image_url, is_admin, created_at')
+        .eq('is_admin', false)
         .order('created_at', { ascending: false })
 
       if (error) {

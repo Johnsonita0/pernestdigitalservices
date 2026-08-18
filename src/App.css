@@ -2930,9 +2930,7 @@ a {
 
 /* Users Management Styles */
 .users-container {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 24px;
+  display: block;
   min-height: 500px;
 }
 
@@ -2941,7 +2939,16 @@ a {
   border: 1px solid rgba(26, 21, 22, 0.08);
   border-radius: 16px;
   overflow-y: auto;
-  max-height: 600px;
+  max-height: none;
+}
+
+.user-list-item + .user-list-item {
+  border-top: 1px solid rgba(26, 21, 22, 0.05);
+}
+
+.user-list-item .user-details {
+  margin: 0 16px 16px;
+  max-height: none;
 }
 
 .user-card {

@@ -131,6 +131,83 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
     }
   }
 
+  const renderUserDetails = (userDetails) => (
+    <div className="user-details">
+      <div className="user-details-header">
+        <h4>{userDetails.fullName}</h4>
+        <button
+          type="button"
+          className="close-btn"
+          onClick={() => setSelectedUser(null)}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="detail-section">
+        <h5>Profile Information</h5>
+        <div className="detail-group">
+          <div className="detail-item">
+            <label><FontAwesomeIcon icon={faEnvelope} /> Email</label>
+            <p>{userDetails.email}</p>
+          </div>
+          <div className="detail-item">
+            <label>Username</label>
+            <p>@{userDetails.username}</p>
+          </div>
+          <div className="detail-item">
+            <label><FontAwesomeIcon icon={faPhone} /> Phone</label>
+            <p>{userDetails.phone}</p>
+          </div>
+          <div className="detail-item">
+            <label><FontAwesomeIcon icon={faMapMarkerAlt} /> Address</label>
+            <p>{userDetails.address}</p>
+          </div>
+          <div className="detail-item">
+            <label>Joined</label>
+            <p>{new Date(userDetails.createdAt).toLocaleDateString()}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="detail-section">
+        <h5>User Orders ({userDetails.orders?.length || 0})</h5>
+        {userDetails.orders && userDetails.orders.length > 0 ? (
+          <div className="orders-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userDetails.orders.map((order) => (
+                  <tr key={order.id}>
+                    <td>#{order.id}</td>
+                    <td>{new Date(order.date).toLocaleDateString()}</td>
+                    <td>{order.items?.length || 0} item(s)</td>
+                    <td>{formatNaira(order.total)}</td>
+                    <td>
+                      <span className={`status-badge ${order.status?.toLowerCase() || 'pending'}`}>
+                        {order.status || 'Pending'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="empty-message">No orders yet.</p>
+        )}
+      </div>
+    </div>
+  )
+
   return (
     <>
       {toast && (
@@ -214,107 +291,26 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                     <p className="empty-state">No registered users yet.</p>
                   ) : (
                     allUsers.map((userData) => (
-                      <div
-                        key={userData.id}
-                        className={`user-card ${selectedUser?.id === userData.id ? 'selected' : ''}`}
-                        onClick={() => setSelectedUser(userData)}
-                      >
-                        <div className="user-info">
-                          <h4>{userData.fullName}</h4>
-                          <p className="user-email">{userData.email}</p>
-                          <p className="user-username">@{userData.username}</p>
+                      <div key={userData.id} className="user-list-item">
+                        <div
+                          className={`user-card ${selectedUser?.id === userData.id ? 'selected' : ''}`}
+                          onClick={() => setSelectedUser(userData)}
+                        >
+                          <div className="user-info">
+                            <h4>{userData.fullName}</h4>
+                            <p className="user-email">{userData.email}</p>
+                            <p className="user-username">@{userData.username}</p>
+                          </div>
+                          <div className="user-meta">
+                            <span className="order-count">{userData.orders?.length || 0} orders</span>
+                            <FontAwesomeIcon icon={faChevronRight} className="chevron" />
+                          </div>
                         </div>
-                        <div className="user-meta">
-                          <span className="order-count">{userData.orders?.length || 0} orders</span>
-                          <FontAwesomeIcon icon={faChevronRight} className="chevron" />
-                        </div>
+                        {selectedUser?.id === userData.id && renderUserDetails(userData)}
                       </div>
                     ))
                   )}
                 </div>
-
-                {selectedUser && (
-                  <div className="user-details">
-                    <div className="user-details-header">
-                      <h4>{selectedUser.fullName}</h4>
-                      <button
-                        type="button"
-                        className="close-btn"
-                        onClick={() => setSelectedUser(null)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="detail-section">
-                      <h5>Profile Information</h5>
-                      <div className="detail-group">
-                        <div className="detail-item">
-                          <label>
-                            <FontAwesomeIcon icon={faEnvelope} /> Email
-                          </label>
-                          <p>{selectedUser.email}</p>
-                        </div>
-                        <div className="detail-item">
-                          <label>Username</label>
-                          <p>@{selectedUser.username}</p>
-                        </div>
-                        <div className="detail-item">
-                          <label>
-                            <FontAwesomeIcon icon={faPhone} /> Phone
-                          </label>
-                          <p>{selectedUser.phone}</p>
-                        </div>
-                        <div className="detail-item">
-                          <label>
-                            <FontAwesomeIcon icon={faMapMarkerAlt} /> Address
-                          </label>
-                          <p>{selectedUser.address}</p>
-                        </div>
-                        <div className="detail-item">
-                          <label>Joined</label>
-                          <p>{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="detail-section">
-                      <h5>User Orders ({selectedUser.orders?.length || 0})</h5>
-                      {selectedUser.orders && selectedUser.orders.length > 0 ? (
-                        <div className="orders-table">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>Order ID</th>
-                                <th>Date</th>
-                                <th>Items</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedUser.orders.map((order) => (
-                                <tr key={order.id}>
-                                  <td>#{order.id}</td>
-                                  <td>{new Date(order.date).toLocaleDateString()}</td>
-                                  <td>{order.items?.length || 0} item(s)</td>
-                                  <td>{formatNaira(order.total)}</td>
-                                  <td>
-                                    <span className={`status-badge ${order.status?.toLowerCase() || 'pending'}`}>
-                                      {order.status || 'Pending'}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      ) : (
-                        <p className="empty-message">No orders yet.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           )}
