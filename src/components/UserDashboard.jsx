@@ -575,8 +575,11 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                       ) : (
                         orders.map((order) => {
                           const orderStatus = order.status || 'pending'
-                          const statusSteps = ['Confirmed', 'Preparing', 'On the way', 'Delivered']
-                          const statusIndex = ['pending', 'preparing', 'ready', 'delivered'].indexOf(orderStatus)
+                          const statusSteps = orderStatus === 'pending_payment_confirmation' 
+                            ? ['Awaiting payment confirmation', 'Confirmed', 'Preparing', 'On the way', 'Delivered']
+                            : ['Confirmed', 'Preparing', 'On the way', 'Delivered']
+                          const statusIndexMap = ['pending_payment_confirmation', 'pending', 'preparing', 'ready', 'delivered']
+                          const statusIndex = statusIndexMap.indexOf(orderStatus)
                           const currentStep = statusIndex >= 0 ? statusIndex : 0
                           const isExpanded = expandedOrderId === order.id
 
@@ -609,14 +612,14 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                                 <div style={{
                                   padding: '6px 12px',
                                   borderRadius: '20px',
-                                  backgroundColor: orderStatus === 'pending' ? '#fef3c7' : orderStatus === 'preparing' ? '#dbeafe' : orderStatus === 'ready' ? '#dcfce7' : orderStatus === 'delivered' ? '#dcfce7' : '#f3e8ff',
-                                  color: orderStatus === 'pending' ? '#92400e' : orderStatus === 'preparing' ? '#1e40af' : orderStatus === 'ready' ? '#166534' : orderStatus === 'delivered' ? '#166534' : '#6b21a8',
+                                  backgroundColor: orderStatus === 'pending_payment_confirmation' ? '#fed7aa' : orderStatus === 'pending' ? '#fef3c7' : orderStatus === 'preparing' ? '#dbeafe' : orderStatus === 'ready' ? '#dcfce7' : orderStatus === 'delivered' ? '#dcfce7' : '#f3e8ff',
+                                  color: orderStatus === 'pending_payment_confirmation' ? '#b45309' : orderStatus === 'pending' ? '#92400e' : orderStatus === 'preparing' ? '#1e40af' : orderStatus === 'ready' ? '#166534' : orderStatus === 'delivered' ? '#166534' : '#6b21a8',
                                   fontSize: '0.75rem',
                                   fontWeight: '600',
                                   textTransform: 'capitalize',
                                   whiteSpace: 'nowrap'
                                 }}>
-                                  {orderStatus}
+                                  {orderStatus === 'pending_payment_confirmation' ? 'Awaiting payment confirmation' : orderStatus}
                                 </div>
                               </div>
 

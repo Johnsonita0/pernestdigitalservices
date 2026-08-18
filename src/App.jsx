@@ -68,6 +68,7 @@ function App() {
     address: '',
     notes: '',
     paymentMethod: 'paystack',
+    proofOfPayment: null,
   })
   const [pendingTestimonials, setPendingTestimonials] = useState([])
   const [approvedTestimonials, setApprovedTestimonials] = useState(testimonials)
@@ -297,9 +298,13 @@ function App() {
   }, [user])
 
   const handleCheckoutInputChange = (event) => {
-    const { name, value } = event.target
+    const { name, value, files } = event.target
     setCheckoutError('')
-    setCheckoutForm((current) => ({ ...current, [name]: value }))
+    if (files) {
+      setCheckoutForm((current) => ({ ...current, [name]: files[0] }))
+    } else {
+      setCheckoutForm((current) => ({ ...current, [name]: value }))
+    }
   }
 
   const handleConfirmOrder = async (orderData) => {
@@ -312,6 +317,9 @@ function App() {
     }
 
     try {
+      let proofOfPaymentUrl = null
+      let orderStatus = 'pending'
+
       if (orderData.paymentMethod === 'paystack') {
         const paymentAmount = total + 2500
         const paymentResponse = await initializePaystackPayment(user.email, paymentAmount, {
@@ -327,15 +335,36 @@ function App() {
         }
       }
 
+      if (orderData.paymentMethod === 'transfer') {
+        if (!orderData.proofOfPayment) {
+          setCheckoutError('Please upload proof of payment for bank transfer')
+          return
+        }
+
+        const fileName = `${user.id}-${Date.now()}-${orderData.proofOfPayment.name}`
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('payment_proofs')
+          .upload(fileName, orderData.proofOfPayment)
+
+        if (uploadError) {
+          throw new Error('Failed to upload proof of payment: ' + uploadError.message)
+        }
+
+        proofOfPaymentUrl = uploadData.path
+        orderStatus = 'pending_payment_confirmation'
+      }
+
       const { data: orderResult, error: orderError } = await supabase
         .from('orders')
         .insert([
           {
             user_id: user.id,
             order_total: total + 2500,
-            status: 'pending',
+            status: orderStatus,
             delivery_address: orderData.address,
             delivery_notes: orderData.notes,
+            payment_method: orderData.paymentMethod,
+            proof_of_payment: proofOfPaymentUrl,
           }
         ])
         .select()
@@ -397,6 +426,7 @@ function App() {
         address: '',
         notes: '',
         paymentMethod: 'paystack',
+        proofOfPayment: null,
       })
 
       setSuccessOrder(newOrder)
@@ -923,6 +953,29 @@ function App() {
                           <span>Transfer to Trophy account</span>
                         </div>
                         <p>Account name: Trophy Sip &amp; Savor<br />Account number: 1234567890</p>
+                        
+                        <label style={{ marginTop: '12px', display: 'grid', gap: '6px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#201814' }}>Upload proof of payment</span>
+                          <input
+                            type="file"
+                            name="proofOfPayment"
+                            onChange={handleCheckoutInputChange}
+                            accept="image/*,.pdf"
+                            required
+                            style={{
+                              padding: '8px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(32, 24, 20, 0.14)',
+                              fontSize: '0.9rem'
+                            }}
+                          />
+                          <small style={{ color: '#7d6056' }}>Upload screenshot or PDF of your bank transfer (JPG, PNG, or PDF)</small>
+                          {checkoutForm.proofOfPayment && (
+                            <span style={{ fontSize: '0.85rem', color: '#4ade80', fontWeight: '600' }}>
+                              ✓ {checkoutForm.proofOfPayment.name}
+                            </span>
+                          )}
+                        </label>
                       </div>
                     )}
 
