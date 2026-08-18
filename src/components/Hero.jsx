@@ -6,12 +6,28 @@ function Hero({ dishes, onOrderNow }) {
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
+    if (dishes.length === 0) return undefined
+
     const interval = setInterval(() => {
       setActiveIndex((current) => (current + 1) % dishes.length)
     }, 4000)
 
     return () => clearInterval(interval)
   }, [dishes.length])
+
+  if (dishes.length === 0) {
+    return (
+      <section className="hero-section" id="home">
+        <div className="container hero-grid">
+          <div className="hero-copy">
+            <p className="eyebrow">Freshly made • Lagos style</p>
+            <h1>Loading today&apos;s menu...</h1>
+            <p className="hero-text">Our dishes are on their way. Please check back in a moment.</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   const activeDish = dishes[activeIndex]
 

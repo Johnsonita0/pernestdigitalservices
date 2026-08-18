@@ -6,12 +6,33 @@ function FeaturedDishes({ items, onAddToCart, onViewMenu }) {
   const [activeIndex, setActiveIndex] = useState(0)
 
   useEffect(() => {
+    if (items.length === 0) return undefined
+
     const interval = setInterval(() => {
       setActiveIndex((current) => (current + 1) % items.length)
     }, 4000)
 
     return () => clearInterval(interval)
   }, [items.length])
+
+  useEffect(() => {
+    if (activeIndex >= items.length) setActiveIndex(0)
+  }, [activeIndex, items.length])
+
+  if (items.length === 0) {
+    return (
+      <section className="featured-section" id="menu">
+        <div className="container">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Featured dishes</p>
+              <h2>Loading our kitchen favorites...</h2>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   const activeDish = items[activeIndex]
 

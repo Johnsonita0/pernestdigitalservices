@@ -15,6 +15,7 @@ import { isSupabaseConfigured, supabase } from './lib/supabase'
 import { initializePaystackPayment } from './lib/payment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faSearch, faUser } from '@fortawesome/free-solid-svg-icons'
+import { faFacebookF, faInstagram, faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
@@ -1500,9 +1501,17 @@ function App() {
 
             <div>
               <h4>Follow</h4>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer">Instagram</a>
-              <a href="https://facebook.com" target="_blank" rel="noreferrer">Facebook</a>
-              <a href="https://wa.me/2349063316300" target="_blank" rel="noreferrer">WhatsApp</a>
+              <div className="footer-social-links">
+                <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" title="Instagram">
+                  <FontAwesomeIcon icon={faInstagram} />
+                </a>
+                <a href="https://facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook" title="Facebook">
+                  <FontAwesomeIcon icon={faFacebookF} />
+                </a>
+                <a href="https://wa.me/2349063316300" target="_blank" rel="noreferrer" aria-label="WhatsApp" title="WhatsApp">
+                  <FontAwesomeIcon icon={faWhatsapp} />
+                </a>
+              </div>
             </div>
           </div>
         </footer>
