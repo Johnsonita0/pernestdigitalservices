@@ -56,7 +56,7 @@ const resolveProfileImageUrl = async (storedValue) => {
   return error ? '' : data?.signedUrl || ''
 }
 
-function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
+function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
   const [expandedOrderId, setExpandedOrderId] = useState(null)
@@ -186,6 +186,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         profileImageUrl: signedImage.signedUrl,
         profileImagePath: filePath,
       }))
+      onProfileImageChange?.(signedImage.signedUrl)
       setPendingProfileImage(null)
       URL.revokeObjectURL(previewUrl)
 
@@ -217,6 +218,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
 
       if (profileData) {
         const profileImageUrl = await resolveProfileImageUrl(profileData.profile_image_url)
+        onProfileImageChange?.(profileImageUrl)
         setProfile((current) => ({
           ...current,
           fullName: profileData.full_name || current.fullName,
@@ -312,7 +314,11 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         <header className="mobile-dashboard-header">
           <div className="mobile-location-row">
             <div className="mobile-location-pin">
-              <FontAwesomeIcon icon={faUser} />
+              {profile.profileImageUrl ? (
+                <img className="mobile-user-avatar" src={profile.profileImageUrl} alt="" />
+              ) : (
+                <FontAwesomeIcon icon={faUser} />
+              )}
             </div>
             <div className="mobile-location-copy">
               <strong>{username}</strong>
@@ -343,7 +349,11 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                     <div className="mobile-profile-card">
                       <div className="mobile-profile-header">
                         <div className="mobile-profile-avatar">
-                          <FontAwesomeIcon icon={faUser} />
+                          {profile.profileImageUrl ? (
+                            <img src={profile.profileImageUrl} alt="Profile" />
+                          ) : (
+                            <FontAwesomeIcon icon={faUser} />
+                          )}
                         </div>
                         <div>
                             <p className="mobile-greeting-label">{userType === 'admin' ? 'Admin account' : 'Customer account'}</p>

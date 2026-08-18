@@ -14,6 +14,7 @@ function Header({
   onNavigate,
   cartCount = 0,
   user = null,
+  profileImageUrl = '',
   onLogout = null,
   isShop = false,
   searchTerm = '',
@@ -119,7 +120,9 @@ function Header({
           {cartCount > 0 && <span className="mobile-nav-badge">{cartCount}</span>}
         </button>
         <button type="button" className="mobile-nav-btn" onClick={() => onNavigate(user ? 'account' : 'login')}>
-          <span className="mobile-nav-icon">👤</span>
+          <span className="mobile-nav-icon mobile-nav-profile-icon">
+            {user && profileImageUrl ? <img src={profileImageUrl} alt="" /> : '👤'}
+          </span>
           <span>Account</span>
         </button>
       </nav>

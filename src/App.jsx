@@ -125,6 +125,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileAccount, setShowMobileAccount] = useState(false)
+  const [profileImageUrl, setProfileImageUrl] = useState('')
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false)
   const [successOrder, setSuccessOrder] = useState(null)
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
@@ -465,6 +466,7 @@ function App() {
   const handleLoginSuccess = async (authUser) => {
     const resolvedUserType = await resolveUserType(authUser)
     setUser(authUser)
+    setProfileImageUrl('')
     setUserType(resolvedUserType)
     setFavoriteItems([])
     setUserOrders([])
@@ -479,6 +481,7 @@ function App() {
 
   const handleSignUpSuccess = (authUser) => {
     setUser(authUser)
+    setProfileImageUrl('')
     setUserType('customer')
     setFavoriteItems([])
     setUserOrders([])
@@ -504,6 +507,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setProfileImageUrl('')
     setUserType('customer')
     setFavoriteItems([])
     setUserOrders([])
@@ -934,6 +938,7 @@ function App() {
           onNavigate={updateRoute}
           cartCount={cartItems.length}
           user={user}
+          profileImageUrl={profileImageUrl}
           onLogout={handleLogout}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -1156,6 +1161,7 @@ function App() {
           onRemoveFavorite={handleRemoveFavorite}
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
+          onProfileImageChange={setProfileImageUrl}
         />
       )}
 
@@ -1171,6 +1177,7 @@ function App() {
           onRemoveFavorite={handleRemoveFavorite}
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
+          onProfileImageChange={setProfileImageUrl}
           isAccountView
         />
       )}
