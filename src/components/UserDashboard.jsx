@@ -34,6 +34,28 @@ const prepareProfileImageFile = (file) => {
   })
 }
 
+const getProfileImagePath = (storedValue) => {
+  if (!storedValue) return ''
+  const publicPathMarker = '/storage/v1/object/public/bank_prof/'
+
+  if (storedValue.includes(publicPathMarker)) {
+    return decodeURIComponent(storedValue.split(publicPathMarker)[1])
+  }
+
+  return storedValue.startsWith('http') ? '' : storedValue
+}
+
+const resolveProfileImageUrl = async (storedValue) => {
+  const path = getProfileImagePath(storedValue)
+  if (!path) return storedValue || ''
+
+  const { data, error } = await supabase.storage
+    .from('bank_prof')
+    .createSignedUrl(path, 60 * 60)
+
+  return error ? '' : data?.signedUrl || ''
+}
+
 function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
@@ -46,6 +68,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
     preferences: user?.user_metadata?.preferences || 'No dietary preference set',
     deliveryNote: user?.user_metadata?.deliveryNote || 'Leave at the door if I am not available.',
     profileImageUrl: user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.profile_image_url || '',
+    profileImagePath: getProfileImagePath(user?.user_metadata?.profile_image_url),
   })
   const [loading, setLoading] = useState(false)
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
@@ -138,12 +161,18 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         throw new Error(error.message)
       }
 
-      const { data } = supabase.storage.from('bank_prof').getPublicUrl(filePath)
+      const { data: signedImage, error: signedImageError } = await supabase.storage
+        .from('bank_prof')
+        .createSignedUrl(filePath, 60 * 60)
+
+      if (signedImageError || !signedImage?.signedUrl) {
+        throw new Error(signedImageError?.message || 'Could not prepare the uploaded image for display.')
+      }
 
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          profile_image_url: data.publicUrl,
+          profile_image_url: filePath,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id)
@@ -154,7 +183,8 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
 
       setProfile((current) => ({
         ...current,
-        profileImageUrl: data.publicUrl,
+        profileImageUrl: signedImage.signedUrl,
+        profileImagePath: filePath,
       }))
       setPendingProfileImage(null)
       URL.revokeObjectURL(previewUrl)
@@ -186,12 +216,14 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
       }
 
       if (profileData) {
+        const profileImageUrl = await resolveProfileImageUrl(profileData.profile_image_url)
         setProfile((current) => ({
           ...current,
           fullName: profileData.full_name || current.fullName,
           phone: profileData.phone || current.phone,
           address: profileData.address || current.address,
-          profileImageUrl: profileData.profile_image_url || current.profileImageUrl,
+          profileImageUrl: profileImageUrl || current.profileImageUrl,
+          profileImagePath: getProfileImagePath(profileData.profile_image_url) || current.profileImagePath,
         }))
       }
 
@@ -242,7 +274,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
           full_name: profile.fullName,
           phone: profile.phone,
           address: profile.address,
-          profile_image_url: profile.profileImageUrl,
+          profile_image_url: profile.profileImagePath || profile.profileImageUrl,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id)
