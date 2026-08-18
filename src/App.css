@@ -2731,6 +2731,71 @@ a {
 
 .admin-tabs {
   margin-top: 42px;
+  padding-bottom: 96px;
+}
+
+.admin-bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(620px, calc(100% - 32px));
+  transform: translateX(-50%);
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  background: rgba(255, 250, 247, 0.94);
+  box-shadow: 0 16px 42px rgba(46, 28, 21, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.admin-bottom-nav-item {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-height: 58px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 15px;
+  background: transparent;
+  color: #765c52;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.admin-bottom-nav-item svg {
+  font-size: 1.05rem;
+}
+
+.admin-bottom-nav-item:hover,
+.admin-bottom-nav-item.active {
+  color: #e95d2d;
+  background: #fff0e8;
+}
+
+.admin-bottom-nav-item:active {
+  transform: scale(0.96);
+}
+
+.admin-bottom-nav-item b {
+  position: absolute;
+  top: 3px;
+  right: 18%;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e95d2d;
+  color: white;
+  font-size: 0.62rem;
 }
 
 .tab-navigation {

@@ -592,6 +592,47 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
           )}
         </div>
       </div>
+
+      <nav className="admin-bottom-nav" aria-label="Admin dashboard navigation">
+        <button
+          type="button"
+          className={`admin-bottom-nav-item ${activeTab === 'users' ? 'active' : ''}`}
+          onClick={() => {
+            setActiveTab('users')
+            setSelectedUser(null)
+          }}
+        >
+          <FontAwesomeIcon icon={faUsers} />
+          <span>Users</span>
+          {allUsers.length > 0 && <b>{allUsers.length}</b>}
+        </button>
+        <button
+          type="button"
+          className={`admin-bottom-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+          onClick={() => setActiveTab('orders')}
+        >
+          <FontAwesomeIcon icon={faShoppingBag} />
+          <span>Orders</span>
+          {allOrders.length > 0 && <b>{allOrders.length}</b>}
+        </button>
+        <button
+          type="button"
+          className={`admin-bottom-nav-item ${activeTab === 'testimonials' ? 'active' : ''}`}
+          onClick={() => setActiveTab('testimonials')}
+        >
+          <FontAwesomeIcon icon={faComment} />
+          <span>Reviews</span>
+          {pendingTestimonials.length > 0 && <b>{pendingTestimonials.length}</b>}
+        </button>
+        <button
+          type="button"
+          className={`admin-bottom-nav-item ${activeTab === 'menu' ? 'active' : ''}`}
+          onClick={() => setActiveTab('menu')}
+        >
+          <FontAwesomeIcon icon={faUtensils} />
+          <span>Menu</span>
+        </button>
+      </nav>
       </section>
     </>
   )
