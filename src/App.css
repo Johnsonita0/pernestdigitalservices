@@ -2724,6 +2724,10 @@ a {
   margin: 0 auto 28px;
 }
 
+.rider-app-header > div {
+  width: 100%;
+}
+
 .rider-app-header h1 {
   margin: 4px 0 8px;
   color: #1a1516;
