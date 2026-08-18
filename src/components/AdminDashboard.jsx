@@ -465,62 +465,78 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
             <div className="tab-content">
               <h3>Menu Items Management</h3>
 
-              <div className="menu-form" style={{ marginBottom: '20px', padding: '20px', border: '1px solid #e5d7c5', borderRadius: '16px', background: '#fffaf5' }}>
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '72px', height: '72px', borderRadius: '12px', overflow: 'hidden', background: '#f3efe9', border: '1px solid #e5d7c5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="menu-form admin-menu-form">
+                <div className="admin-menu-form-fields">
+                  <div className="admin-image-upload-row">
+                    <div className="admin-image-preview">
                       {menuForm.imageUrl ? (
                         <img src={menuForm.imageUrl} alt="Food preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <span style={{ color: '#6b4f3c', fontSize: '0.8rem', fontWeight: 700 }}>Image</span>
                       )}
                     </div>
-                    <label style={{ flex: 1, cursor: 'pointer', color: '#6b4f3c', fontWeight: 700 }}>
-                      Upload food image
-                      <input type="file" accept="image/*" onChange={handleMenuImageUpload} style={{ display: 'block', marginTop: '8px', width: '100%' }} />
+                    <label className="admin-image-upload-label">
+                      <span>Upload food image</span>
+                      <small>JPG, PNG or WEBP up to 5MB</small>
+                      <input type="file" accept="image/*" onChange={handleMenuImageUpload} />
                     </label>
                   </div>
 
-                  <input
-                    type="text"
-                    value={menuForm.title}
-                    placeholder="Food title"
-                    onChange={(event) => setMenuForm((current) => ({ ...current, title: event.target.value }))}
-                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
-                  />
-                  <textarea
-                    value={menuForm.description}
-                    placeholder="Description"
-                    rows="3"
-                    onChange={(event) => setMenuForm((current) => ({ ...current, description: event.target.value }))}
-                    style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
-                  />
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-                    <input
-                      type="number"
-                      value={menuForm.price}
-                      placeholder="Price"
-                      onChange={(event) => setMenuForm((current) => ({ ...current, price: event.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
-                    />
+                  <label className="admin-menu-field admin-menu-field-wide">
+                    <span>Food title</span>
                     <input
                       type="text"
-                      value={menuForm.tag}
-                      placeholder="Tag"
-                      onChange={(event) => setMenuForm((current) => ({ ...current, tag: event.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                      value={menuForm.title}
+                      placeholder="e.g. Fisherman native soup"
+                      onChange={(event) => setMenuForm((current) => ({ ...current, title: event.target.value }))}
                     />
-                    <input
-                      type="text"
-                      value={menuForm.badge}
-                      placeholder="Badge"
-                      onChange={(event) => setMenuForm((current) => ({ ...current, badge: event.target.value }))}
-                      style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid #d9c7b2' }}
+                  </label>
+                  <label className="admin-menu-field admin-menu-field-wide">
+                    <span>Description</span>
+                    <textarea
+                      value={menuForm.description}
+                      placeholder="Describe the ingredients and serving style"
+                      rows="3"
+                      onChange={(event) => setMenuForm((current) => ({ ...current, description: event.target.value }))}
                     />
+                  </label>
+                  <div className="admin-menu-meta-grid">
+                    <label className="admin-menu-field admin-price-field">
+                      <span>Price</span>
+                      <div className="admin-price-input">
+                        <strong>₦</strong>
+                        <input
+                          type="number"
+                          min="0"
+                          step="100"
+                          value={menuForm.price}
+                          placeholder="0"
+                          onChange={(event) => setMenuForm((current) => ({ ...current, price: event.target.value }))}
+                        />
+                      </div>
+                    </label>
+                    <label className="admin-menu-field">
+                      <span>Tag</span>
+                      <input
+                        type="text"
+                        value={menuForm.tag}
+                        placeholder="Chef special"
+                        onChange={(event) => setMenuForm((current) => ({ ...current, tag: event.target.value }))}
+                      />
+                    </label>
+                    <label className="admin-menu-field">
+                      <span>Badge</span>
+                      <input
+                        type="text"
+                        value={menuForm.badge}
+                        placeholder="Popular"
+                        onChange={(event) => setMenuForm((current) => ({ ...current, badge: event.target.value }))}
+                      />
+                    </label>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: '#4a352b' }}>
+                  <div className="admin-menu-options">
+                    <label>
                       <input
                         type="checkbox"
                         checked={menuForm.available}
@@ -528,7 +544,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                       />
                       Available
                     </label>
-                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', color: '#4a352b' }}>
+                    <label>
                       <input
                         type="checkbox"
                         checked={menuForm.featured}
@@ -544,7 +560,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                     </div>
                   )}
 
-                  <button type="button" className="primary-btn" onClick={handleCreateMenuItem} disabled={uploadingImage}>
+                  <button type="button" className="primary-btn admin-menu-submit" onClick={handleCreateMenuItem} disabled={uploadingImage}>
                     {uploadingImage ? 'Uploading...' : 'Create menu item'}
                   </button>
                 </div>
