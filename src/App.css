@@ -3749,6 +3749,120 @@ a {
   font-weight: 800;
 }
 
+@media (max-width: 760px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-form-panel,
+  .checkout-summary-panel,
+  .checkout-login-card {
+    padding: 18px 16px;
+  }
+
+  .checkout-page-header {
+    align-items: flex-start;
+  }
+
+  .checkout-login-actions {
+    flex-direction: column;
+  }
+
+  .checkout-login-actions .primary-btn,
+  .checkout-login-actions .ghost-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-page-shell {
+    padding: 16px 10px 42px;
+  }
+
+  .checkout-page-header {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .checkout-page-header h1 {
+    font-size: clamp(1.7rem, 9vw, 2.2rem);
+  }
+
+  .checkout-form-panel,
+  .checkout-summary-panel,
+  .checkout-login-card {
+    border-radius: 18px;
+    padding: 14px 12px;
+  }
+
+  .checkout-form-panel {
+    gap: 12px;
+  }
+
+  .checkout-form-panel label {
+    font-size: 0.9rem;
+  }
+
+  .checkout-form-panel input,
+  .checkout-form-panel textarea,
+  .checkout-form-panel select {
+    padding: 0.8rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .payment-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-method-option {
+    padding: 12px 10px;
+  }
+
+  .payment-method-name {
+    font-size: 0.9rem;
+  }
+
+  .checkout-item-row,
+  .checkout-total-row {
+    font-size: 0.93rem;
+    gap: 8px;
+  }
+
+  .checkout-confirm-btn {
+    min-height: 52px;
+  }
+
+  .ghost-btn.small-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.order-tracking-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .order-tracking-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+}
+
+@media (max-width: 400px) {
+  .order-tracking-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .order-tracking-step {
+    padding: 6px 4px !important;
+    font-size: 0.65rem !important;
+  }
+}
+
 .success-modal-backdrop {
   position: fixed;
   inset: 0;

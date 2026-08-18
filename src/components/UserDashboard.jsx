@@ -663,11 +663,11 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
 
                                   <div style={{ margin: '16px 0' }}>
                                     <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#666', fontWeight: '700' }}>Tracking</p>
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px' }}>
+                                    <div className="order-tracking-grid">
                                       {statusSteps.map((step, index) => {
                                         const isActive = index <= currentStep
                                         return (
-                                          <div key={step} style={{
+                                          <div key={step} className="order-tracking-step" style={{
                                             background: isActive ? '#fff1eb' : '#f3f4f6',
                                             borderRadius: '8px',
                                             padding: '8px 6px',
