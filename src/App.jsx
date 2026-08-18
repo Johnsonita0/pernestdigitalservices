@@ -67,7 +67,7 @@ function App() {
     contactNumber: '',
     address: '',
     notes: '',
-    paymentMethod: 'card',
+    paymentMethod: 'paystack',
   })
   const [pendingTestimonials, setPendingTestimonials] = useState([])
   const [approvedTestimonials, setApprovedTestimonials] = useState(testimonials)
@@ -396,7 +396,7 @@ function App() {
         contactNumber: '',
         address: '',
         notes: '',
-        paymentMethod: 'card',
+        paymentMethod: 'paystack',
       })
 
       setSuccessOrder(newOrder)
@@ -885,7 +885,6 @@ function App() {
                       <label>Payment method</label>
                       <div className="payment-method-grid" role="radiogroup" aria-label="Payment method">
                         {[
-                          { value: 'card', label: 'Card payment', note: 'Debit/Credit card' },
                           { value: 'paystack', label: 'Paystack', note: 'Fast online payment' },
                           { value: 'cash', label: 'Cash on delivery', note: 'Pay when delivered' },
                           { value: 'transfer', label: 'Bank transfer', note: 'Transfer to account' },
