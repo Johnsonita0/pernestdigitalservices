@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
+  const [expandedOrderId, setExpandedOrderId] = useState(null)
   const [orders, setOrders] = useState([])
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.fullName || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User',
@@ -572,94 +573,130 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
                           </button>
                         </div>
                       ) : (
-                        orders.map((order) => (
-                          <div 
-                            key={order.id}
-                            style={{
-                              borderRadius: '12px',
-                              border: '1px solid #e5e7eb',
-                              padding: '16px',
-                              marginBottom: '16px',
-                              backgroundColor: '#fafafa'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                              <div>
-                                <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#666' }}>
-                                  Order #{order.id.slice(0, 8)}
-                                </p>
-                                <p style={{ margin: '0', fontSize: '0.9rem', color: '#999' }}>
-                                  {new Date(order.created_at).toLocaleDateString('en-NG', { 
-                                    month: 'short', 
-                                    day: 'numeric', 
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
-                                </p>
-                              </div>
-                              <div style={{
-                                padding: '6px 12px',
-                                borderRadius: '20px',
-                                backgroundColor: order.status === 'pending' ? '#fef3c7' : order.status === 'preparing' ? '#dbeafe' : order.status === 'ready' ? '#dcfce7' : '#f3e8ff',
-                                color: order.status === 'pending' ? '#92400e' : order.status === 'preparing' ? '#1e40af' : order.status === 'ready' ? '#166534' : '#6b21a8',
-                                fontSize: '0.75rem',
-                                fontWeight: '600',
-                                textTransform: 'capitalize',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {order.status}
-                              </div>
-                            </div>
+                        orders.map((order) => {
+                          const orderStatus = order.status || 'pending'
+                          const statusSteps = ['Confirmed', 'Preparing', 'On the way', 'Delivered']
+                          const statusIndex = ['pending', 'preparing', 'ready', 'delivered'].indexOf(orderStatus)
+                          const currentStep = statusIndex >= 0 ? statusIndex : 0
+                          const isExpanded = expandedOrderId === order.id
 
-                            <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
-                              {order.order_items.map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.9rem' }}>
-                                  <span>
-                                    {item.food_name} <span style={{ color: '#999' }}>×{item.quantity}</span>
-                                  </span>
-                                  <span style={{ fontWeight: '600' }}>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                          return (
+                            <div 
+                              key={order.id}
+                              style={{
+                                borderRadius: '12px',
+                                border: '1px solid #e5e7eb',
+                                padding: '16px',
+                                marginBottom: '16px',
+                                backgroundColor: '#fafafa'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                                <div>
+                                  <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#666' }}>
+                                    Order #{order.id.slice(0, 8)}
+                                  </p>
+                                  <p style={{ margin: '0', fontSize: '0.9rem', color: '#999' }}>
+                                    {new Date(order.created_at).toLocaleDateString('en-NG', { 
+                                      month: 'short', 
+                                      day: 'numeric', 
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
                                 </div>
-                              ))}
-                            </div>
-
-                            <div style={{ marginBottom: '12px' }}>
-                              <p style={{ margin: '0 0 6px 0', fontSize: '0.85rem', color: '#666' }}>
-                                <strong>Delivery Address:</strong>
-                              </p>
-                              <p style={{ margin: '0', fontSize: '0.9rem', color: '#333' }}>
-                                {order.delivery_address}
-                              </p>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <p style={{ margin: '0', fontSize: '0.85rem', color: '#666' }}>Total</p>
-                                <p style={{ margin: '0', fontSize: '1.1rem', fontWeight: '700', color: '#ff6b35' }}>
-                                  ₦{order.order_total.toLocaleString('en-NG')}
-                                </p>
-                              </div>
-                              <button 
-                                type="button"
-                                style={{
-                                  padding: '8px 16px',
-                                  borderRadius: '8px',
-                                  border: '1px solid #ff6b35',
-                                  backgroundColor: 'transparent',
-                                  color: '#ff6b35',
-                                  fontSize: '0.85rem',
+                                <div style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  backgroundColor: orderStatus === 'pending' ? '#fef3c7' : orderStatus === 'preparing' ? '#dbeafe' : orderStatus === 'ready' ? '#dcfce7' : orderStatus === 'delivered' ? '#dcfce7' : '#f3e8ff',
+                                  color: orderStatus === 'pending' ? '#92400e' : orderStatus === 'preparing' ? '#1e40af' : orderStatus === 'ready' ? '#166534' : orderStatus === 'delivered' ? '#166534' : '#6b21a8',
+                                  fontSize: '0.75rem',
                                   fontWeight: '600',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => { e.target.style.backgroundColor = '#ff6b35'; e.target.style.color = '#fff'; }}
-                                onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#ff6b35'; }}
-                              >
-                                Track
-                              </button>
+                                  textTransform: 'capitalize',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {orderStatus}
+                                </div>
+                              </div>
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <div>
+                                  <p style={{ margin: '0', fontSize: '0.85rem', color: '#666' }}>Total</p>
+                                  <p style={{ margin: '0', fontSize: '1.1rem', fontWeight: '700', color: '#ff6b35' }}>
+                                    ₦{order.order_total.toLocaleString('en-NG')}
+                                  </p>
+                                </div>
+                                <button 
+                                  type="button"
+                                  style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ff6b35',
+                                    backgroundColor: 'transparent',
+                                    color: '#ff6b35',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#ff6b35'; e.target.style.color = '#fff'; }}
+                                  onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#ff6b35'; }}
+                                >
+                                  {isExpanded ? 'Hide details' : 'Track'}
+                                </button>
+                              </div>
+
+                              {isExpanded && (
+                                <div>
+                                  <div style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb' }}>
+                                    {order.order_items.map((item, idx) => (
+                                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', fontSize: '0.9rem' }}>
+                                        <span>
+                                          {item.food_name} <span style={{ color: '#999' }}>×{item.quantity}</span>
+                                        </span>
+                                        <span style={{ fontWeight: '600' }}>₦{(item.price * item.quantity).toLocaleString('en-NG')}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <div style={{ margin: '16px 0' }}>
+                                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#666', fontWeight: '700' }}>Tracking</p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px' }}>
+                                      {statusSteps.map((step, index) => {
+                                        const isActive = index <= currentStep
+                                        return (
+                                          <div key={step} style={{
+                                            background: isActive ? '#fff1eb' : '#f3f4f6',
+                                            borderRadius: '8px',
+                                            padding: '8px 6px',
+                                            textAlign: 'center',
+                                            fontSize: '0.7rem',
+                                            color: isActive ? '#ff6b35' : '#6b7280',
+                                            fontWeight: isActive ? 700 : 500,
+                                            border: `1px solid ${isActive ? '#ffb899' : '#e5e7eb'}`
+                                          }}>
+                                            {step}
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+
+                                  <div style={{ marginBottom: '12px' }}>
+                                    <p style={{ margin: '0 0 6px 0', fontSize: '0.85rem', color: '#666' }}>
+                                      <strong>Delivery Address:</strong>
+                                    </p>
+                                    <p style={{ margin: '0', fontSize: '0.9rem', color: '#333' }}>
+                                      {order.delivery_address}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))
+                          )
+                        })
                       )}
                     </div>
                   ) : (
@@ -751,31 +788,6 @@ function UserDashboard({ user, favoriteItems = [], userOrders = [], onLogout, on
           )}
         </main>
 
-        <nav className="mobile-bottom-nav dashboard-bottom-nav" aria-label="Mobile navigation">
-          <button type="button" className={`mobile-nav-btn ${activeNav === 'home' ? 'active' : ''}`} onClick={() => setActiveNav('home')}>
-            <span className="mobile-nav-icon">🏠</span>
-            <span>Home</span>
-          </button>
-          <button type="button" className={`mobile-nav-btn ${activeNav === 'search' ? 'active' : ''}`} onClick={() => setActiveNav('search')}>
-            <span className="mobile-nav-icon">🔍</span>
-            <span>Search</span>
-          </button>
-          <button type="button" className={`mobile-nav-btn ${activeNav === 'menu' ? 'active' : ''}`} onClick={() => { setActiveNav('menu'); onViewMenu(); }}>
-            <span className="mobile-nav-icon">📋</span>
-            <span>Menu</span>
-          </button>
-          <button type="button" className={`mobile-nav-btn ${activeNav === 'cart' ? 'active' : ''}`} onClick={() => setActiveNav('cart')}>
-            <span className="mobile-nav-icon">🛒</span>
-            <span>Cart</span>
-          </button>
-          <button type="button" className={`mobile-nav-btn ${activeNav === 'account' ? 'active' : ''}`} onClick={() => {
-            setActiveNav('account')
-            onOpenAccount?.()
-          }}>
-            <span className="mobile-nav-icon">👤</span>
-            <span>Account</span>
-          </button>
-        </nav>
       </div>
     </div>
   )

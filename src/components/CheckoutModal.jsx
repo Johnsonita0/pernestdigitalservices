@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supabase } from '../lib/supabase'
 
 const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
@@ -22,7 +21,7 @@ function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '', userI
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    
+
     if (!formData.name.trim() || !formData.contactNumber.trim() || !formData.address.trim()) {
       setError('Please fill in all required fields')
       return
@@ -33,56 +32,19 @@ function CheckoutModal({ items, total, onClose, onConfirm, userEmail = '', userI
       return
     }
 
+    if (!onConfirm) {
+      setError('Checkout handler is unavailable.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      // Save order to database
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert([
-          {
-            user_id: userId,
-            order_total: total,
-            status: 'pending',
-            delivery_address: formData.address,
-            delivery_notes: formData.notes,
-          }
-        ])
-        .select()
-
-      if (orderError) {
-        throw new Error(orderError.message)
-      }
-
-      const orderId = orderData?.[0]?.id
-
-      if (!orderId) {
-        throw new Error('Failed to create order')
-      }
-
-      // Save order items
-      const orderItems = items.map((item) => ({
-        order_id: orderId,
-        food_name: item.title,
-        food_id: item.id,
-        quantity: item.quantity || 1,
-        price: item.price,
-      }))
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-
-      if (itemsError) {
-        throw new Error(itemsError.message)
-      }
-
-      // Call original onConfirm callback
-      onConfirm(formData)
-      setLoading(false)
+      await onConfirm(formData)
     } catch (err) {
       console.error('Error creating order:', err)
       setError(err.message || 'Failed to create order')
+    } finally {
       setLoading(false)
     }
   }

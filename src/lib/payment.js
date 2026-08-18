@@ -1,6 +1,5 @@
 // Payment Configuration and Helpers
-// Paystack Public Key - Replace with your actual public key from https://dashboard.paystack.com
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_51234567890abcdefghijklmnop'
+const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || ''
 
 // Opay Merchant ID and App ID - Replace with your actual credentials from Opay
 const OPAY_MERCHANT_ID = import.meta.env.VITE_OPAY_MERCHANT_ID || 'MERCHANT_ID'
@@ -42,17 +41,28 @@ export const PAYMENT_METHODS = {
 // Paystack Payment Handler
 export const initializePaystackPayment = async (email, amount, metadata) => {
   return new Promise((resolve, reject) => {
+    if (!PAYSTACK_PUBLIC_KEY) {
+      reject(new Error('VITE_PAYSTACK_PUBLIC_KEY is missing. Add your Paystack test key to the environment before running the app.'))
+      return
+    }
+
     const script = document.createElement('script')
     script.src = 'https://js.paystack.co/v1/inline.js'
     script.async = true
-    
+
     script.onload = () => {
       const PaystackPop = window.PaystackPop
+
+      if (!PaystackPop || !PaystackPop.setup) {
+        reject(new Error('Paystack script failed to initialize.'))
+        return
+      }
+
       const handler = PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: email,
-        amount: amount * 100, // Paystack expects amount in kobo (cents)
-        ref: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        amount: amount * 100,
+        ref: `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
         metadata: metadata,
         onClose: () => {
           reject(new Error('Payment window closed'))
@@ -61,14 +71,14 @@ export const initializePaystackPayment = async (email, amount, metadata) => {
           resolve(response)
         },
       })
-      
+
       handler.openIframe()
     }
-    
+
     script.onerror = () => {
       reject(new Error('Failed to load Paystack script'))
     }
-    
+
     document.body.appendChild(script)
   })
 }

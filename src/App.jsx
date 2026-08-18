@@ -6,13 +6,13 @@ import Story from './components/Story'
 import FeaturedDishes from './components/FeaturedDishes'
 import Shop from './components/Shop'
 import AdminDashboard from './components/AdminDashboard'
-import CheckoutModal from './components/CheckoutModal'
 import TestimonialForm from './components/TestimonialForm'
 import LoginPage from './components/LoginPage'
 import SignUpPage from './components/SignUpPage'
 import UserDashboard from './components/UserDashboard'
 import { menuItems } from './data/menu'
 import { isSupabaseConfigured, supabase } from './lib/supabase'
+import { initializePaystackPayment } from './lib/payment'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faSearch, faUser } from '@fortawesome/free-solid-svg-icons'
 
@@ -82,6 +82,9 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileAccount, setShowMobileAccount] = useState(false)
+  const [checkoutError, setCheckoutError] = useState('')
+  const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false)
+  const [successOrder, setSuccessOrder] = useState(null)
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
 
   useEffect(() => {
@@ -281,8 +284,21 @@ function App() {
     window.history.pushState({}, '', '/checkout')
   }
 
+  useEffect(() => {
+    if (!user) return
+
+    setCheckoutForm((current) => ({
+      name: current.name || user.user_metadata?.fullName || user.user_metadata?.name || user.email?.split('@')[0] || '',
+      contactNumber: current.contactNumber || user.user_metadata?.phone || '',
+      address: current.address || user.user_metadata?.address || '',
+      notes: current.notes || '',
+      paymentMethod: current.paymentMethod || 'card',
+    }))
+  }, [user])
+
   const handleCheckoutInputChange = (event) => {
     const { name, value } = event.target
+    setCheckoutError('')
     setCheckoutForm((current) => ({ ...current, [name]: value }))
   }
 
@@ -296,13 +312,27 @@ function App() {
     }
 
     try {
-      // Save order to database
+      if (orderData.paymentMethod === 'paystack') {
+        const paymentAmount = total + 2500
+        const paymentResponse = await initializePaystackPayment(user.email, paymentAmount, {
+          orderType: 'food_order',
+          userId: user.id,
+          name: orderData.name,
+          contactNumber: orderData.contactNumber,
+          address: orderData.address,
+        })
+
+        if (!paymentResponse?.reference) {
+          throw new Error('Paystack payment was not completed.')
+        }
+      }
+
       const { data: orderResult, error: orderError } = await supabase
         .from('orders')
         .insert([
           {
             user_id: user.id,
-            order_total: total,
+            order_total: total + 2500,
             status: 'pending',
             delivery_address: orderData.address,
             delivery_notes: orderData.notes,
@@ -322,7 +352,6 @@ function App() {
         return
       }
 
-      // Save order items to database
       const orderItems = cartItems.map((item) => ({
         order_id: orderId,
         food_name: item.title,
@@ -339,12 +368,11 @@ function App() {
         console.warn('Error saving order items:', itemsError)
       }
 
-      // Create local order object for display
       const newOrder = {
         id: orderId,
         date: new Date().toISOString(),
         items: cartItems,
-        total,
+        total: total + 2500,
         name: orderData.name,
         contactNumber: orderData.contactNumber,
         address: orderData.address,
@@ -353,19 +381,15 @@ function App() {
         status: 'pending',
         userId: user?.id || null,
       }
-      
+
       setUserOrders((current) => [newOrder, ...current])
-      
-      // Add to all orders
       setAllOrders((current) => [newOrder, ...current])
-      
-      // Update user's orders in allUsers
       setAllUsers((current) =>
         current.map((u) =>
           u.id === user?.id ? { ...u, orders: [newOrder, ...(u.orders || [])] } : u
         )
       )
-      
+
       setCartItems([])
       setCheckoutForm({
         name: '',
@@ -374,8 +398,9 @@ function App() {
         notes: '',
         paymentMethod: 'card',
       })
-      
-      alert('Order created successfully! You can track it in your profile.')
+
+      setSuccessOrder(newOrder)
+      setShowOrderSuccessModal(true)
       updateRoute('home')
     } catch (error) {
       console.error('Error creating order:', error)
@@ -442,6 +467,41 @@ function App() {
 
   return (
     <div className="page-shell">
+      {showOrderSuccessModal && successOrder && (
+        <div className="success-modal-backdrop" onClick={() => setShowOrderSuccessModal(false)}>
+          <div className="success-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="fireworks" aria-hidden="true">
+              <span className="firework firework-1" />
+              <span className="firework firework-2" />
+              <span className="firework firework-3" />
+              <span className="firework firework-4" />
+              <span className="firework firework-5" />
+            </div>
+
+            <div className="success-modal-icon">✓</div>
+            <h3>Order placed successfully</h3>
+            <p>Your food is being prepared and the order is now tracking in your account.</p>
+
+            <div className="success-order-summary">
+              <span>Order #{String(successOrder.id).slice(0, 8)}</span>
+              <strong>{formatNaira(successOrder.total)}</strong>
+            </div>
+
+            <div className="success-modal-actions">
+              <button type="button" className="primary-btn" onClick={() => {
+                setShowOrderSuccessModal(false)
+                updateRoute('account')
+              }}>
+                Track order
+              </button>
+              <button type="button" className="ghost-btn" onClick={() => setShowOrderSuccessModal(false)}>
+                Continue shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {view !== 'login' && (
         <Header
           onNavigate={updateRoute}
@@ -751,107 +811,169 @@ function App() {
                 </div>
               </div>
             ) : (
-              <div className="checkout-layout">
-                <form
-                  className="checkout-form-panel"
-                  onSubmit={(event) => {
-                    event.preventDefault()
-                    if (!checkoutForm.name.trim() || !checkoutForm.contactNumber.trim() || !checkoutForm.address.trim()) {
-                      alert('Please fill in all required fields')
-                      return
-                    }
-                    handleConfirmOrder(checkoutForm)
-                  }}
-                >
-                  <label>
-                    Full name
-                    <input
-                      type="text"
-                      name="name"
-                      value={checkoutForm.name || user.user_metadata?.fullName || user.email?.split('@')[0] || ''}
-                      onChange={handleCheckoutInputChange}
-                      placeholder="Your full name"
-                      required
-                    />
-                  </label>
+                <div className="checkout-layout">
+                  <form
+                    className="checkout-form-panel"
+                    onSubmit={(event) => {
+                      event.preventDefault()
+                      const name = (checkoutForm.name || user?.user_metadata?.fullName || user?.email?.split('@')[0] || '').trim()
+                      const contactNumber = (checkoutForm.contactNumber || '').trim()
+                      const address = (checkoutForm.address || user?.user_metadata?.address || '').trim()
 
-                  <label>
-                    Contact number
-                    <input
-                      type="tel"
-                      name="contactNumber"
-                      value={checkoutForm.contactNumber}
-                      onChange={handleCheckoutInputChange}
-                      placeholder="0803 000 0000"
-                      required
-                    />
-                  </label>
+                      if (!name || !contactNumber || !address) {
+                        setCheckoutError('Please fill in all required fields')
+                        return
+                      }
 
-                  <label>
-                    Delivery address
-                    <textarea
-                      name="address"
-                      rows="3"
-                      value={checkoutForm.address}
-                      onChange={handleCheckoutInputChange}
-                      placeholder="Street, area, city"
-                      required
-                    />
-                  </label>
+                      setCheckoutError('')
+                      handleConfirmOrder({
+                        ...checkoutForm,
+                        name,
+                        contactNumber,
+                        address,
+                      })
+                    }}
+                  >
+                    <label>
+                      Full name
+                      <input
+                        type="text"
+                        name="name"
+                        value={checkoutForm.name || user.user_metadata?.fullName || user.email?.split('@')[0] || ''}
+                        onChange={handleCheckoutInputChange}
+                        placeholder="Your full name"
+                        required
+                      />
+                    </label>
 
-                  <label>
-                    Delivery notes
-                    <textarea
-                      name="notes"
-                      rows="2"
-                      value={checkoutForm.notes}
-                      onChange={handleCheckoutInputChange}
-                      placeholder="Extra instructions"
-                    />
-                  </label>
+                    <label>
+                      Contact number
+                      <input
+                        type="tel"
+                        name="contactNumber"
+                        value={checkoutForm.contactNumber}
+                        onChange={handleCheckoutInputChange}
+                        placeholder="0803 000 0000"
+                        required
+                      />
+                    </label>
 
-                  <label>
-                    Payment method
-                    <select name="paymentMethod" value={checkoutForm.paymentMethod} onChange={handleCheckoutInputChange}>
-                      <option value="card">Card payment</option>
-                      <option value="cash">Cash on delivery</option>
-                      <option value="transfer">Bank transfer</option>
-                    </select>
-                  </label>
+                    <label>
+                      Delivery address
+                      <textarea
+                        name="address"
+                        rows="3"
+                        value={checkoutForm.address}
+                        onChange={handleCheckoutInputChange}
+                        placeholder="Street, area, city"
+                        required
+                      />
+                    </label>
 
-                  <button type="submit" className="primary-btn checkout-confirm-btn">
-                    Confirm and pay {formatNaira(total)}
-                  </button>
-                </form>
+                    <label>
+                      Delivery notes
+                      <textarea
+                        name="notes"
+                        rows="2"
+                        value={checkoutForm.notes}
+                        onChange={handleCheckoutInputChange}
+                        placeholder="Extra instructions"
+                      />
+                    </label>
 
-                <aside className="checkout-summary-panel">
-                  <h3>Order summary</h3>
-                  {cartItems.map((item) => (
-                    <div key={`summary-${item.id}`} className="checkout-item-row">
-                      <span>{item.title}</span>
-                      <strong>{formatNaira(item.price)}</strong>
+                    <div className="payment-method-block">
+                      <label>Payment method</label>
+                      <div className="payment-method-grid" role="radiogroup" aria-label="Payment method">
+                        {[
+                          { value: 'card', label: 'Card payment', note: 'Debit/Credit card' },
+                          { value: 'paystack', label: 'Paystack', note: 'Fast online payment' },
+                          { value: 'cash', label: 'Cash on delivery', note: 'Pay when delivered' },
+                          { value: 'transfer', label: 'Bank transfer', note: 'Transfer to account' },
+                        ].map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`payment-method-option ${checkoutForm.paymentMethod === option.value ? 'active' : ''}`}
+                            onClick={() => {
+                              setCheckoutError('')
+                              setCheckoutForm((current) => ({ ...current, paymentMethod: option.value }))
+                            }}
+                            aria-pressed={checkoutForm.paymentMethod === option.value}
+                          >
+                            <span className="payment-method-name">{option.label}</span>
+                            <span className="payment-method-note">{option.note}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  ))}
 
-                  <div className="checkout-total-row">
-                    <span>Subtotal</span>
-                    <strong>{formatNaira(total)}</strong>
-                  </div>
+                    {checkoutForm.paymentMethod === 'paystack' && (
+                      <div className="payment-inline-box">
+                        <div className="payment-inline-header">
+                          <strong>Paystack</strong>
+                          <span>Secure online checkout</span>
+                        </div>
+                        <p>Pay securely with your card or bank via the Paystack checkout popup.</p>
+                      </div>
+                    )}
 
-                  <div className="checkout-total-row delivery-row">
-                    <span>Delivery</span>
-                    <strong>₦2,500</strong>
-                  </div>
+                    {checkoutForm.paymentMethod === 'transfer' && (
+                      <div className="payment-inline-box">
+                        <div className="payment-inline-header">
+                          <strong>Bank transfer</strong>
+                          <span>Transfer to Trophy account</span>
+                        </div>
+                        <p>Account name: Trophy Sip &amp; Savor<br />Account number: 1234567890</p>
+                      </div>
+                    )}
 
-                  <div className="checkout-total-row grand-total-row">
-                    <span>Total</span>
-                    <strong>{formatNaira(total + 2500)}</strong>
-                  </div>
-                </aside>
-              </div>
-            )}
-          </section>
-        </main>
+                    {checkoutForm.paymentMethod === 'cash' && (
+                      <div className="payment-inline-box">
+                        <div className="payment-inline-header">
+                          <strong>Cash on delivery</strong>
+                          <span>Pay on arrival</span>
+                        </div>
+                        <p>Pay the delivery rider when your order arrives at your location.</p>
+                      </div>
+                    )}
+
+                    {checkoutError && (
+                      <div className="checkout-inline-error">{checkoutError}</div>
+                    )}
+
+                    <button type="submit" className="primary-btn checkout-confirm-btn">
+                      Confirm and pay {formatNaira(total)}
+                    </button>
+                  </form>
+
+                  <aside className="checkout-summary-panel">
+                    <h3>Order summary</h3>
+                    {cartItems.map((item) => (
+                      <div key={`summary-${item.id}`} className="checkout-item-row">
+                        <span>{item.title}</span>
+                        <strong>{formatNaira(item.price)}</strong>
+                      </div>
+                    ))}
+
+                    <div className="checkout-total-row">
+                      <span>Subtotal</span>
+                      <strong>{formatNaira(total)}</strong>
+                    </div>
+
+                    <div className="checkout-total-row delivery-row">
+                      <span>Delivery</span>
+                      <strong>₦2,500</strong>
+                    </div>
+
+                    <div className="checkout-total-row grand-total-row">
+                      <span>Total</span>
+                      <strong>{formatNaira(total + 2500)}</strong>
+                    </div>
+                  </aside>
+                </div>
+              )}
+            </section>
+          </main>
       )}
 
       {view !== 'login' && view !== 'checkout' && (
