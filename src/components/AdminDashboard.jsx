@@ -205,48 +205,6 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
         </div>
 
         <div className="admin-tabs">
-          <div className="tab-navigation">
-            <button
-              type="button"
-              className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveTab('users')
-                setSelectedUser(null)
-              }}
-            >
-              <FontAwesomeIcon icon={faUsers} />
-              <span>Users</span>
-              {allUsers.length > 0 && <span className="badge">{allUsers.length}</span>}
-            </button>
-            <button
-              type="button"
-              className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
-            >
-              <FontAwesomeIcon icon={faShoppingBag} />
-              <span>Orders</span>
-            </button>
-            <button
-              type="button"
-              className={`tab-btn ${activeTab === 'testimonials' ? 'active' : ''}`}
-              onClick={() => setActiveTab('testimonials')}
-            >
-              <FontAwesomeIcon icon={faComment} />
-              <span>Testimonials</span>
-              {pendingTestimonials.length > 0 && (
-                <span className="badge">{pendingTestimonials.length}</span>
-              )}
-            </button>
-            <button
-              type="button"
-              className={`tab-btn ${activeTab === 'menu' ? 'active' : ''}`}
-              onClick={() => setActiveTab('menu')}
-            >
-              <FontAwesomeIcon icon={faUtensils} />
-              <span>Menu & Featured</span>
-            </button>
-          </div>
-
           {activeTab === 'users' && (
             <div className="tab-content">
               <h3>Users Management</h3>
