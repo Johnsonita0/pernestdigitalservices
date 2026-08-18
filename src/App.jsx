@@ -6,6 +6,7 @@ import Story from './components/Story'
 import FeaturedDishes from './components/FeaturedDishes'
 import Shop from './components/Shop'
 import AdminDashboard from './components/AdminDashboard'
+import RiderDashboard from './components/RiderDashboard'
 import TestimonialForm from './components/TestimonialForm'
 import LoginPage from './components/LoginPage'
 import SignUpPage from './components/SignUpPage'
@@ -40,7 +41,7 @@ const resolveUserType = async (authUser) => {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('is_admin')
+    .select('is_admin, role')
     .eq('id', authUser.id)
     .maybeSingle()
 
@@ -48,7 +49,8 @@ const resolveUserType = async (authUser) => {
     console.warn('Unable to verify account type:', error)
   }
 
-  return data?.is_admin || isAdminUser(authUser) ? 'admin' : 'customer'
+  if (data?.is_admin || isAdminUser(authUser)) return 'admin'
+  return data?.role === 'rider' ? 'rider' : 'customer'
 }
 
 const faqItems = [
@@ -115,6 +117,7 @@ function App() {
   const [authView, setAuthView] = useState('login') // 'login' or 'signup'
   const [allUsers, setAllUsers] = useState([])
   const [allOrders, setAllOrders] = useState([])
+  const [riderOrders, setRiderOrders] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [showMobileSearch, setShowMobileSearch] = useState(false)
   const [showMobileAccount, setShowMobileAccount] = useState(false)
@@ -135,9 +138,10 @@ function App() {
       setUser(authUser)
       const resolvedUserType = await resolveUserType(authUser)
       setUserType(resolvedUserType)
-      if (authUser && resolvedUserType === 'admin') {
-        setView('admin')
-        window.history.pushState({}, '', '/admin')
+      if (authUser && resolvedUserType !== 'customer') {
+        const nextRoute = resolvedUserType === 'rider' ? '/rider' : '/admin'
+        setView(resolvedUserType)
+        window.history.pushState({}, '', nextRoute)
       }
       setLoading(false)
     }
@@ -227,6 +231,47 @@ function App() {
   }, [user?.id, userType])
 
   useEffect(() => {
+    if (!isSupabaseConfigured || userType !== 'rider' || !user?.id) return
+
+    const loadRiderOrders = async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*), profiles:user_id(full_name, phone)')
+        .eq('status', 'ready')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.warn('Error loading rider orders:', error)
+        return
+      }
+
+      setRiderOrders((data || []).map((order) => ({
+        ...order,
+        customerName: order.profiles?.full_name || 'Customer',
+        customerPhone: order.profiles?.phone || '',
+        address: order.delivery_address || 'No delivery address',
+        total: Number(order.order_total) || 0,
+        items: order.order_items || [],
+      })))
+    }
+
+    loadRiderOrders()
+
+    const riderOrderChannel = supabase
+      .channel(`rider-orders-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        loadRiderOrders,
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(riderOrderChannel)
+    }
+  }, [user?.id, userType])
+
+  useEffect(() => {
     if (!isSupabaseConfigured || userType !== 'admin' || !user?.id) return
 
     const loadAdminOrders = async () => {
@@ -271,6 +316,20 @@ function App() {
           return
         }
         setView('admin')
+        return
+      }
+      if (path === '/rider') {
+        if (!user) {
+          setAuthView('login')
+          setView('login')
+          return
+        }
+        if (userType !== 'rider') {
+          setView(userType === 'admin' ? 'admin' : 'account')
+          window.history.pushState({}, '', userType === 'admin' ? '/admin' : '/account')
+          return
+        }
+        setView('rider')
         return
       }
       if (path === '/dashboard') {
@@ -368,8 +427,8 @@ function App() {
     setFavoriteItems([])
     setUserOrders([])
 
-    const nextView = resolvedUserType === 'admin' ? 'admin' : 'account'
-    const route = nextView === 'admin' ? '/admin' : '/account'
+    const nextView = resolvedUserType === 'admin' ? 'admin' : resolvedUserType === 'rider' ? 'rider' : 'account'
+    const route = nextView === 'admin' ? '/admin' : nextView === 'rider' ? '/rider' : '/account'
 
     setView(nextView)
     setAuthView('login')
@@ -406,8 +465,21 @@ function App() {
     setUserType('customer')
     setFavoriteItems([])
     setUserOrders([])
+    setRiderOrders([])
     setView('home')
     window.history.pushState({}, '', '/')
+  }
+
+  const handleUpdateRiderOrderStatus = async (orderId) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'delivered', updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .eq('status', 'ready')
+
+    if (error) throw new Error(error.message)
+
+    setRiderOrders((current) => current.filter((order) => order.id !== orderId))
   }
 
   const handleAddToCart = (product) => {
@@ -1047,6 +1119,15 @@ function App() {
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
           isAccountView
+        />
+      )}
+
+      {view === 'rider' && user && userType === 'rider' && (
+        <RiderDashboard
+          user={user}
+          orders={riderOrders}
+          onUpdateOrderStatus={handleUpdateRiderOrderStatus}
+          onLogout={handleLogout}
         />
       )}
 

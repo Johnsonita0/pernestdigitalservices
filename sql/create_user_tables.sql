@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   address TEXT NOT NULL,
   profile_image_url TEXT, -- path/URL stored in the Supabase 'bank_prof' bucket
   is_admin BOOLEAN DEFAULT FALSE,
+  role TEXT NOT NULL DEFAULT 'customer', -- customer, rider, admin
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -83,6 +84,9 @@ CREATE TABLE IF NOT EXISTS menu_items (
 
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'customer';
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_menu_items_title_unique
   ON menu_items(title);
 
@@ -125,6 +129,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+CREATE OR REPLACE FUNCTION public.is_rider_user(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM public.profiles
+    WHERE id = p_user_id
+      AND role = 'rider'
+      AND is_admin = false
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Drop existing policies so the script can be re-run safely
 DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
@@ -134,6 +151,9 @@ DROP POLICY IF EXISTS "Users can insert their own preferences" ON user_preferenc
 DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
+DROP POLICY IF EXISTS "Riders can view ready orders" ON orders;
+DROP POLICY IF EXISTS "Riders can mark ready orders delivered" ON orders;
+DROP POLICY IF EXISTS "Riders can view ready order items" ON order_items;
 DROP POLICY IF EXISTS "Admin can manage menu items" ON menu_items;
 DROP POLICY IF EXISTS "Anyone can view available menu items" ON menu_items;
 DROP POLICY IF EXISTS "Admin can manage food_img files" ON storage.objects;
@@ -179,6 +199,33 @@ CREATE POLICY "Users can view order items from their orders"
   USING (
     order_id IN (
       SELECT id FROM orders WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Riders can view ready orders"
+  ON orders FOR SELECT
+  USING (
+    public.is_rider_user(auth.uid())
+    AND status = 'ready'
+  );
+
+CREATE POLICY "Riders can mark ready orders delivered"
+  ON orders FOR UPDATE
+  USING (
+    public.is_rider_user(auth.uid())
+    AND status = 'ready'
+  )
+  WITH CHECK (
+    public.is_rider_user(auth.uid())
+    AND status = 'delivered'
+  );
+
+CREATE POLICY "Riders can view ready order items"
+  ON order_items FOR SELECT
+  USING (
+    public.is_rider_user(auth.uid())
+    AND order_id IN (
+      SELECT id FROM orders WHERE status = 'ready'
     )
   );
 
@@ -319,6 +366,37 @@ DO UPDATE SET
   full_name = EXCLUDED.full_name,
   email = EXCLUDED.email,
   is_admin = true,
+  role = 'admin',
+  updated_at = NOW();
+
+-- Ensure the delivery rider profile exists and has rider-only privileges.
+INSERT INTO public.profiles (
+  id,
+  username,
+  full_name,
+  email,
+  phone,
+  address,
+  is_admin,
+  role
+)
+VALUES (
+  '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d',
+  'rider',
+  'Trophy Rider',
+  'rider@trophy.com',
+  '0000000000',
+  'Delivery Desk',
+  false,
+  'rider'
+)
+ON CONFLICT (id)
+DO UPDATE SET
+  username = EXCLUDED.username,
+  full_name = EXCLUDED.full_name,
+  email = EXCLUDED.email,
+  is_admin = false,
+  role = 'rider',
   updated_at = NOW();
 
 -- Add payment method and proof of payment columns to orders table if they don't exist
