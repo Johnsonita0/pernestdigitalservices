@@ -4,6 +4,36 @@ import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUse
 import { supabase } from '../lib/supabase'
 import { notifyToast } from '../lib/toast'
 
+const prepareProfileImageFile = (file) => {
+  if (!['image/png', 'image/webp'].includes(file.type)) return Promise.resolve(file)
+
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    image.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = image.naturalWidth
+      canvas.height = image.naturalHeight
+      canvas.getContext('2d').drawImage(image, 0, 0)
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(objectUrl)
+        if (!blob) {
+          reject(new Error('Could not prepare this image for upload.'))
+          return
+        }
+        resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.jpg', { type: 'image/jpeg' }))
+      }, 'image/jpeg', 0.9)
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Could not read this image.'))
+    }
+    image.src = objectUrl
+  })
+}
+
 function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
@@ -19,6 +49,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
   })
   const [loading, setLoading] = useState(false)
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
+  const [pendingProfileImage, setPendingProfileImage] = useState(null)
 
   // Load profile data from database on component mount
   useEffect(() => {
@@ -56,7 +87,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
     }
   }
 
-  const handleProfileImageUpload = async (event) => {
+  const handleProfileImageSelect = (event) => {
     const file = event.target.files?.[0]
     if (!file || !user?.id) return
 
@@ -70,22 +101,38 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
       return
     }
 
-    const previousProfileImageUrl = profile.profileImageUrl
+    if (pendingProfileImage?.previewUrl) {
+      URL.revokeObjectURL(pendingProfileImage.previewUrl)
+    }
+
     const previewUrl = URL.createObjectURL(file)
-    setProfile((current) => ({
-      ...current,
-      profileImageUrl: previewUrl,
-    }))
+    setPendingProfileImage({ file, previewUrl })
+    event.target.value = ''
+    notifyToast('Preview ready. Confirm when you are happy with the photo.', 'info')
+  }
+
+  const cancelProfileImageUpload = () => {
+    if (pendingProfileImage?.previewUrl) {
+      URL.revokeObjectURL(pendingProfileImage.previewUrl)
+    }
+    setPendingProfileImage(null)
+  }
+
+  const handleProfileImageUpload = async () => {
+    if (!pendingProfileImage || !user?.id) return
+
+    const { file, previewUrl } = pendingProfileImage
 
     try {
       setUploadingProfileImage(true)
       notifyToast('Uploading profile photo...', 'info')
-      const safeName = file.name.replace(/\s+/g, '_')
+      const uploadFile = await prepareProfileImageFile(file)
+      const safeName = uploadFile.name.replace(/\s+/g, '_')
       const filePath = `${user.id}/profile/${Date.now()}-${safeName}`
 
       const { error } = await supabase.storage
         .from('bank_prof')
-        .upload(filePath, file, { upsert: true })
+        .upload(filePath, uploadFile, { upsert: true })
 
       if (error) {
         throw new Error(error.message)
@@ -109,18 +156,19 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         ...current,
         profileImageUrl: data.publicUrl,
       }))
+      setPendingProfileImage(null)
+      URL.revokeObjectURL(previewUrl)
 
       notifyToast('Profile photo uploaded successfully.', 'success')
     } catch (error) {
       console.error('Error uploading profile photo:', error)
       setProfile((current) => ({
         ...current,
-        profileImageUrl: previousProfileImageUrl,
       }))
+      URL.revokeObjectURL(previewUrl)
       notifyToast(`Profile photo upload failed: ${error.message}`, 'error')
     } finally {
       setUploadingProfileImage(false)
-      event.target.value = ''
     }
   }
 
@@ -179,6 +227,11 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
   const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
 
   const handleProfileSave = async () => {
+    if (uploadingProfileImage) {
+      notifyToast('Please wait for the profile photo upload to finish.', 'warning')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -444,39 +497,42 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                   </div>
 
                   <div className="mobile-profile-form">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
-                      <div style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        backgroundColor: '#f3efe9',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid #e5d7c5'
-                      }}>
-                        {profile.profileImageUrl ? (
+                    <div className="profile-photo-upload">
+                      <div className="profile-photo-preview">
+                        {pendingProfileImage?.previewUrl || profile.profileImageUrl ? (
                           <img
-                            src={profile.profileImageUrl}
+                            src={pendingProfileImage?.previewUrl || profile.profileImageUrl}
                             alt="Profile"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         ) : (
-                          <FontAwesomeIcon icon={faUser} style={{ color: '#6b4f3c', fontSize: '1.5rem' }} />
+                          <FontAwesomeIcon icon={faUser} />
                         )}
                       </div>
 
-                      <label style={{ flex: 1, cursor: 'pointer', color: '#6b4f3c', fontWeight: 600 }}>
+                      <div className="profile-photo-actions">
+                        <label className="profile-photo-picker">
                         Upload profile photo
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={handleProfileImageUpload}
+                          onChange={handleProfileImageSelect}
                           disabled={uploadingProfileImage}
-                          style={{ display: 'block', marginTop: '8px', width: '100%' }}
                         />
-                      </label>
+                        </label>
+                        {pendingProfileImage && (
+                          <div className="profile-photo-confirmation">
+                            <span>Preview selected</span>
+                            <div>
+                              <button type="button" className="profile-photo-confirm" onClick={handleProfileImageUpload} disabled={uploadingProfileImage}>
+                                {uploadingProfileImage ? 'Uploading...' : 'Use this photo'}
+                              </button>
+                              <button type="button" className="profile-photo-cancel" onClick={cancelProfileImageUpload} disabled={uploadingProfileImage}>
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <label>
@@ -520,7 +576,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                       type="button" 
                       className="mobile-order-btn" 
                       onClick={handleProfileSave}
-                      disabled={loading}
+                      disabled={loading || uploadingProfileImage}
                       style={{ opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
                     >
                       {loading ? 'Saving...' : 'Save changes'}
