@@ -75,10 +75,16 @@ function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, u
 
           <div className="mobile-food-row">
             {quickMeals.map((item, index) => (
-              <div key={item.id || index} className="mobile-food-pill">
+              <button
+                key={item.id || index}
+                type="button"
+                className="mobile-food-pill"
+                onClick={() => setSelectedItem(item)}
+                disabled={item.available === false}
+              >
                 <img src={item.image} alt={item.title} />
                 <span>{item.title}</span>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -154,10 +160,16 @@ function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, u
 
           <div className="mobile-favorites-strip">
             {showProducts.slice(0, 3).map((item, index) => (
-              <div key={item.id || index} className="mobile-favorite-tile">
+              <button
+                key={item.id || index}
+                type="button"
+                className="mobile-favorite-tile"
+                onClick={() => setSelectedItem(item)}
+                disabled={item.available === false}
+              >
                 <img src={item.image} alt={item.title} />
                 <span>{item.title}</span>
-              </div>
+              </button>
             ))}
           </div>
         </main>

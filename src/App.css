@@ -762,6 +762,11 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
 }
 
 .mobile-food-pill img {
@@ -1055,6 +1060,10 @@ textarea {
   border: 1px solid rgba(29, 23, 20, 0.06);
   border-radius: 18px;
   overflow: hidden;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .mobile-favorite-tile img {
