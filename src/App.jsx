@@ -128,6 +128,7 @@ function App() {
   const [profileImageUrl, setProfileImageUrl] = useState('')
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false)
   const [successOrder, setSuccessOrder] = useState(null)
+  const [orderToTrackId, setOrderToTrackId] = useState(null)
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
   const [toast, setToast] = useState(null)
 
@@ -921,6 +922,7 @@ function App() {
             <div className="success-modal-actions">
               <button type="button" className="primary-btn" onClick={() => {
                 setShowOrderSuccessModal(false)
+                setOrderToTrackId(successOrder.id)
                 updateRoute('account')
               }}>
                 Track order
@@ -1178,6 +1180,8 @@ function App() {
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
           onProfileImageChange={setProfileImageUrl}
+          initialAccountSubmenu={orderToTrackId ? 'orders' : null}
+          initialExpandedOrderId={orderToTrackId}
           isAccountView
         />
       )}

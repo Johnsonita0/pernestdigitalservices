@@ -56,10 +56,10 @@ const resolveProfileImageUrl = async (storedValue) => {
   return error ? '' : data?.signedUrl || ''
 }
 
-function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false }) {
+function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
-  const [accountSubmenu, setAccountSubmenu] = useState(null)
-  const [expandedOrderId, setExpandedOrderId] = useState(null)
+  const [accountSubmenu, setAccountSubmenu] = useState(initialAccountSubmenu)
+  const [expandedOrderId, setExpandedOrderId] = useState(initialExpandedOrderId)
   const [orders, setOrders] = useState([])
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.fullName || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User',
