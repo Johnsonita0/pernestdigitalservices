@@ -293,14 +293,36 @@ function App() {
     updateRoute('shop')
   }
 
-  const handleCreateMenuItem = (newItem) => {
+  const handleCreateMenuItem = async (newItem) => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase is not configured.')
+    }
+
+    const { data, error } = await supabase
+      .from('menu_items')
+      .insert({
+        title: newItem.title,
+        description: newItem.description,
+        price: Number(newItem.price) || 0,
+        tag: newItem.tag || null,
+        badge: newItem.badge || null,
+        featured: Boolean(newItem.featured),
+        available: Boolean(newItem.available),
+        image_url: newItem.image || null,
+      })
+      .select()
+      .single()
+
+    if (error) throw new Error(error.message)
+
     setMenuCatalog((current) => [
       {
         ...newItem,
-        id: newItem.id || Date.now(),
-        featured: Boolean(newItem.featured),
-        available: Boolean(newItem.available),
-        price: Number(newItem.price) || 0,
+        id: data.id,
+        image: data.image_url || newItem.image,
+        featured: Boolean(data.featured),
+        available: Boolean(data.available),
+        price: Number(data.price) || 0,
       },
       ...current,
     ])

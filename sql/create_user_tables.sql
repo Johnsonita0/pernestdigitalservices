@@ -83,6 +83,20 @@ CREATE TABLE IF NOT EXISTS menu_items (
 
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 
+-- Helper function for admin checks inside RLS policies.
+CREATE OR REPLACE FUNCTION public.is_admin_user(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN p_user_id = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
+    OR EXISTS (
+      SELECT 1
+      FROM public.profiles
+      WHERE id = p_user_id
+        AND is_admin = true
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Drop existing policies so the script can be re-run safely
 DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
@@ -93,6 +107,7 @@ DROP POLICY IF EXISTS "Users can view their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can insert their own orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
 DROP POLICY IF EXISTS "Admin can manage menu items" ON menu_items;
+DROP POLICY IF EXISTS "Anyone can view available menu items" ON menu_items;
 DROP POLICY IF EXISTS "Admin can manage food_img files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can view their own bank_prof files" ON storage.objects;
 DROP POLICY IF EXISTS "Users can upload their own bank_prof files" ON storage.objects;
@@ -147,71 +162,39 @@ DROP POLICY IF EXISTS "Admin can update all orders" ON orders;
 
 CREATE POLICY "Admin can view all profiles"
   ON profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
-  );
+  USING (public.is_admin_user(auth.uid()));
 
 CREATE POLICY "Admin can update all profiles"
   ON profiles FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
-  );
+  USING (public.is_admin_user(auth.uid()));
 
 CREATE POLICY "Admin can view all orders"
   ON orders FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
-  );
+  USING (public.is_admin_user(auth.uid()));
 
 CREATE POLICY "Admin can update all orders"
   ON orders FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
-  );
+  USING (public.is_admin_user(auth.uid()));
 
 CREATE POLICY "Admin can manage menu items"
   ON menu_items FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
-  );
+  USING (public.is_admin_user(auth.uid()))
+  WITH CHECK (public.is_admin_user(auth.uid()));
+
+CREATE POLICY "Anyone can view available menu items"
+  ON menu_items FOR SELECT
+  USING (available = true);
 
 -- Admin can upload food images to food_img bucket
 CREATE POLICY "Admin can manage food_img files"
   ON storage.objects FOR ALL
   USING (
     bucket_id = 'food_img'
-    AND EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
+    AND public.is_admin_user(auth.uid())
   )
   WITH CHECK (
     bucket_id = 'food_img'
-    AND EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.is_admin = true
-    )
+    AND public.is_admin_user(auth.uid())
   );
 
 -- Users can read only files they uploaded to the shared bank_prof bucket.
@@ -247,20 +230,6 @@ CREATE POLICY "Users can delete their own bank_prof files"
     bucket_id = 'bank_prof'
     AND name LIKE auth.uid()::text || '/%'
   );
-
--- Helper function for checking if the current auth user is the app admin
-CREATE OR REPLACE FUNCTION public.is_admin_user(p_user_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN p_user_id = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
-    OR EXISTS (
-      SELECT 1
-      FROM public.profiles
-      WHERE id = p_user_id
-        AND is_admin = true
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create function to automatically create a profile entry when user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()

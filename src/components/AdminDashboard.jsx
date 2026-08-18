@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
@@ -24,10 +24,22 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
   })
   const [menuMessage, setMenuMessage] = useState('')
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [toast, setToast] = useState(null)
 
   // Get user orders
   const userOrders = selectedUser ? (selectedUser.orders || []) : allOrders
   const formatNaira = (value) => `₦${value.toLocaleString('en-NG')}`
+
+  const showToast = (message, tone = 'success') => {
+    setToast({ message, tone })
+  }
+
+  useEffect(() => {
+    if (!toast) return
+
+    const timer = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(timer)
+  }, [toast])
 
   const toggleProductAvailability = (productId) => {
     setProductAvailability((current) => ({
@@ -47,7 +59,13 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
 
   const handleMenuImageUpload = async (event) => {
     const file = event.target.files?.[0]
-    if (!file || !user?.id) return
+    if (!file || !user?.id) {
+      showToast('Please choose a food image first.', 'error')
+      return
+    }
+
+    const previewUrl = URL.createObjectURL(file)
+    setMenuForm((current) => ({ ...current, imageUrl: previewUrl }))
 
     try {
       setUploadingImage(true)
@@ -59,18 +77,20 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
 
       const { data } = supabase.storage.from('food_img').getPublicUrl(filePath)
       setMenuForm((current) => ({ ...current, imageUrl: data.publicUrl }))
-      setMenuMessage('✅ Food image uploaded successfully.')
+      showToast('Food image uploaded successfully.', 'success')
     } catch (error) {
       console.error('Error uploading food image:', error)
-      setMenuMessage(`❌ Upload failed: ${error.message}`)
+      const message = error?.message || 'Upload failed.'
+      showToast(message, 'error')
+      setMenuForm((current) => ({ ...current, imageUrl: '' }))
     } finally {
       setUploadingImage(false)
     }
   }
 
-  const handleCreateMenuItem = () => {
+  const handleCreateMenuItem = async () => {
     if (!menuForm.title || !menuForm.description || !menuForm.price) {
-      setMenuMessage('Please fill in title, description, and price.')
+      showToast('Please fill in title, description, and price.', 'error')
       return
     }
 
@@ -88,25 +108,64 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
       image: menuForm.imageUrl || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80',
     }
 
-    if (typeof onCreateMenuItem === 'function') {
-      onCreateMenuItem(newProduct)
-    }
+    try {
+      if (typeof onCreateMenuItem !== 'function') {
+        throw new Error('Menu creation is not available.')
+      }
 
-    setMenuForm({
-      title: '',
-      description: '',
-      price: '',
-      tag: '',
-      badge: '',
-      imageUrl: '',
-      available: true,
-      featured: false,
-    })
-    setMenuMessage('✅ Menu item created successfully.')
+      await onCreateMenuItem(newProduct)
+      setMenuForm({
+        title: '',
+        description: '',
+        price: '',
+        tag: '',
+        badge: '',
+        imageUrl: '',
+        available: true,
+        featured: false,
+      })
+      showToast('Menu item created successfully.', 'success')
+    } catch (error) {
+      console.error('Error creating menu item:', error)
+      showToast(error?.message || 'Menu item could not be created.', 'error')
+    }
   }
 
   return (
-    <section className="admin-section" id="admin">
+    <>
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '18px',
+          right: '18px',
+          zIndex: 9999,
+          minWidth: '240px',
+          maxWidth: '360px',
+          padding: '12px 14px',
+          borderRadius: '12px',
+          background: toast.tone === 'error' ? '#fef2f2' : toast.tone === 'warning' ? '#fff7ed' : '#f0fdf4',
+          border: `1px solid ${toast.tone === 'error' ? '#fecaca' : toast.tone === 'warning' ? '#fed7aa' : '#bbf7d0'}`,
+          boxShadow: '0 10px 28px rgba(36, 31, 27, 0.12)',
+          color: toast.tone === 'error' ? '#991b1b' : toast.tone === 'warning' ? '#9a4d00' : '#166534',
+          fontSize: '0.9rem',
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <span style={{
+            width: '10px',
+            height: '10px',
+            borderRadius: '50%',
+            background: toast.tone === 'error' ? '#ef4444' : toast.tone === 'warning' ? '#f59e0b' : '#22c55e',
+            display: 'inline-block',
+            flexShrink: 0,
+          }} />
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      <section className="admin-section" id="admin">
       <div className="admin-topbar">
         <div className="container admin-topbar-wrap">
           <div>
@@ -533,7 +592,8 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
           )}
         </div>
       </div>
-    </section>
+      </section>
+    </>
   )
 }
 
