@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBox, faCheck, faClipboardCheck, faList, faMapMarkerAlt, faPhone, faSignOutAlt, faTruck } from '@fortawesome/free-solid-svg-icons'
 import { notifyToast } from '../lib/toast'
 
-function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
+function RiderDashboard({ user, orders = [], notifications = [], onMarkNotificationRead, onUpdateOrderStatus, onLogout }) {
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [activeView, setActiveView] = useState('orders')
 
@@ -63,10 +63,45 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
           <FontAwesomeIcon icon={faClipboardCheck} />
           Delivered records <span>{deliveredOrders.length}</span>
         </button>
+        <button
+          type="button"
+          className={activeView === 'notifications' ? 'active' : ''}
+          onClick={() => setActiveView('notifications')}
+        >
+          Notifications <span>{notifications.filter((notification) => !notification.is_read).length}</span>
+        </button>
       </nav>
 
       <section className="rider-order-list">
-        {visibleOrders.length === 0 ? (
+        {activeView === 'notifications' ? (
+          notifications.length === 0 ? (
+            <div className="rider-empty-state">
+              <FontAwesomeIcon icon={faClipboardCheck} />
+              <h2>No notifications yet</h2>
+              <p>New delivery assignments will appear here.</p>
+            </div>
+          ) : (
+            notifications.map((notification) => (
+              <button
+                type="button"
+                className="rider-order-card"
+                key={notification.id}
+                onClick={() => onMarkNotificationRead?.(notification.id)}
+                style={{ textAlign: 'left', border: notification.is_read ? undefined : '2px solid #f97316' }}
+              >
+                <div className="rider-order-heading">
+                  <div>
+                    <span>{notification.is_read ? 'Read notification' : 'New notification'}</span>
+                    <h2>{notification.title}</h2>
+                  </div>
+                </div>
+                <p>{notification.message}</p>
+                <small>{new Date(notification.created_at).toLocaleString('en-NG')}</small>
+              </button>
+            ))
+          )
+        ) : (
+          visibleOrders.length === 0 ? (
           <div className="rider-empty-state">
             <FontAwesomeIcon icon={faBox} />
             <h2>{activeView === 'orders' ? 'No active orders' : 'No delivered records'}</h2>
@@ -119,6 +154,7 @@ function RiderDashboard({ user, orders = [], onUpdateOrderStatus, onLogout }) {
               )}
             </article>
           ))
+          )
         )}
       </section>
     </main>

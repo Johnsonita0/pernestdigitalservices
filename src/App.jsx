@@ -150,6 +150,7 @@ function App() {
   const [orderToTrackId, setOrderToTrackId] = useState(null)
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
   const [toast, setToast] = useState(null)
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     const handleToast = (event) => {
@@ -169,6 +170,50 @@ function App() {
     const timer = setTimeout(() => setToast(null), 4000)
     return () => clearTimeout(timer)
   }, [toast])
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user?.id) {
+      setNotifications([])
+      return undefined
+    }
+
+    const loadNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('recipient_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (error) {
+        console.warn('Unable to load notifications:', error)
+        return
+      }
+
+      setNotifications(data || [])
+    }
+
+    loadNotifications()
+
+    const notificationChannel = supabase
+      .channel(`notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `recipient_id=eq.${user.id}` },
+        (payload) => {
+          setNotifications((current) => [payload.new, ...current].slice(0, 50))
+          notifyToast(payload.new.title || 'New notification', 'info')
+          if (typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+            new window.Notification(payload.new.title || 'Trophy update', { body: payload.new.message || '' })
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(notificationChannel)
+    }
+  }, [user?.id])
 
   useEffect(() => {
     if (!isSupabaseConfigured || !user?.id) {
@@ -573,6 +618,48 @@ function App() {
     setDashboardRefreshKey((current) => current + 1)
   }
 
+  const createNotifications = async (entries) => {
+    if (!isSupabaseConfigured || entries.length === 0) return
+
+    const { error } = await supabase.from('notifications').insert(entries)
+    if (error) console.warn('Unable to create notifications:', error)
+  }
+
+  const handleMarkNotificationRead = async (notificationId) => {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId)
+      .eq('recipient_id', user?.id)
+
+    if (error) {
+      notifyToast('Could not update notification.', 'error')
+      return
+    }
+
+    setNotifications((current) => current.map((notification) => (
+      notification.id === notificationId ? { ...notification, is_read: true } : notification
+    )))
+  }
+
+  const handleSendUserNotification = async ({ title, message }) => {
+    if (!title?.trim() || !message?.trim()) throw new Error('Title and message are required.')
+
+    const { data: customerProfiles, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'customer')
+
+    if (error) throw new Error(error.message)
+
+    await createNotifications((customerProfiles || []).map((profile) => ({
+      recipient_id: profile.id,
+      notification_type: 'admin_broadcast',
+      title: title.trim(),
+      message: message.trim(),
+    })))
+  }
+
   const handleUpdateRiderOrderStatus = async (orderId) => {
     const { error } = await supabase
       .from('orders')
@@ -585,6 +672,17 @@ function App() {
     setRiderOrders((current) => current.map((order) => (
       order.id === orderId ? { ...order, status: 'delivered' } : order
     )))
+
+    const order = riderOrders.find((item) => item.id === orderId)
+    if (order?.user_id) {
+      await createNotifications([{
+        recipient_id: order.user_id,
+        notification_type: 'order_status',
+        title: 'Order delivered',
+        message: `Order #${String(orderId).slice(0, 8)} has been delivered.`,
+        order_id: orderId,
+      }])
+    }
   }
 
   const handleAddToCart = (product) => {
@@ -626,6 +724,21 @@ function App() {
       },
       ...current,
     ])
+
+    const { data: customerProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('role', 'customer')
+
+    if (!profilesError) {
+      await createNotifications((customerProfiles || []).map((profile) => ({
+        recipient_id: profile.id,
+        notification_type: 'menu_update',
+        title: 'New meal available',
+        message: `${data.title} is now available on the Trophy menu.`,
+        menu_item_id: data.id,
+      })))
+    }
   }
 
   const handleUpdateOrderStatus = async (orderId, status) => {
@@ -642,6 +755,23 @@ function App() {
     setUserOrders((current) => current.map((order) => (
       order.id === orderId ? { ...order, status } : order
     )))
+
+    const order = allOrders.find((item) => item.id === orderId)
+    if (order?.userId) {
+      await createNotifications([{
+        recipient_id: order.userId,
+        notification_type: 'order_status',
+        title: 'Order status updated',
+        message: `Order #${String(orderId).slice(0, 8)} is now ${status.replaceAll('_', ' ')}.`,
+        order_id: orderId,
+      }, ...(status === 'ready' ? [{
+        recipient_id: RIDER_USER_ID,
+        notification_type: 'order_status',
+        title: 'New delivery assigned',
+        message: `Order #${String(orderId).slice(0, 8)} is ready for delivery.`,
+        order_id: orderId,
+      }] : [])])
+    }
   }
 
   const handleOrderNow = (product) => {
@@ -817,6 +947,23 @@ function App() {
       if (itemsError) {
         console.warn('Error saving order items:', itemsError)
       }
+
+      await createNotifications([
+        {
+          recipient_id: user.id,
+          notification_type: 'order_status',
+          title: 'Order received',
+          message: `Order #${String(orderId).slice(0, 8)} has been received and is being reviewed.`,
+          order_id: orderId,
+        },
+        {
+          recipient_id: ADMIN_USER_ID,
+          notification_type: 'new_order',
+          title: 'New order received',
+          message: `${orderData.name} placed order #${String(orderId).slice(0, 8)}.`,
+          order_id: orderId,
+        },
+      ])
 
       // Create admin notification for bank transfer payments
       if (orderData.paymentMethod === 'transfer') {
@@ -1238,6 +1385,8 @@ function App() {
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
           onProfileImageChange={setProfileImageUrl}
+          notifications={notifications}
+          onMarkNotificationRead={handleMarkNotificationRead}
           initialAccountSubmenu={orderToTrackId ? 'orders' : null}
           initialExpandedOrderId={orderToTrackId}
           isAccountView
@@ -1248,6 +1397,8 @@ function App() {
         <RiderDashboard
           user={user}
           orders={riderOrders}
+          notifications={notifications}
+          onMarkNotificationRead={handleMarkNotificationRead}
           onUpdateOrderStatus={handleUpdateRiderOrderStatus}
           onLogout={handleLogout}
         />
@@ -1257,6 +1408,8 @@ function App() {
         <main>
           <AdminDashboard
             products={menuCatalog}
+            notifications={notifications}
+            onMarkNotificationRead={handleMarkNotificationRead}
             pendingTestimonials={pendingTestimonials}
             onApproveTestimonial={handleApproveTestimonial}
             onRejectTestimonial={handleRejectTestimonial}
@@ -1267,6 +1420,7 @@ function App() {
             allOrders={allOrders}
             onUpdateOrderStatus={handleUpdateOrderStatus}
             onCreateMenuItem={handleCreateMenuItem}
+            onSendUserNotification={handleSendUserNotification}
           />
         </main>
       )}

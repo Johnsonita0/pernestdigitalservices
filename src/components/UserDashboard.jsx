@@ -56,7 +56,7 @@ const resolveProfileImageUrl = async (storedValue) => {
   return error ? '' : data?.signedUrl || ''
 }
 
-function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
+function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], notifications = [], onMarkNotificationRead, onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(initialAccountSubmenu)
   const [expandedOrderId, setExpandedOrderId] = useState(initialExpandedOrderId)
@@ -76,6 +76,9 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
   const [loading, setLoading] = useState(false)
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false)
   const [pendingProfileImage, setPendingProfileImage] = useState(null)
+  const [browserPermission, setBrowserPermission] = useState(() => (
+    typeof window !== 'undefined' && 'Notification' in window ? window.Notification.permission : 'unsupported'
+  ))
 
   // Load profile data from database on component mount
   useEffect(() => {
@@ -129,6 +132,26 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
     } catch (error) {
       console.error('Error loading orders:', error)
     }
+  }
+
+  const requestBrowserNotifications = async () => {
+    if (!('Notification' in window)) {
+      notifyToast('Browser notifications are not supported here.', 'warning')
+      return
+    }
+
+    const permission = await window.Notification.requestPermission()
+    setBrowserPermission(permission)
+
+    await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: user.id,
+        browser_notifications_enabled: permission === 'granted',
+        browser_notifications_prompted: true,
+      }, { onConflict: 'user_id' })
+
+    notifyToast(permission === 'granted' ? 'Browser notifications enabled.' : 'Browser notifications were not enabled.', permission === 'granted' ? 'success' : 'warning')
   }
 
   const openCancelOrderModal = (orderId) => {
@@ -413,8 +436,9 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
             <div className="mobile-location-copy">
               <strong>{username}</strong>
             </div>
-            <button type="button" className="mobile-bell-btn" aria-label="Notifications">
+                <button type="button" className="mobile-bell-btn" aria-label="Notifications" onClick={() => setAccountSubmenu('notifications')}>
               <FontAwesomeIcon icon={faBell} />
+                  {notifications.some((notification) => !notification.is_read) && <span className="mobile-nav-badge">{notifications.filter((notification) => !notification.is_read).length}</span>}
             </button>
           </div>
 
@@ -822,7 +846,34 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                     <h2>{accountSubmenu === 'orders' ? 'My Orders' : accountSubmenu === 'saved' ? 'Saved Items' : accountSubmenu === 'vouchers' ? 'Vouchers' : accountSubmenu === 'faq' ? 'FAQs' : accountSubmenu === 'notifications' ? 'Notifications' : 'Payment Information'}</h2>
                   </div>
 
-                  {accountSubmenu === 'orders' ? (
+                  {accountSubmenu === 'notifications' ? (
+                    <div style={{ padding: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                        <p style={{ margin: 0, color: '#7d6056', fontSize: '0.85rem' }}>Updates from Trophy will appear here.</p>
+                        {browserPermission !== 'granted' && browserPermission !== 'unsupported' && (
+                          <button type="button" className="ghost-btn small-btn" onClick={requestBrowserNotifications}>
+                            Enable browser alerts
+                          </button>
+                        )}
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: '#999', padding: '40px 20px' }}>
+                          <p style={{ fontSize: '1rem' }}>No notifications yet</p>
+                        </div>
+                      ) : notifications.map((notification) => (
+                        <button
+                          key={notification.id}
+                          type="button"
+                          onClick={() => onMarkNotificationRead?.(notification.id)}
+                          style={{ display: 'block', width: '100%', textAlign: 'left', padding: '14px', marginBottom: '10px', border: '1px solid #eaded8', borderRadius: '12px', background: notification.is_read ? '#fff' : '#fff7f1', cursor: 'pointer' }}
+                        >
+                          <strong style={{ display: 'block', color: '#201814', marginBottom: '4px' }}>{notification.title}</strong>
+                          <span style={{ display: 'block', color: '#6f564c', fontSize: '0.85rem' }}>{notification.message}</span>
+                          <small style={{ display: 'block', color: '#a08478', marginTop: '8px' }}>{new Date(notification.created_at).toLocaleString('en-NG')}</small>
+                        </button>
+                      ))}
+                    </div>
+                  ) : accountSubmenu === 'orders' ? (
                     <div style={{ padding: '20px' }}>
                       {orders.length === 0 ? (
                         <div style={{ textAlign: 'center', color: '#999', padding: '40px 20px' }}>

@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 ALTER TABLE orders
 ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
+ADD COLUMN IF NOT EXISTS rider_id UUID REFERENCES profiles(id),
 ADD COLUMN IF NOT EXISTS cancellation_reason TEXT,
 ADD COLUMN IF NOT EXISTS cancellation_note TEXT,
 ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP WITH TIME ZONE;
@@ -506,6 +507,25 @@ CREATE TABLE IF NOT EXISTS admin_notifications (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create recipient-scoped in-app notifications for customers, riders, and admins.
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipient_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  notification_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+  menu_item_id UUID REFERENCES menu_items(id) ON DELETE CASCADE,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE user_preferences
+ADD COLUMN IF NOT EXISTS browser_notifications_enabled BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS browser_notifications_prompted BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
 -- Enable RLS on admin_notifications and payment_proofs
 ALTER TABLE admin_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_proofs ENABLE ROW LEVEL SECURITY;
@@ -515,6 +535,10 @@ DROP POLICY IF EXISTS "Admin can view all notifications" ON admin_notifications;
 DROP POLICY IF EXISTS "Admin can update notifications" ON admin_notifications;
 DROP POLICY IF EXISTS "Users can view their own payment proof" ON payment_proofs;
 DROP POLICY IF EXISTS "Users can insert their own payment proof" ON payment_proofs;
+DROP POLICY IF EXISTS "Users can view their own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can update their own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can create order notifications" ON notifications;
+DROP POLICY IF EXISTS "Admin can manage notifications" ON notifications;
 
 -- Admin can view all notifications
 CREATE POLICY "Admin can view all notifications"
@@ -525,6 +549,34 @@ CREATE POLICY "Admin can view all notifications"
 CREATE POLICY "Admin can update notifications"
   ON admin_notifications FOR UPDATE
   USING (true);
+
+CREATE POLICY "Users can view their own notifications"
+  ON notifications FOR SELECT
+  USING (auth.uid() = recipient_id);
+
+CREATE POLICY "Users can update their own notifications"
+  ON notifications FOR UPDATE
+  USING (auth.uid() = recipient_id)
+  WITH CHECK (auth.uid() = recipient_id);
+
+CREATE POLICY "Users can create order notifications"
+  ON notifications FOR INSERT
+  WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND notification_type IN ('new_order', 'order_status')
+    AND (
+      recipient_id = auth.uid()
+      OR (
+        recipient_id = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
+        AND order_id IN (SELECT id FROM orders WHERE user_id = auth.uid())
+      )
+    )
+  );
+
+CREATE POLICY "Admin can manage notifications"
+  ON notifications FOR ALL
+  USING (public.is_admin_user(auth.uid()))
+  WITH CHECK (public.is_admin_user(auth.uid()));
 
 -- Users can view their own payment proof records
 CREATE POLICY "Users can view their own payment proof"
@@ -550,6 +602,13 @@ CREATE INDEX IF NOT EXISTS idx_admin_notifications_created_at
 
 CREATE INDEX IF NOT EXISTS idx_admin_notifications_is_read 
   ON admin_notifications(is_read);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient_created_at
+  ON notifications(recipient_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_unread
+  ON notifications(recipient_id, is_read)
+  WHERE is_read = false;
 
 CREATE INDEX IF NOT EXISTS idx_payment_proofs_order_id
   ON payment_proofs(order_id);

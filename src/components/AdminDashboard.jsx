@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt, faSignOutAlt, faChartLine, faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons'
+import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt, faSignOutAlt, faChartLine, faFileInvoiceDollar, faBell } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
-function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus }) {
+function AdminDashboard({ products, pendingTestimonials = [], notifications = [], onMarkNotificationRead, onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus, onSendUserNotification }) {
   const [activeTab, setActiveTab] = useState('users')
+  const [reviewTab, setReviewTab] = useState('reviews')
   const [reportTab, setReportTab] = useState('transfers')
   const [transferNotifications, setTransferNotifications] = useState([])
   const [selectedTransfer, setSelectedTransfer] = useState(null)
@@ -30,6 +31,8 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
   const [uploadingImage, setUploadingImage] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [toast, setToast] = useState(null)
+  const [notificationForm, setNotificationForm] = useState({ title: '', message: '' })
+  const [sendingNotification, setSendingNotification] = useState(false)
 
   // Get user orders
   const userOrders = selectedUser ? (selectedUser.orders || []) : allOrders
@@ -37,6 +40,22 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
 
   const showToast = (message, tone = 'success') => {
     setToast({ message, tone })
+  }
+
+  const handleSendNotification = async (event) => {
+    event.preventDefault()
+    if (sendingNotification) return
+
+    try {
+      setSendingNotification(true)
+      await onSendUserNotification?.(notificationForm)
+      setNotificationForm({ title: '', message: '' })
+      showToast('Notification sent to customers.', 'success')
+    } catch (error) {
+      showToast(error?.message || 'Could not send notification.', 'error')
+    } finally {
+      setSendingNotification(false)
+    }
   }
 
   const handleRefresh = async () => {
@@ -315,6 +334,10 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
             <button type="button" className="admin-header-icon" onClick={handleRefresh} disabled={refreshing} aria-label="Refresh dashboard" title="Refresh dashboard">
               <FontAwesomeIcon icon={faSyncAlt} spin={refreshing} />
             </button>
+            <button type="button" className="admin-header-icon" onClick={() => setActiveTab('notifications')} aria-label="Notifications" title="Notifications">
+              <FontAwesomeIcon icon={faBell} />
+              {notifications.some((notification) => !notification.is_read) && <b>{notifications.filter((notification) => !notification.is_read).length}</b>}
+            </button>
             <button type="button" className="admin-header-icon" onClick={onLogout} aria-label="Log out" title="Log out">
               <FontAwesomeIcon icon={faSignOutAlt} />
             </button>
@@ -478,8 +501,46 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
 
           {activeTab === 'testimonials' && (
             <div className="tab-content">
-              <h3>Testimonial Responses</h3>
-              {pendingTestimonials.length > 0 ? (
+              <div className="admin-report-tabs" role="tablist" aria-label="Reviews and notifications">
+                <button type="button" className={reviewTab === 'reviews' ? 'active' : ''} onClick={() => setReviewTab('reviews')}>
+                  Reviews
+                </button>
+                <button type="button" className={reviewTab === 'notifications' ? 'active' : ''} onClick={() => setReviewTab('notifications')}>
+                  Send notification
+                </button>
+              </div>
+
+              {reviewTab === 'notifications' ? (
+                <form className="admin-menu-form" onSubmit={handleSendNotification}>
+                  <h3>Notify customers</h3>
+                  <label className="admin-menu-field admin-menu-field-wide">
+                    <span>Notification title</span>
+                    <input
+                      type="text"
+                      value={notificationForm.title}
+                      onChange={(event) => setNotificationForm((current) => ({ ...current, title: event.target.value }))}
+                      placeholder="New update from Trophy"
+                      required
+                    />
+                  </label>
+                  <label className="admin-menu-field admin-menu-field-wide">
+                    <span>Message</span>
+                    <textarea
+                      rows="5"
+                      value={notificationForm.message}
+                      onChange={(event) => setNotificationForm((current) => ({ ...current, message: event.target.value }))}
+                      placeholder="Share an important update with customers."
+                      required
+                    />
+                  </label>
+                  <button type="submit" className="primary-btn" disabled={sendingNotification}>
+                    {sendingNotification ? 'Sending...' : 'Send to all customers'}
+                  </button>
+                </form>
+              ) : (
+                <>
+                  <h3>Testimonial Responses</h3>
+                  {pendingTestimonials.length > 0 ? (
                 <div className="testimonial-review-list">
                   {pendingTestimonials.map((review) => (
                     <div key={review.id} className="testimonial-review-item">
@@ -514,8 +575,37 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                     </div>
                   ))}
                 </div>
+                  ) : (
+                    <p className="empty-state">No pending testimonials.</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <div className="tab-content">
+              <h3>Notifications</h3>
+              {notifications.length === 0 ? (
+                <p className="empty-state">No notifications yet.</p>
               ) : (
-                <p className="empty-state">No pending testimonials.</p>
+                <div className="testimonial-review-list">
+                  {notifications.map((notification) => (
+                    <button
+                      type="button"
+                      className="testimonial-review-item"
+                      key={notification.id}
+                      onClick={() => onMarkNotificationRead?.(notification.id)}
+                      style={{ textAlign: 'left', border: notification.is_read ? undefined : '2px solid #f97316' }}
+                    >
+                      <div className="review-content">
+                        <div className="review-meta"><strong>{notification.title}</strong></div>
+                        <p className="review-text">{notification.message}</p>
+                        <small>{new Date(notification.created_at).toLocaleString('en-NG')}</small>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           )}
