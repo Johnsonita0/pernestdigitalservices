@@ -14,11 +14,13 @@ function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, u
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'
   const displayName = user ? username : 'Guest'
   const profileImage = profileImageUrl || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar || user?.user_metadata?.profilePic || user?.user_metadata?.photoURL || user?.avatar_url || user?.picture || user?.photoURL || null
-  const quickMeals = products.slice(0, 5)
-  const topPicks = products.slice(0, 2)
+  const newestProducts = [...products].sort((first, second) => (
+    new Date(second.createdAt || second.created_at || 0).getTime() - new Date(first.createdAt || first.created_at || 0).getTime()
+  ))
+  const quickMeals = newestProducts.slice(0, 5)
 
   const filteredProducts = searchTerm.trim()
-    ? products.filter((product) => {
+    ? newestProducts.filter((product) => {
         const searchableText = [product.title, product.description, product.tag, product.badge, product.category]
           .filter(Boolean)
           .join(' ')
@@ -26,9 +28,9 @@ function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, u
 
         return searchableText.includes(searchTerm.trim().toLowerCase())
       })
-    : products
+      : newestProducts
 
-  const showProducts = filteredProducts.length ? filteredProducts : products
+    const showProducts = filteredProducts.length ? filteredProducts : newestProducts
 
   return (
     <section className="mobile-dashboard-shell shop-mobile-shell" id="shop">
