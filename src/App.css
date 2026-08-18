@@ -3289,12 +3289,10 @@ a {
 }
 
 .shop-description {
-  min-height: 72px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: 8px;
+  color: #5a453d;
+  line-height: 1.6;
+  margin: 0 0 8px;
+  display: block;
 }
 
 .shop-description.expanded {
