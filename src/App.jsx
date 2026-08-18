@@ -1435,7 +1435,6 @@ function App() {
           <section className="checkout-page">
             <div className="checkout-page-header">
               <div>
-                <p className="eyebrow">Review your order</p>
                 <h1>Checkout</h1>
               </div>
               <button type="button" className="ghost-btn small-btn" onClick={() => updateRoute('shop')}>
