@@ -1,19 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { notifyToast } from '../lib/toast'
 
 function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const loginCardRef = useRef(null)
+  const emailInputRef = useRef(null)
+
+  useEffect(() => {
+    loginCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    emailInputRef.current?.focus({ preventScroll: true })
+    notifyToast('Sign in to continue.', 'info')
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
 
     if (!isSupabaseConfigured) {
-      setError('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to continue.')
+      notifyToast('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to continue.', 'error')
       return
     }
 
@@ -26,7 +33,7 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
       })
 
       if (signInError) {
-        setError(signInError.message || 'Login failed. Please check your credentials.')
+        notifyToast(signInError.message || 'Login failed. Please check your credentials.', 'error')
         setLoading(false)
         return
       }
@@ -37,14 +44,14 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
         onLoginSuccess(data.user)
       }
     } catch (err) {
-      setError(err.message || 'An error occurred during login.')
+      notifyToast(err.message || 'An error occurred during login.', 'error')
       setLoading(false)
     }
   }
 
   return (
     <div className="auth-screen">
-      <div className="auth-card">
+      <div className="auth-card login-card-focus-target" ref={loginCardRef}>
         <div className="auth-brand">
           <img src="/logo/logo1.png" alt="Trophy Logo" className="auth-logo-img" />
           <div>
@@ -63,6 +70,7 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
             <label htmlFor="login-email">Email</label>
             <input
               id="login-email"
+              ref={emailInputRef}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -99,12 +107,6 @@ function LoginPage({ onLoginSuccess, onSwitchToSignUp }) {
               </button>
             </div>
           </div>
-
-          {error && (
-            <div className="error-alert">
-              <p>{error}</p>
-            </div>
-          )}
 
           <button type="submit" className="primary-action" disabled={loading}>
             {loading ? 'Signing in...' : 'Login'}
