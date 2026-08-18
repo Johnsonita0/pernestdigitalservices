@@ -381,26 +381,31 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                             <td className="address-cell">{order.address}</td>
                             <td className="amount">{formatNaira(order.total)}</td>
                             <td>
-                              <select
-                                className={`admin-order-status-select status-${order.status || 'pending'}`}
-                                value={order.status || 'pending'}
-                                aria-label={`Update order ${order.id} status`}
-                                onChange={async (event) => {
-                                  try {
-                                    await onUpdateOrderStatus(order.id, event.target.value)
-                                    showToast('Order status updated.', 'success')
-                                  } catch (error) {
-                                    showToast(error?.message || 'Could not update order status.', 'error')
-                                  }
-                                }}
-                              >
-                                <option value="pending_payment_confirmation">Awaiting payment</option>
-                                <option value="pending">Confirmed</option>
-                                <option value="preparing">Preparing</option>
-                                <option value="ready">On the way</option>
-                                <option value="delivered">Delivered</option>
-                                <option value="cancelled">Cancelled</option>
-                              </select>
+                              {order.status === 'cancelled' ? (
+                                <span className="admin-order-status-select status-cancelled" aria-label={`Order ${order.id} is cancelled`}>
+                                  Cancelled
+                                </span>
+                              ) : (
+                                <select
+                                  className={`admin-order-status-select status-${order.status || 'pending'}`}
+                                  value={order.status || 'pending'}
+                                  aria-label={`Update order ${order.id} status`}
+                                  onChange={async (event) => {
+                                    try {
+                                      await onUpdateOrderStatus(order.id, event.target.value)
+                                      showToast('Order status updated.', 'success')
+                                    } catch (error) {
+                                      showToast(error?.message || 'Could not update order status.', 'error')
+                                    }
+                                  }}
+                                >
+                                  <option value="pending_payment_confirmation">Awaiting payment</option>
+                                  <option value="pending">Confirmed</option>
+                                  <option value="preparing">Preparing</option>
+                                  <option value="ready">On the way</option>
+                                  <option value="delivered">Delivered</option>
+                                </select>
+                              )}
                             </td>
                           </tr>
                         )

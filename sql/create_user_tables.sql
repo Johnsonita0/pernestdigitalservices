@@ -295,6 +295,7 @@ DROP POLICY IF EXISTS "Admin can view all profiles" ON profiles;
 DROP POLICY IF EXISTS "Admin can update all profiles" ON profiles;
 DROP POLICY IF EXISTS "Admin can view all orders" ON orders;
 DROP POLICY IF EXISTS "Admin can update all orders" ON orders;
+DROP POLICY IF EXISTS "Admin can update active orders" ON orders;
 
 CREATE POLICY "Admin can view all profiles"
   ON profiles FOR SELECT
@@ -308,9 +309,13 @@ CREATE POLICY "Admin can view all orders"
   ON orders FOR SELECT
   USING (public.is_admin_user(auth.uid()));
 
-CREATE POLICY "Admin can update all orders"
+CREATE POLICY "Admin can update active orders"
   ON orders FOR UPDATE
-  USING (public.is_admin_user(auth.uid()));
+  USING (
+    public.is_admin_user(auth.uid())
+    AND status <> 'cancelled'
+  )
+  WITH CHECK (public.is_admin_user(auth.uid()));
 
 CREATE POLICY "Admin can manage menu items"
   ON menu_items FOR ALL
