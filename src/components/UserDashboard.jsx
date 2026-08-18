@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBell, faHeart, faMapMarkerAlt, faSearch, faShoppingBag, faStar, faUser, faSignOutAlt, faChevronRight, faCog, faCreditCard, faTicketAlt, faClipboardList, faQuestionCircle, faMapPin, faLock, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
-function UserDashboard({ user, menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
+function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, isAccountView = false }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(null)
   const [expandedOrderId, setExpandedOrderId] = useState(null)
@@ -263,7 +263,7 @@ function UserDashboard({ user, menuItems = [], favoriteItems = [], userOrders = 
                           <FontAwesomeIcon icon={faUser} />
                         </div>
                         <div>
-                          <p className="mobile-greeting-label">Hello</p>
+                            <p className="mobile-greeting-label">{userType === 'admin' ? 'Admin account' : 'Customer account'}</p>
                           <strong>{username}</strong>
                           <small>{email}</small>
                         </div>
@@ -819,7 +819,7 @@ function UserDashboard({ user, menuItems = [], favoriteItems = [], userOrders = 
             <>
               <div className="mobile-greeting-row">
                 <div>
-                  <p className="mobile-greeting-label">Hi, {username}</p>
+                  <p className="mobile-greeting-label">{userType === 'admin' ? 'Admin account' : 'Customer account'} · {username}</p>
                   <h1>What are you craving?</h1>
                 </div>
                 <button type="button" className="mobile-logout-btn" onClick={onLogout}>

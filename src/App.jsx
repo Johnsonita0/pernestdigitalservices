@@ -35,6 +35,22 @@ const isAdminUser = (authUser) => {
   )
 }
 
+const resolveUserType = async (authUser) => {
+  if (!authUser) return 'customer'
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', authUser.id)
+    .maybeSingle()
+
+  if (error) {
+    console.warn('Unable to verify account type:', error)
+  }
+
+  return data?.is_admin || isAdminUser(authUser) ? 'admin' : 'customer'
+}
+
 const faqItems = [
   {
     question: 'Do you offer delivery in Lagos?',
@@ -91,6 +107,7 @@ function App() {
   const [approvedTestimonials, setApprovedTestimonials] = useState(testimonials)
   const [testimonialSliderIndex, setTestimonialSliderIndex] = useState(0)
   const [user, setUser] = useState(null)
+  const [userType, setUserType] = useState('customer')
   const [loading, setLoading] = useState(true)
   const [favoriteItems, setFavoriteItems] = useState([])
   const [userOrders, setUserOrders] = useState([])
@@ -116,7 +133,9 @@ function App() {
       setLoading(true)
       const { data: { user: authUser } } = await supabase.auth.getUser()
       setUser(authUser)
-      if (authUser && isAdminUser(authUser)) {
+      const resolvedUserType = await resolveUserType(authUser)
+      setUserType(resolvedUserType)
+      if (authUser && resolvedUserType === 'admin') {
         setView('admin')
         window.history.pushState({}, '', '/admin')
       }
@@ -128,6 +147,11 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_, session) => {
         setUser(session?.user || null)
+        if (session?.user) {
+          resolveUserType(session.user).then(setUserType)
+        } else {
+          setUserType('customer')
+        }
       }
     )
 
@@ -276,12 +300,14 @@ function App() {
     }
   }
 
-  const handleLoginSuccess = (authUser) => {
+  const handleLoginSuccess = async (authUser) => {
+    const resolvedUserType = await resolveUserType(authUser)
     setUser(authUser)
+    setUserType(resolvedUserType)
     setFavoriteItems([])
     setUserOrders([])
 
-    const nextView = isAdminUser(authUser) ? 'admin' : 'account'
+    const nextView = resolvedUserType === 'admin' ? 'admin' : 'account'
     const route = nextView === 'admin' ? '/admin' : '/account'
 
     setView(nextView)
@@ -291,6 +317,7 @@ function App() {
 
   const handleSignUpSuccess = (authUser) => {
     setUser(authUser)
+    setUserType('customer')
     setFavoriteItems([])
     setUserOrders([])
     // Add new user to all users list
@@ -315,6 +342,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setUserType('customer')
     setFavoriteItems([])
     setUserOrders([])
     setView('home')
@@ -918,6 +946,7 @@ function App() {
         <UserDashboard
           user={user}
           menuItems={menuCatalog}
+          userType={userType}
           favoriteItems={favoriteItems}
           userOrders={userOrders}
           onLogout={handleLogout}
@@ -932,6 +961,7 @@ function App() {
         <UserDashboard
           user={user}
           menuItems={menuCatalog}
+          userType={userType}
           favoriteItems={favoriteItems}
           userOrders={userOrders}
           onLogout={handleLogout}
