@@ -230,6 +230,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
       const uploadFile = await prepareProfileImageFile(file)
       const safeName = uploadFile.name.replace(/\s+/g, '_')
       const filePath = `${user.id}/profile/${Date.now()}-${safeName}`
+      const previousFilePath = profile.profileImagePath
 
       const { error } = await supabase.storage
         .from('bank_prof')
@@ -256,7 +257,18 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         .eq('id', user.id)
 
       if (profileError) {
+        await supabase.storage.from('bank_prof').remove([filePath])
         throw new Error(profileError.message)
+      }
+
+      if (previousFilePath && previousFilePath !== filePath) {
+        const { error: removeError } = await supabase.storage
+          .from('bank_prof')
+          .remove([previousFilePath])
+
+        if (removeError) {
+          console.warn('New profile photo saved, but the previous photo could not be removed:', removeError)
+        }
       }
 
       setProfile((current) => ({

@@ -344,7 +344,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                     <tr>
                       <th>Order ID</th>
                       <th>User</th>
-                      <th>Date</th>
+                      <th>Order Timestamp</th>
                       <th>Cancelled At</th>
                       <th>Cancellation Reason</th>
                       <th>Items Ordered</th>
@@ -365,7 +365,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                           <tr key={order.id}>
                             <td className="order-id">#{order.id}</td>
                             <td>{orderUser?.fullName || order.name || 'Unknown'}</td>
-                            <td>{new Date(order.date).toLocaleDateString()}</td>
+                            <td>{new Date(order.date).toLocaleString('en-NG')}</td>
                             <td>{order.status === 'cancelled' && order.updatedAt ? new Date(order.updatedAt).toLocaleString() : '—'}</td>
                             <td className="address-cell">
                               {order.status === 'cancelled' ? (
