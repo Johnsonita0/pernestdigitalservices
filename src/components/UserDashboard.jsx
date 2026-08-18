@@ -62,6 +62,8 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
   const [expandedOrderId, setExpandedOrderId] = useState(initialExpandedOrderId)
   const [orders, setOrders] = useState([])
   const orderCardRefs = useRef({})
+  const [cancelOrderModal, setCancelOrderModal] = useState(null)
+  const [cancellingOrder, setCancellingOrder] = useState(false)
   const [profile, setProfile] = useState({
     fullName: user?.user_metadata?.fullName || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User',
     phone: user?.user_metadata?.phone || '',
@@ -129,7 +131,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
     }
   }
 
-  const handleCancelOrder = async (orderId) => {
+  const openCancelOrderModal = (orderId) => {
     const order = orders.find((item) => item.id === orderId)
     const canCancel = order?.payment_method === 'cash' && ['pending', 'confirmed'].includes(order.status || 'pending')
 
@@ -138,21 +140,42 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
       return
     }
 
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-      .eq('id', orderId)
-      .eq('user_id', user.id)
+    setCancelOrderModal({ orderId, reason: '', note: '' })
+  }
 
-    if (error) {
-      notifyToast('This order can no longer be cancelled.', 'error')
+  const handleCancelOrder = async () => {
+    if (!cancelOrderModal?.reason || cancellingOrder) return
+
+    const { orderId, reason, note } = cancelOrderModal
+    setCancellingOrder(true)
+
+    try {
+      const cancelledAt = new Date().toISOString()
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'cancelled',
+          cancellation_reason: reason,
+          cancellation_note: note.trim() || null,
+          cancelled_at: cancelledAt,
+          updated_at: cancelledAt,
+        })
+        .eq('id', orderId)
+        .eq('user_id', user.id)
+
+      if (error) {
+        notifyToast('This order can no longer be cancelled.', 'error')
+        await loadOrders()
+        return
+      }
+
+      setCancelOrderModal(null)
+      setExpandedOrderId(null)
+      notifyToast('Order cancelled successfully.', 'success')
       await loadOrders()
-      return
+    } finally {
+      setCancellingOrder(false)
     }
-
-    setExpandedOrderId(null)
-    notifyToast('Order cancelled successfully.', 'success')
-    await loadOrders()
   }
 
   useEffect(() => {
@@ -805,10 +828,13 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                       ) : (
                         orders.map((order) => {
                           const orderStatus = order.status || 'pending'
-                          const statusSteps = orderStatus === 'pending_payment_confirmation' 
+                          const statusSteps = orderStatus === 'cancelled'
+                            ? ['Cancelled']
+                            : orderStatus === 'pending_payment_confirmation'
                             ? ['Awaiting payment confirmation', 'Confirmed', 'Preparing', 'On the way', 'Delivered']
                             : ['Confirmed', 'Preparing', 'On the way', 'Delivered']
                           const currentStep = {
+                            cancelled: 0,
                             pending_payment_confirmation: 0,
                             pending: 0,
                             confirmed: 0,
@@ -858,7 +884,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                                   textTransform: 'capitalize',
                                   whiteSpace: 'nowrap'
                                 }}>
-                                  {orderStatus === 'pending_payment_confirmation' ? 'Awaiting payment confirmation' : orderStatus}
+                                  {orderStatus === 'pending_payment_confirmation' ? 'Awaiting payment confirmation' : orderStatus === 'cancelled' ? 'Cancelled' : orderStatus}
                                 </div>
                               </div>
 
@@ -883,7 +909,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                                         fontWeight: '600',
                                         cursor: 'pointer',
                                       }}
-                                      onClick={() => handleCancelOrder(order.id)}
+                                      onClick={() => openCancelOrderModal(order.id)}
                                     >
                                       Cancel order
                                     </button>
@@ -1051,6 +1077,56 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
         </main>
 
       </div>
+
+      {cancelOrderModal && (
+        <div
+          className="cancel-order-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !cancellingOrder) setCancelOrderModal(null)
+          }}
+        >
+          <div className="cancel-order-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-order-title">
+            <h3 id="cancel-order-title">Cancel this order?</h3>
+            <p>Please confirm that you want to cancel this payment-on-delivery order.</p>
+
+            <label htmlFor="cancellation-reason">Reason for cancelling</label>
+            <select
+              id="cancellation-reason"
+              value={cancelOrderModal.reason}
+              onChange={(event) => setCancelOrderModal((current) => ({ ...current, reason: event.target.value }))}
+              disabled={cancellingOrder}
+            >
+              <option value="">Choose a reason</option>
+              <option value="Changed my mind">Changed my mind</option>
+              <option value="Ordered by mistake">Ordered by mistake</option>
+              <option value="Delivery is taking too long">Delivery is taking too long</option>
+              <option value="Found another option">Found another option</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <label htmlFor="cancellation-note">Short note (optional)</label>
+            <textarea
+              id="cancellation-note"
+              value={cancelOrderModal.note}
+              onChange={(event) => setCancelOrderModal((current) => ({ ...current, note: event.target.value }))}
+              maxLength="200"
+              rows="3"
+              placeholder="Add a short note"
+              disabled={cancellingOrder}
+            />
+
+            <div className="cancel-order-modal-actions">
+              <button type="button" className="ghost-btn" onClick={() => setCancelOrderModal(null)} disabled={cancellingOrder}>
+                Keep order
+              </button>
+              <button type="button" className="primary-btn" onClick={handleCancelOrder} disabled={!cancelOrderModal.reason || cancellingOrder}>
+                {cancellingOrder ? 'Cancelling...' : 'Cancel order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

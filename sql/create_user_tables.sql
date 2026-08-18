@@ -55,7 +55,10 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 ALTER TABLE orders
-ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash';
+ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
+ADD COLUMN IF NOT EXISTS cancellation_reason TEXT,
+ADD COLUMN IF NOT EXISTS cancellation_note TEXT,
+ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP WITH TIME ZONE;
 
 -- Ensure the shared storage bucket for user profile photos and bank proof uploads exists.
 -- Store files using a user-scoped path such as:

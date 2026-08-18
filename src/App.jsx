@@ -384,6 +384,9 @@ function App() {
         address: order.delivery_address || '',
         total: Number(order.order_total) || 0,
         date: order.created_at,
+        updatedAt: order.updated_at,
+        cancellationReason: order.cancellation_reason,
+        cancellationNote: order.cancellation_note,
         items: order.order_items || [],
       })))
     }

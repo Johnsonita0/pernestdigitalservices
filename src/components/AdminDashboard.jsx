@@ -345,6 +345,8 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                       <th>Order ID</th>
                       <th>User</th>
                       <th>Date</th>
+                      <th>Cancelled At</th>
+                      <th>Cancellation Reason</th>
                       <th>Items Ordered</th>
                       <th>Delivery Address</th>
                       <th>Amount Paid</th>
@@ -354,7 +356,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                   <tbody>
                     {allOrders.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="empty-message">No orders yet.</td>
+                        <td colSpan="9" className="empty-message">No orders yet.</td>
                       </tr>
                     ) : (
                       allOrders.map((order) => {
@@ -364,6 +366,15 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                             <td className="order-id">#{order.id}</td>
                             <td>{orderUser?.fullName || order.name || 'Unknown'}</td>
                             <td>{new Date(order.date).toLocaleDateString()}</td>
+                            <td>{order.status === 'cancelled' && order.updatedAt ? new Date(order.updatedAt).toLocaleString() : '—'}</td>
+                            <td className="address-cell">
+                              {order.status === 'cancelled' ? (
+                                <>
+                                  <strong>{order.cancellationReason || 'Not provided'}</strong>
+                                  {order.cancellationNote && <div>{order.cancellationNote}</div>}
+                                </>
+                              ) : '—'}
+                            </td>
                             <td className="items-cell">
                               {order.items?.map((item) => item.name || item.title || item).join(', ')}
                             </td>
@@ -388,6 +399,7 @@ function AdminDashboard({ products, pendingTestimonials = [], onApproveTestimoni
                                 <option value="preparing">Preparing</option>
                                 <option value="ready">On the way</option>
                                 <option value="delivered">Delivered</option>
+                                <option value="cancelled">Cancelled</option>
                               </select>
                             </td>
                           </tr>

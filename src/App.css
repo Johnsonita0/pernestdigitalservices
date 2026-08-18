@@ -4754,6 +4754,85 @@ a {
   min-width: 170px;
 }
 
+.cancel-order-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(29, 23, 20, 0.48);
+}
+
+.cancel-order-modal {
+  width: min(100%, 440px);
+  padding: 24px;
+  border-radius: 18px;
+  background: #fffaf7;
+  box-shadow: 0 24px 70px rgba(29, 23, 20, 0.24);
+}
+
+.cancel-order-modal h3 {
+  margin: 0 0 8px;
+  color: #1d1714;
+  font-size: 1.25rem;
+}
+
+.cancel-order-modal p {
+  margin: 0 0 20px;
+  color: #7b6257;
+  line-height: 1.5;
+}
+
+.cancel-order-modal label {
+  display: block;
+  margin: 14px 0 7px;
+  color: #5e473e;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.cancel-order-modal select,
+.cancel-order-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(29, 23, 20, 0.14);
+  border-radius: 10px;
+  background: #fff;
+  padding: 11px 12px;
+  color: #1d1714;
+  font: inherit;
+}
+
+.cancel-order-modal textarea {
+  resize: vertical;
+}
+
+.cancel-order-modal select:focus,
+.cancel-order-modal textarea:focus {
+  outline: none;
+  border-color: rgba(255, 107, 53, 0.7);
+  box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.08);
+}
+
+.cancel-order-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+@media (max-width: 520px) {
+  .cancel-order-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cancel-order-modal-actions button {
+    width: 100%;
+  }
+}
+
 .fireworks {
   position: absolute;
   inset: 0;
