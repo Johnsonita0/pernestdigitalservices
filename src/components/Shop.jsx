@@ -9,11 +9,11 @@ const getShortDescription = (description = '') => {
   return `${description.slice(0, 48).trim()}...`
 }
 
-function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, user = null, onNavigate = null }) {
+function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, user = null, profileImageUrl = '', onNavigate = null }) {
   const [selectedItem, setSelectedItem] = useState(null)
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'
   const displayName = user ? username : 'Guest'
-  const profileImage = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar || user?.user_metadata?.profilePic || user?.user_metadata?.photoURL || user?.avatar_url || user?.picture || user?.photoURL || null
+  const profileImage = profileImageUrl || user?.user_metadata?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar || user?.user_metadata?.profilePic || user?.user_metadata?.photoURL || user?.avatar_url || user?.picture || user?.photoURL || null
   const quickMeals = products.slice(0, 5)
   const topPicks = products.slice(0, 2)
 

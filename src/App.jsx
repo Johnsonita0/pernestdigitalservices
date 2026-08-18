@@ -1126,6 +1126,7 @@ function App() {
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             user={user}
+            profileImageUrl={profileImageUrl}
             onNavigate={updateRoute}
           />
         </main>
