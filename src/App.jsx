@@ -24,6 +24,7 @@ const ADMIN_USER_ID = '58876079-3e57-4b35-9a54-b7f3d00a18c7'
 const ADMIN_EMAIL = 'admin@trophysip.com'
 const RIDER_USER_ID = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
 const BROWSER_NOTIFICATION_PROMPT_KEY = 'trophy-browser-notification-prompted'
+const CART_STORAGE_KEY = 'trophy-cart-items'
 
 const resolveStoredProfileImageUrl = async (storedValue) => {
   if (!storedValue) return ''
@@ -118,7 +119,16 @@ const testimonials = [
 
 function App() {
   const [view, setView] = useState('home')
-  const [cartItems, setCartItems] = useState([])
+  const [cartItems, setCartItems] = useState(() => {
+    if (typeof window === 'undefined') return []
+
+    try {
+      const storedCart = window.localStorage.getItem(CART_STORAGE_KEY)
+      return storedCart ? JSON.parse(storedCart) : []
+    } catch {
+      return []
+    }
+  })
   const [activeFaq, setActiveFaq] = useState(0)
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
@@ -152,6 +162,10 @@ function App() {
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
   const [toast, setToast] = useState(null)
   const [notifications, setNotifications] = useState([])
+
+  useEffect(() => {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
+  }, [cartItems])
 
   useEffect(() => {
     const handleToast = (event) => {
@@ -1615,7 +1629,6 @@ function App() {
                             
                             <div 
                               className="image-upload-box"
-                              onClick={() => document.getElementById('proofOfPaymentInput').click()}
                               style={{
                                 cursor: 'pointer',
                                 border: '2px dashed rgba(255, 107, 53, 0.4)',
