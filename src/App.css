@@ -613,6 +613,20 @@ textarea {
   justify-content: center;
 }
 
+.mobile-bell-btn {
+  position: relative;
+}
+
+.mobile-bell-btn .mobile-nav-badge {
+  top: 1px;
+  right: 1px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 2px solid #fff;
+  font-size: 0.58rem;
+}
+
 .mobile-search-bar {
   display: flex;
   align-items: center;
@@ -3618,18 +3632,6 @@ a {
   display: grid;
   justify-items: center;
   gap: 5px;
-.mobile-bell-btn {
-  position: relative;
-}
-.mobile-bell-btn .mobile-nav-badge {
-  top: 1px;
-  right: 1px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 0.58rem;
-  border: 2px solid #fff;
-}
   min-height: 58px;
   padding: 8px 6px;
   border: 0;
