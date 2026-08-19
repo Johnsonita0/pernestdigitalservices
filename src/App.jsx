@@ -10,6 +10,9 @@ import VerificationPage from './pages/VerificationPage';
 import VerificationStatusPage from './pages/VerificationStatusPage';
 import SuccessPage from './pages/SuccessPage';
 import MorePage from './pages/MorePage';
+import NGORegistrationPage from './pages/NGORegistrationPage';
+import CompanyRegistrationPage from './pages/CompanyRegistrationPage';
+import BusinessRegistrationPage from './pages/BusinessRegistrationPage';
 import './css/App.css';
 
 function AppLoader() {
@@ -91,6 +94,9 @@ function App() {
         <Route path="/verification-status" element={<VerificationStatusPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/more" element={<MorePage />} />
+        <Route path="/ngo-register" element={<NGORegistrationPage />} />
+        <Route path="/company-register" element={<CompanyRegistrationPage />} />
+        <Route path="/business-register" element={<BusinessRegistrationPage />} />
 
         {/* Admin Routes */}
         <Route

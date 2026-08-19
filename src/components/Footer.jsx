@@ -18,7 +18,7 @@ function Footer() {
             We are a professional digital and business support service provider committed to making registration and documentation processes simple, reliable, and accessible. Our services include CAC registration, SCUML registration, Trademark registration, NIN services, and other digital government-related services.
           </p>
           <div className="social-links">
-            <a href="#" title="Facebook" aria-label="Facebook" className="social-icon fb">
+            <a href="https://www.facebook.com/share/1EygCT1mWo/" title="Facebook" aria-label="Facebook" className="social-icon fb">
               <FontAwesomeIcon icon={faFacebookF} aria-hidden="true" />
             </a>
             <a href="#" title="Twitter" aria-label="Twitter" className="social-icon tw">

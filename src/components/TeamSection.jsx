@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faInstagram, faLinkedinIn, faXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { faFacebookF, faInstagram, faLinkedinIn, faXTwitter } from '@fortawesome/free-brands-svg-icons';
 import '../css/components/TeamSection.css';
 
 function TeamSection() {
@@ -30,6 +30,11 @@ function TeamSection() {
                 <img src={member.image} alt={member.name} className="team-image" />
                 <div className="team-overlay">
                   <div className="team-socials">
+                    {member.socials.facebook && (
+                      <a href={member.socials.facebook} title="Facebook" aria-label="Facebook">
+                        <FontAwesomeIcon icon={faFacebookF} aria-hidden="true" />
+                      </a>
+                    )}
                     {member.socials.linkedin && (
                       <a href={member.socials.linkedin} title="LinkedIn" aria-label="LinkedIn">
                         <FontAwesomeIcon icon={faLinkedinIn} aria-hidden="true" />

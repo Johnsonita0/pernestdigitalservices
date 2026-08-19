@@ -1,0 +1,43 @@
+.company-page { min-height: 100vh; padding: 32px 18px; background: linear-gradient(135deg, #eaf7ff, #fff8e3); }
+.company-card { width: min(100%, 1040px); margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-md); overflow: hidden; }
+.company-header { padding: 34px 28px 28px; text-align: center; color: white; background: linear-gradient(135deg, var(--brand-dark), var(--brand), #168ca3); }
+.company-header img, .company-payment > img { width: 170px; height: 70px; object-fit: contain; mix-blend-mode: screen; margin: 0 auto 12px; display: block; }
+.company-header p, .company-kicker { color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 8px; }
+.company-header h1, .company-payment h1 { color: white; font-size: clamp(2rem, 4vw, 3.4rem); margin: 0 0 10px; text-transform: capitalize; }
+.company-header span { color: rgba(255,255,255,.88); }
+.company-progress { height: 7px; background: #e7edf4; }
+.company-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--accent)); transition: width .25s ease; }
+.company-step { padding: 18px 32px 0; color: var(--muted); font-size: .85rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.company-step-content { padding: 22px 32px 10px; }
+.company-step-content h2 { margin: 0 0 20px; font-size: 1.55rem; }
+.company-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.company-field { display: flex; flex-direction: column; gap: 7px; color: var(--brand-dark); font-size: .88rem; font-weight: 700; }
+.company-field input, .company-field textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 11px 12px; color: var(--text); background: #fbfdff; outline: none; }
+.company-field input:focus, .company-field textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,87,184,.12); }
+.company-full-field { width: 100%; }
+.company-error { color: #c62828; font-weight: 600; font-size: .78rem; }
+.company-help { color: var(--muted); }
+.company-person { padding: 20px; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 12px; background: #fbfdff; }
+.company-person h3 { margin: 0 0 16px; }
+.company-files { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+.company-file { display: flex; flex-direction: column; gap: 8px; padding: 13px; border: 1px dashed var(--brand); border-radius: 8px; color: var(--brand-dark); font-size: .85rem; font-weight: 700; background: var(--brand-soft); }
+.company-file input { max-width: 100%; font-size: .78rem; }
+.company-documents, .company-review, .company-notes, .company-account { display: grid; gap: 10px; padding: 18px; border-radius: 10px; background: var(--surface-alt); }
+.company-documents > div { display: grid; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.company-documents > div:last-child { border-bottom: 0; }
+.company-documents span, .company-notes span, .company-account span { color: var(--muted); }
+.company-notes { margin-top: 20px; border-left: 4px solid var(--accent); }
+.company-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 32px 30px; }
+.company-primary, .company-secondary, .add-person { border: 0; border-radius: 8px; padding: 12px 20px; font-weight: 800; cursor: pointer; }
+.company-primary { background: var(--brand); color: white; }
+.company-primary:hover { background: var(--brand-dark); }
+.company-primary:disabled { opacity: .6; cursor: wait; }
+.company-secondary { background: var(--surface-alt); color: var(--brand-dark); }
+.add-person { margin-top: 4px; background: var(--accent-soft); color: var(--brand-dark); }
+.company-payment { padding: 40px; text-align: center; }
+.company-payment h1 { color: var(--brand-dark); }
+.company-payment > p { max-width: 680px; margin: 12px auto; }
+.company-account { max-width: 460px; margin: 24px auto; text-align: left; border: 1px solid var(--accent); background: var(--accent-soft); }
+.company-payment .company-file { max-width: 460px; margin: 20px auto; text-align: left; }
+.company-payment .company-secondary { margin-left: 10px; }
+@media (max-width: 680px) { .company-page { padding: 0; } .company-card { border-radius: 0; min-height: 100vh; } .company-header { padding: 28px 20px; } .company-step-content { padding: 20px; } .company-step { padding: 16px 20px 0; } .company-grid, .company-files { grid-template-columns: 1fr; } .company-actions { padding: 18px 20px 24px; } .company-actions button { flex: 1; } .company-payment { padding: 28px 20px; } }

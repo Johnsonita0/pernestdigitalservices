@@ -126,6 +126,21 @@
   letter-spacing: 0.01em;
 }
 
+.nav-menu a {
+  display: block;
+  padding: 12px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  transition: all 0.25s ease;
+  letter-spacing: 0.01em;
+}
+
+.nav-menu a:hover {
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
 .nav-menu button:hover {
   color: var(--accent);
   transform: translateY(-2px);
@@ -146,6 +161,59 @@
 
 .nav-menu li:not(.nav-divider, .nav-shop) button:hover::after {
   width: 70%;
+}
+
+.registration-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  padding: 8px 0;
+  margin: 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.nav-registration:hover .registration-dropdown,
+.registration-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.registration-dropdown li,
+.registration-dropdown a {
+  width: 100%;
+}
+
+.registration-dropdown li {
+  border-bottom: 1px solid var(--border);
+}
+
+.registration-dropdown li:last-child {
+  border-bottom: 0;
+}
+
+.registration-dropdown a {
+  padding: 10px 16px;
+  white-space: nowrap;
+  color: var(--brand-dark);
+  border-radius: 6px;
+  margin: 2px 4px;
+  width: calc(100% - 8px);
+}
+
+.registration-dropdown a:hover {
+  color: var(--brand-dark);
+  background: var(--brand-soft);
+  transform: none;
 }
 
 .nav-divider {
@@ -222,6 +290,36 @@
     padding: 14px 24px;
     text-align: left;
     border-radius: 0;
+  }
+
+  .nav-menu a {
+    width: 100%;
+    padding: 14px 24px;
+    text-align: left;
+  }
+
+  .registration-dropdown {
+    position: static;
+    display: none;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .registration-dropdown.open {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .registration-dropdown a {
+    padding-left: 42px;
+    background: var(--surface-alt);
+    border-radius: 0;
+    margin: 0;
+    width: 100%;
   }
 
   .nav-menu button:hover {

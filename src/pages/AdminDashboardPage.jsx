@@ -9,6 +9,9 @@ function AdminDashboardPage({ user, onLogout }) {
   const [messages, setMessages] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [ngoApplications, setNgoApplications] = useState([]);
+  const [companyApplications, setCompanyApplications] = useState([]);
+  const [businessApplications, setBusinessApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -25,7 +28,7 @@ function AdminDashboardPage({ user, onLogout }) {
     } else if (activeTab === 'testimonials') {
       const { data } = await getAllTestimonials();
       setTestimonials(data || []);
-    } else {
+    } else if (activeTab === 'applications') {
       const { data, error } = await supabase
         .from('internship_applications')
         .select('*')
@@ -33,6 +36,24 @@ function AdminDashboardPage({ user, onLogout }) {
       if (!error) {
         setApplications(data || []);
       }
+    } else if (activeTab === 'ngo') {
+      const { data, error } = await supabase
+        .from('ngo_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setNgoApplications(data || []);
+    } else if (activeTab === 'company') {
+      const { data, error } = await supabase
+        .from('company_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setCompanyApplications(data || []);
+    } else {
+      const { data, error } = await supabase
+        .from('business_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setBusinessApplications(data || []);
     }
     setLoading(false);
   };
@@ -48,7 +69,7 @@ function AdminDashboardPage({ user, onLogout }) {
       setTestimonials((prev) =>
         prev.map((item) => (item.id === messageId ? { ...item, status: newStatus } : item))
       );
-    } else {
+    } else if (activeTab === 'applications') {
       const currentApp = applications.find((app) => app.id === messageId);
       const { error } = await supabase
         .from('internship_applications')
@@ -75,6 +96,24 @@ function AdminDashboardPage({ user, onLogout }) {
           }
         }
       }
+    } else if (activeTab === 'ngo') {
+      const { error } = await supabase
+        .from('ngo_applications')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setNgoApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    } else if (activeTab === 'company') {
+      const { error } = await supabase
+        .from('company_applications')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setCompanyApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    } else {
+      const { error } = await supabase
+        .from('business_applications')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setBusinessApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     }
   };
 
@@ -82,7 +121,13 @@ function AdminDashboardPage({ user, onLogout }) {
     ? messages.filter((msg) => filter === 'all' || msg.status === filter)
     : activeTab === 'testimonials'
       ? testimonials.filter((item) => filter === 'all' || item.status === filter)
-      : applications.filter((app) => filter === 'all' || app.status === filter);
+      : activeTab === 'applications'
+        ? applications.filter((app) => filter === 'all' || app.status === filter)
+        : activeTab === 'ngo'
+          ? ngoApplications.filter((app) => filter === 'all' || app.status === filter)
+          : activeTab === 'company'
+            ? companyApplications.filter((app) => filter === 'all' || app.status === filter)
+            : businessApplications.filter((app) => filter === 'all' || app.status === filter);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -90,6 +135,8 @@ function AdminDashboardPage({ user, onLogout }) {
       read: '#003d99',
       replied: '#4caf50',
       pending: '#f59e0b',
+      payment_pending: '#f59e0b',
+      payment_submitted: '#168ca3',
       approved: '#10b981',
       rejected: '#ef4444',
     };
@@ -106,7 +153,7 @@ function AdminDashboardPage({ user, onLogout }) {
             </a>
             <div className="header-copy">
               <h1>Welcome Admin</h1>
-              <p>Manage messages, testimonials, and internship applications</p>
+              <p>Manage messages, testimonials, internship, NGO, and company registrations</p>
             </div>
           </div>
           <div className="header-actions">
@@ -148,12 +195,42 @@ function AdminDashboardPage({ user, onLogout }) {
           >
             🎓 Internship Applications ({applications.length})
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'ngo' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('ngo');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            🏛️ NGO Registrations ({ngoApplications.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'company' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('company');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            🏢 Company Registrations ({companyApplications.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'business' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('business');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            🧾 Business Registrations ({businessApplications.length})
+          </button>
         </div>
 
         {/* Sidebar */}
         <div className="dashboard-sidebar">
           <div className="sidebar-section">
-            <h3>{activeTab === 'messages' ? 'Filter Messages' : activeTab === 'testimonials' ? 'Filter Testimonials' : 'Filter Applications'}</h3>
+            <h3>{activeTab === 'messages' ? 'Filter Messages' : activeTab === 'testimonials' ? 'Filter Testimonials' : activeTab === 'applications' ? 'Filter Applications' : activeTab === 'ngo' ? 'Filter NGO Registrations' : activeTab === 'company' ? 'Filter Company Registrations' : 'Filter Business Registrations'}</h3>
             <div className="filter-buttons">
               {activeTab === 'messages' ? (
                 <>
@@ -209,7 +286,7 @@ function AdminDashboardPage({ user, onLogout }) {
                     Rejected ({testimonials.filter((item) => item.status === 'rejected').length})
                   </button>
                 </>
-              ) : (
+              ) : activeTab === 'applications' ? (
                 <>
                   <button
                     className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
@@ -236,6 +313,27 @@ function AdminDashboardPage({ user, onLogout }) {
                     Rejected ({applications.filter((a) => a.status === 'rejected').length})
                   </button>
                 </>
+              ) : activeTab === 'ngo' ? (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({ngoApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({ngoApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({ngoApplications.filter((a) => a.status === 'approved').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({ngoApplications.filter((a) => a.status === 'rejected').length})</button>
+                </>
+              ) : activeTab === 'company' ? (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({companyApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({companyApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({companyApplications.filter((a) => a.status === 'approved').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({companyApplications.filter((a) => a.status === 'rejected').length})</button>
+                </>
+              ) : (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({businessApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({businessApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({businessApplications.filter((a) => a.status === 'approved').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({businessApplications.filter((a) => a.status === 'rejected').length})</button>
+                </>
               )}
             </div>
           </div>
@@ -244,10 +342,10 @@ function AdminDashboardPage({ user, onLogout }) {
         {/* Main Content */}
         <div className="dashboard-main">
           {loading ? (
-            <div className="loading">Loading {activeTab === 'messages' ? 'messages' : 'applications'}...</div>
+            <div className="loading">Loading {activeTab === 'messages' ? 'messages' : activeTab === 'ngo' ? 'NGO registrations' : activeTab === 'company' ? 'company registrations' : activeTab === 'business' ? 'business registrations' : 'applications'}...</div>
           ) : filteredData.length === 0 ? (
             <div className="empty-state">
-              <p>No {activeTab === 'messages' ? 'messages' : 'applications'} found</p>
+              <p>No {activeTab === 'messages' ? 'messages' : activeTab === 'ngo' ? 'NGO registrations' : activeTab === 'company' ? 'company registrations' : activeTab === 'business' ? 'business registrations' : 'applications'} found</p>
             </div>
           ) : (
             <div className="messages-container">
@@ -304,7 +402,7 @@ function AdminDashboardPage({ user, onLogout }) {
                               {new Date(item.created_at).toLocaleTimeString()}
                             </p>
                           </>
-                        ) : (
+                        ) : activeTab === 'applications' ? (
                           <>
                             <div className="message-header">
                               <div className="message-info">
@@ -325,6 +423,45 @@ function AdminDashboardPage({ user, onLogout }) {
                               {new Date(item.created_at).toLocaleTimeString()}
                             </p>
                           </>
+                        ) : activeTab === 'ngo' ? (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.proposed_name_1}</h4>
+                                <p className="message-email">{item.email}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">{item.trustee_count} trustee(s) · {item.payment_slip ? 'Payment slip uploaded' : 'Awaiting payment slip'}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
+                        ) : activeTab === 'company' ? (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.proposed_name_1}</h4>
+                                <p className="message-email">{item.email}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">{item.directors?.length || 0} director(s) · {item.shareholders?.length || 0} shareholder(s) · {item.payment_slip ? 'Payment slip uploaded' : 'Awaiting payment slip'}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.proposed_name_1}</h4>
+                                <p className="message-email">{item.email}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">{item.proprietors?.length || 0} proprietor(s) · {item.payment_slip ? 'Payment slip uploaded' : 'Awaiting payment slip'}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
                         )}
                       </div>
 
@@ -334,8 +471,14 @@ function AdminDashboardPage({ user, onLogout }) {
                             <MessageDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
                           ) : activeTab === 'testimonials' ? (
                             <TestimonialDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
-                          ) : (
+                          ) : activeTab === 'applications' ? (
                             <ApplicationDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
+                          ) : activeTab === 'ngo' ? (
+                            <NGOApplicationDetail item={item} onStatusChange={handleStatusChange} />
+                          ) : activeTab === 'company' ? (
+                            <CompanyApplicationDetail item={item} onStatusChange={handleStatusChange} />
+                          ) : (
+                            <BusinessApplicationDetail item={item} onStatusChange={handleStatusChange} />
                           )}
                         </div>
                       )}
@@ -559,6 +702,81 @@ function ApplicationDetail({ item, getStatusColor, onStatusChange }) {
         <a href={`tel:${item.phone}`} className="call-btn">
           Call
         </a>
+      </div>
+    </div>
+  );
+}
+
+function NGOApplicationDetail({ item, onStatusChange }) {
+  const trustees = Array.isArray(item.trustees) ? item.trustees : [];
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>NGO Application: {item.proposed_name_1}</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
+        <div className="info-row"><strong>Office:</strong><span>{item.office_address}</span></div>
+        <div className="info-row"><strong>Trustees:</strong><span>{item.trustee_count}</span></div>
+        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+      </div>
+      <div className="application-sections">
+        <div className="app-section"><h4>Aims and objectives</h4><p>{item.aims}</p></div>
+        <div className="app-section"><h4>Sources of income</h4><p>{item.source_of_income}</p></div>
+        {trustees.map((trustee, index) => <div className="app-section" key={index}><h4>Trustee {index + 1}: {trustee.firstName} {trustee.surname}</h4><p>{trustee.email} · {trustee.phone} · {trustee.occupation}</p><p>{trustee.idDocument?.dataUrl ? <a href={trustee.idDocument.dataUrl} target="_blank" rel="noreferrer">View ID</a> : 'ID not uploaded'} · {trustee.signature?.dataUrl ? <a href={trustee.signature.dataUrl} target="_blank" rel="noreferrer">View signature</a> : 'Signature not uploaded'} · {trustee.passport?.dataUrl ? <a href={trustee.passport.dataUrl} target="_blank" rel="noreferrer">View passport</a> : 'Passport not uploaded'}</p></div>)}
+      </div>
+    </div>
+  );
+}
+
+function CompanyApplicationDetail({ item, onStatusChange }) {
+  const people = [
+    ['Witness', item.witness],
+    ...(item.directors || []).map((person, index) => [`Director ${index + 1}`, person]),
+    ...(item.shareholders || []).map((person, index) => [`Shareholder ${index + 1}`, person]),
+  ];
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>Company Application: {item.proposed_name_1}</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
+        <div className="info-row"><strong>Phone:</strong><span>{item.phone}</span></div>
+        <div className="info-row"><strong>Address:</strong><span>{item.town}, {item.state}, {item.street_name}</span></div>
+        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+      </div>
+      <div className="application-sections">
+        <div className="app-section"><h4>Object of memorandum</h4><p>{item.objects}</p></div>
+        {people.map(([label, person]) => <div className="app-section" key={label}><h4>{label}: {person?.firstName} {person?.surname}</h4><p>{person?.email} · {person?.phone} · {person?.occupation}</p><p>{person?.idDocument?.dataUrl ? <a href={person.idDocument.dataUrl} target="_blank" rel="noreferrer">View ID</a> : 'ID not uploaded'} · {person?.signature?.dataUrl ? <a href={person.signature.dataUrl} target="_blank" rel="noreferrer">View signature</a> : 'Signature not uploaded'}</p></div>)}
+      </div>
+    </div>
+  );
+}
+
+function BusinessApplicationDetail({ item, onStatusChange }) {
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>Business Application: {item.proposed_name_1}</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
+        <div className="info-row"><strong>Phone:</strong><span>{item.phone}</span></div>
+        <div className="info-row"><strong>Address:</strong><span>{item.town}, {item.state}, {item.street_name}</span></div>
+        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+      </div>
+      <div className="application-sections">
+        {(item.proprietors || []).map((person, index) => <div className="app-section" key={index}><h4>Proprietor {index + 1}: {person.firstName} {person.surname}</h4><p>{person.email} · {person.phone} · {person.occupation}</p><p>{person.idDocument?.dataUrl ? <a href={person.idDocument.dataUrl} target="_blank" rel="noreferrer">View ID</a> : 'ID not uploaded'} · {person.signature?.dataUrl ? <a href={person.signature.dataUrl} target="_blank" rel="noreferrer">View signature</a> : 'Signature not uploaded'} · {person.passport?.dataUrl ? <a href={person.passport.dataUrl} target="_blank" rel="noreferrer">View passport</a> : 'Passport not uploaded'}</p></div>)}
       </div>
     </div>
   );

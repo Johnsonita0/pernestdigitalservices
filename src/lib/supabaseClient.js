@@ -11,6 +11,9 @@ export const supabase = missingSupabaseConfig
   : createClient(supabaseUrl, supabaseAnonKey);
 
 const LOCAL_REGISTRATIONS_KEY = 'pernestdigitalservices_internship_registrations';
+const LOCAL_NGO_APPLICATIONS_KEY = 'pernestdigitalservices_ngo_applications';
+const LOCAL_COMPANY_APPLICATIONS_KEY = 'pernestdigitalservices_company_applications';
+const LOCAL_BUSINESS_APPLICATIONS_KEY = 'pernestdigitalservices_business_applications';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -135,6 +138,120 @@ export async function saveTrainingRegistration(registration) {
       ),
     };
   }
+}
+
+export async function submitNGOApplication(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_NGO_APPLICATIONS_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_NGO_APPLICATIONS_KEY, JSON.stringify([{ ...application, id: `local-ngo-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save your NGO application on this device.') };
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('ngo_applications')
+      .insert(application)
+      .select()
+      .single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the NGO application. Please try again.') };
+  }
+}
+
+export async function updateNGOPaymentSlip(referenceNumber, paymentSlip) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_NGO_APPLICATIONS_KEY) || '[]');
+      const updated = stored.map((application) => application.reference_number === referenceNumber
+        ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' }
+        : application);
+      window.localStorage.setItem(LOCAL_NGO_APPLICATIONS_KEY, JSON.stringify(updated));
+      return { error: null };
+    } catch (error) {
+      return { error: new Error('Unable to save the payment slip on this device.') };
+    }
+  }
+
+  const { error } = await supabase
+    .from('ngo_applications')
+    .update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() })
+    .eq('reference_number', referenceNumber);
+  return { error };
+}
+
+export async function submitCompanyApplication(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_COMPANY_APPLICATIONS_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_COMPANY_APPLICATIONS_KEY, JSON.stringify([{ ...application, id: `local-company-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save the company application on this device.') };
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.from('company_applications').insert(application).select().single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the company application. Please try again.') };
+  }
+}
+
+export async function updateCompanyPaymentSlip(referenceNumber, paymentSlip) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_COMPANY_APPLICATIONS_KEY) || '[]');
+      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' } : application);
+      window.localStorage.setItem(LOCAL_COMPANY_APPLICATIONS_KEY, JSON.stringify(updated));
+      return { error: null };
+    } catch (error) {
+      return { error: new Error('Unable to save the payment slip on this device.') };
+    }
+  }
+
+  const { error } = await supabase.from('company_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
+  return { error };
+}
+
+export async function submitBusinessApplication(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_BUSINESS_APPLICATIONS_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_BUSINESS_APPLICATIONS_KEY, JSON.stringify([{ ...application, id: `local-business-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save the business application on this device.') };
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.from('business_applications').insert(application).select().single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the business application. Please try again.') };
+  }
+}
+
+export async function updateBusinessPaymentSlip(referenceNumber, paymentSlip) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_BUSINESS_APPLICATIONS_KEY) || '[]');
+      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' } : application);
+      window.localStorage.setItem(LOCAL_BUSINESS_APPLICATIONS_KEY, JSON.stringify(updated));
+      return { error: null };
+    } catch (error) {
+      return { error: new Error('Unable to save the payment slip on this device.') };
+    }
+  }
+
+  const { error } = await supabase.from('business_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
+  return { error };
 }
 
 export async function deleteTrainingRegistration(registrationId) {

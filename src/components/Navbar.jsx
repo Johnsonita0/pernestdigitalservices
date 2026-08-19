@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faBagShopping, faXmark } from '@fortawesome/free-solid-svg-icons';
 import '../css/components/Navbar.css';
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -55,8 +57,27 @@ function Navbar() {
           <li>
             <button onClick={() => scrollToSection('services')}>Services</button>
           </li>
-          <li>
-            <button onClick={() => scrollToSection('team')}>Team</button>
+          <li className="nav-registration">
+            <button onClick={() => setRegistrationOpen((open) => !open)} aria-expanded={registrationOpen}>
+              Registration
+            </button>
+            <ul className={`registration-dropdown ${registrationOpen ? 'open' : ''}`}>
+              <li>
+                <Link to="/ngo-register" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  NGO Registration
+                </Link>
+              </li>
+              <li>
+                <Link to="/company-register" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  Company Registration
+                </Link>
+              </li>
+              <li>
+                <Link to="/business-register" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  Business Registration
+                </Link>
+              </li>
+            </ul>
           </li>
           <li>
             <button onClick={() => scrollToSection('contact')}>Contact</button>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import '../css/components/HeroSlider.css';
@@ -14,6 +15,31 @@ function HeroSlider({ onContactClick }) {
       image: '/image/cac.jpg',
       cta: 'Explore Our Services'
     },  
+    {
+      id: 6,
+      title: 'NGO Registration Support',
+      description: 'Register your NGO with structured guidance for trustees, constitution, aims and objectives, statutory documents, publications, and payment confirmation.',
+      image: '/image/cac.jpg',
+      cta: 'Start NGO Registration',
+      href: '/ngo-register',
+      actionType: 'ngo'
+    },
+    {
+      id: 7,
+      title: 'CAC Company Registration',
+      description: 'Register your company with CAC using a guided process for company details, memorandum objects, witnesses, directors, shareholders, IDs, and signatures.',
+      image: '/image/cac.jpg',
+      cta: 'Start Company Registration',
+      href: '/company-register'
+    },
+    {
+      id: 8,
+      title: 'CAC Business Name Registration',
+      description: 'Register your business name with a guided process for business details, proprietor information, identity documents, signatures, and passport photographs.',
+      image: '/image/cac.jpg',
+      cta: 'Start Business Registration',
+      href: '/business-register'
+    },
     {
       id: 2,
       title: 'NIN Services Without the Stress',
@@ -63,7 +89,7 @@ function HeroSlider({ onContactClick }) {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  const handleCtaClick = () => {
+  const handleCtaClick = (actionType) => {
     const servicesSection = document.getElementById('services');
     if (servicesSection) {
       servicesSection.scrollIntoView({ behavior: 'smooth' });
@@ -85,9 +111,11 @@ function HeroSlider({ onContactClick }) {
             <div className="slider-content">
               <h1 className="slider-title">{slide.title}</h1>
               <p className="slider-description">{slide.description}</p>
-              <button className="slider-cta" onClick={handleCtaClick}>
-                {slide.cta}
-              </button>
+              {slide.href ? (
+                <Link className="slider-cta" to={slide.href}>{slide.cta}</Link>
+              ) : (
+                <button className="slider-cta" onClick={() => handleCtaClick(slide.actionType)}>{slide.cta}</button>
+              )}
             </div>
           </div>
         ))}
