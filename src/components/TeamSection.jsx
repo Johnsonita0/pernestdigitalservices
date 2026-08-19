@@ -7,11 +7,11 @@ function TeamSection() {
   const team = [
     {
       id: 0,
-      name: 'Hon. Akan Eyo',
+      name: 'Coach Ernest Osung',
       role: 'CEO & Founder',
       bio: 'Visionary leader driving Pernest Digital Services towards innovation and excellence in digital business support.',
       image: '/people/ceo.jpg',
-      socials: { linkedin: '#', twitter: '#', instagram: '#' }
+      socials: { whatsapp: 'https://wa.me/2348130801666', facebook: 'https://www.facebook.com/pernestdigitalservices', instagram: 'https://www.instagram.com/pernestdigitalservices' }
     }
   ];
 
