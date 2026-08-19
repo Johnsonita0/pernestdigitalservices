@@ -56,7 +56,7 @@ const resolveProfileImageUrl = async (storedValue) => {
   return error ? '' : data?.signedUrl || ''
 }
 
-function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], notifications = [], onMarkNotificationRead, onNotificationClick, onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
+function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], notifications = [], onMarkNotificationRead, onNotificationClick, onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onOpenNotifications = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(initialAccountSubmenu)
   const [expandedOrderId, setExpandedOrderId] = useState(initialExpandedOrderId)
@@ -445,7 +445,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
             <div className="mobile-location-copy">
               <strong>{username}</strong>
             </div>
-                <button type="button" className="mobile-bell-btn" aria-label="Notifications" onClick={() => setAccountSubmenu('notifications')}>
+                <button type="button" className="mobile-bell-btn" aria-label="Notifications" onClick={() => { setAccountSubmenu('notifications'); onOpenNotifications?.() }}>
               <FontAwesomeIcon icon={faBell} />
                   {notifications.some((notification) => !notification.is_read) && <span className="mobile-nav-badge">{notifications.filter((notification) => !notification.is_read).length}</span>}
             </button>

@@ -9,7 +9,7 @@ const getShortDescription = (description = '') => {
   return `${description.slice(0, 48).trim()}...`
 }
 
-function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, user = null, profileImageUrl = '', onNavigate = null }) {
+function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, user = null, profileImageUrl = '', onNavigate = null, notifications = [], onOpenNotifications = null }) {
   const [selectedItem, setSelectedItem] = useState(null)
   const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'
   const displayName = user ? username : 'Guest'
@@ -53,8 +53,9 @@ function Shop({ products, onAddToCart, searchTerm = '', onSearchChange = null, u
                 </button>
               )}
             </div>
-            <button type="button" className="mobile-bell-btn" aria-label="Notifications">
+            <button type="button" className="mobile-bell-btn" aria-label="Notifications" onClick={onOpenNotifications}>
               <FontAwesomeIcon icon={faBell} />
+              {notifications.some((notification) => !notification.is_read) && <span className="mobile-nav-badge">{notifications.filter((notification) => !notification.is_read).length}</span>}
             </button>
           </div>
 

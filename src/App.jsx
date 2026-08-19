@@ -168,6 +168,7 @@ function App() {
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
   const [toast, setToast] = useState(null)
   const [notifications, setNotifications] = useState([])
+  const [accountSubmenuTarget, setAccountSubmenuTarget] = useState(null)
   const [installPromptEvent, setInstallPromptEvent] = useState(null)
   const [showInstallPrompt, setShowInstallPrompt] = useState(false)
 
@@ -751,6 +752,11 @@ function App() {
     }
 
     if (notification.notification_type === 'menu_update') updateRoute('shop')
+  }
+
+  const openCustomerNotifications = () => {
+    setAccountSubmenuTarget('notifications')
+    updateRoute('account')
   }
 
   const handleAdminNotificationClick = async (notification) => {
@@ -1366,8 +1372,9 @@ function App() {
                 <div className="mobile-location-copy">
                   <strong>{user?.user_metadata?.username || user?.email?.split('@')[0] || 'Guest'}</strong>
                 </div>
-                <button type="button" className="mobile-bell-btn" aria-label="Notifications">
+                <button type="button" className="mobile-bell-btn" aria-label="Notifications" onClick={openCustomerNotifications}>
                   <FontAwesomeIcon icon={faBell} />
+                  {notifications.some((notification) => !notification.is_read) && <span className="mobile-nav-badge">{notifications.filter((notification) => !notification.is_read).length}</span>}
                 </button>
               </div>
 
@@ -1525,6 +1532,8 @@ function App() {
             user={user}
             profileImageUrl={profileImageUrl}
             onNavigate={updateRoute}
+            notifications={notifications}
+            onOpenNotifications={openCustomerNotifications}
           />
         </main>
       )}
@@ -1561,6 +1570,8 @@ function App() {
           onRemoveFavorite={handleRemoveFavorite}
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
+          onOpenNotifications={openCustomerNotifications}
+          notifications={notifications}
           onProfileImageChange={setProfileImageUrl}
         />
       )}
@@ -1577,11 +1588,12 @@ function App() {
           onRemoveFavorite={handleRemoveFavorite}
           onViewMenu={() => updateRoute('shop')}
           onOpenAccount={() => updateRoute('account')}
+          onOpenNotifications={openCustomerNotifications}
           onProfileImageChange={setProfileImageUrl}
           notifications={notifications}
           onMarkNotificationRead={handleMarkNotificationRead}
           onNotificationClick={handleCustomerNotificationClick}
-          initialAccountSubmenu={orderToTrackId ? 'orders' : null}
+          initialAccountSubmenu={orderToTrackId ? 'orders' : accountSubmenuTarget}
           initialExpandedOrderId={orderToTrackId}
           isAccountView
         />
