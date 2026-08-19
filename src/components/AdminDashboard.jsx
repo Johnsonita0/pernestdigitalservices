@@ -103,6 +103,19 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
     }
 
     loadTransferNotifications()
+
+    const transferChannel = supabase
+      .channel(`admin-transfer-notifications-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'admin_notifications', filter: 'notification_type=eq.bank_transfer_payment' },
+        loadTransferNotifications,
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(transferChannel)
+    }
   }, [activeTab, user?.id])
 
   const completedCashOrders = allOrders.filter((order) => order.paymentMethod === 'cash' && order.status === 'delivered')
@@ -932,7 +945,13 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
         <div className="transfer-proof-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setSelectedTransfer(null)}>
           <div className="transfer-proof-modal" role="dialog" aria-modal="true" aria-labelledby="transfer-proof-title">
             <div className="report-heading-row"><div><p className="eyebrow">Transfer submission</p><h3 id="transfer-proof-title">Payment proof</h3></div><button type="button" className="close-btn" onClick={() => setSelectedTransfer(null)}>✕</button></div>
-            <div className="transfer-sender-card"><strong>{selectedTransfer.user_name}</strong><span>{selectedTransfer.user_email}</span><span>{selectedTransfer.user_phone}</span><b>{formatNaira(Number(selectedTransfer.order_total) || 0)}</b></div>
+            <div className="transfer-sender-card">
+              <strong>{selectedTransfer.user_name}</strong>
+              <span>{selectedTransfer.user_email}</span>
+              <span>{selectedTransfer.user_phone}</span>
+              <span>Order #{String(selectedTransfer.order_id || '').slice(0, 8)}</span>
+              <b>{formatNaira(Number(selectedTransfer.order_total) || 0)}</b>
+            </div>
             {selectedTransfer.proof_of_payment_url ? <img className="transfer-proof-image" src={selectedTransfer.proof_of_payment_url} alt={`Payment proof from ${selectedTransfer.user_name}`} /> : <p className="empty-state">No proof image attached.</p>}
             <p className="transfer-file-name">{selectedTransfer.proof_of_payment_filename || 'Bank transfer proof'}</p>
           </div>

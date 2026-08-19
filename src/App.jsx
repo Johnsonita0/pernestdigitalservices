@@ -176,6 +176,29 @@ function App() {
   }, [cartItems])
 
   useEffect(() => {
+    const refreshLiveState = () => {
+      if (document.visibilityState === 'visible') {
+        setDashboardRefreshKey((current) => current + 1)
+      }
+    }
+
+    const handleVisibilityChange = () => refreshLiveState()
+    const handleWindowFocus = () => refreshLiveState()
+    const refreshTimer = window.setInterval(refreshLiveState, 20 * 1000)
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleWindowFocus)
+    window.addEventListener('pageshow', handleWindowFocus)
+
+    return () => {
+      window.clearInterval(refreshTimer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleWindowFocus)
+      window.removeEventListener('pageshow', handleWindowFocus)
+    }
+  }, [])
+
+  useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
     const wasDismissed = window.localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true'
 

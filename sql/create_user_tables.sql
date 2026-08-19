@@ -546,6 +546,7 @@ ALTER TABLE payment_proofs ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies so the script can be re-run safely
 DROP POLICY IF EXISTS "Admin can view all notifications" ON admin_notifications;
 DROP POLICY IF EXISTS "Admin can update notifications" ON admin_notifications;
+DROP POLICY IF EXISTS "Users can create their own transfer notifications" ON admin_notifications;
 DROP POLICY IF EXISTS "Users can view their own payment proof" ON payment_proofs;
 DROP POLICY IF EXISTS "Users can insert their own payment proof" ON payment_proofs;
 DROP POLICY IF EXISTS "Users can view their own notifications" ON notifications;
@@ -562,6 +563,17 @@ CREATE POLICY "Admin can view all notifications"
 CREATE POLICY "Admin can update notifications"
   ON admin_notifications FOR UPDATE
   USING (true);
+
+CREATE POLICY "Users can create their own transfer notifications"
+  ON admin_notifications FOR INSERT
+  WITH CHECK (
+    auth.uid() IS NOT NULL
+    AND notification_type = 'bank_transfer_payment'
+    AND order_id IN (
+      SELECT id FROM orders WHERE user_id = auth.uid()
+    )
+    AND user_email = (SELECT email FROM profiles WHERE id = auth.uid())
+  );
 
 CREATE POLICY "Users can view their own notifications"
   ON notifications FOR SELECT
