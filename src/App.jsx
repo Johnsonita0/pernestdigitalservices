@@ -695,16 +695,14 @@ function App() {
     await handleMarkNotificationRead(notification.id)
   }
 
-  const handleSendUserNotification = async ({ title, message, recipientMode = 'all', recipientGroup = 'customer', recipientIds = [] }) => {
+  const handleSendUserNotification = async ({ title, message, recipientMode = 'all', recipientIds = [] }) => {
     if (!title?.trim() || !message?.trim()) throw new Error('Title and message are required.')
 
     let profilesQuery = supabase
       .from('profiles')
       .select('id')
 
-    if (recipientMode === 'group') {
-      profilesQuery = profilesQuery.eq('role', recipientGroup)
-    } else if (recipientMode === 'individual') {
+    if (recipientMode !== 'all') {
       if (recipientIds.length === 0) throw new Error('Select at least one account.')
       profilesQuery = profilesQuery.in('id', recipientIds)
     }
@@ -872,17 +870,29 @@ function App() {
       savedProof = {}
     }
 
-    setCheckoutForm((current) => ({
-      name: current.name || user.user_metadata?.fullName || user.user_metadata?.name || user.email?.split('@')[0] || '',
-      contactNumber: current.contactNumber || user.user_metadata?.phone || '',
-      address: current.address || user.user_metadata?.address || '',
-      notes: current.notes || '',
-      paymentMethod: current.paymentMethod || 'card',
-      proofOfPaymentUrl: current.proofOfPaymentUrl || savedProof.url || '',
-      proofOfPaymentFilename: current.proofOfPaymentFilename || savedProof.filename || '',
-      proofOfPaymentMimeType: current.proofOfPaymentMimeType || savedProof.mimeType || '',
-      proofOfPaymentSize: current.proofOfPaymentSize || savedProof.size || null,
-    }))
+    const loadCheckoutProfile = async () => {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('full_name, phone, address')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (error) console.warn('Unable to load checkout profile:', error)
+
+      setCheckoutForm((current) => ({
+        name: profile?.full_name || current.name || user.user_metadata?.fullName || user.user_metadata?.name || user.email?.split('@')[0] || '',
+        contactNumber: profile?.phone || user.user_metadata?.phone || current.contactNumber || '',
+        address: profile?.address || current.address || user.user_metadata?.address || '',
+        notes: current.notes || '',
+        paymentMethod: current.paymentMethod || 'card',
+        proofOfPaymentUrl: current.proofOfPaymentUrl || savedProof.url || '',
+        proofOfPaymentFilename: current.proofOfPaymentFilename || savedProof.filename || '',
+        proofOfPaymentMimeType: current.proofOfPaymentMimeType || savedProof.mimeType || '',
+        proofOfPaymentSize: current.proofOfPaymentSize || savedProof.size || null,
+      }))
+    }
+
+    loadCheckoutProfile()
   }, [user])
 
   const handleCheckoutInputChange = async (event) => {
@@ -989,6 +999,7 @@ function App() {
             order_total: total + 2500,
             status: orderStatus,
             delivery_address: orderData.address,
+            contact_phone: orderData.contactNumber,
             delivery_notes: orderData.notes,
             payment_method: orderData.paymentMethod,
             proof_of_payment: proofOfPaymentUrl,

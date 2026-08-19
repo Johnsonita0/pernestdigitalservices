@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS order_items (
 ALTER TABLE orders
 ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'cash',
 ADD COLUMN IF NOT EXISTS rider_id UUID REFERENCES profiles(id),
+ADD COLUMN IF NOT EXISTS contact_phone TEXT,
 ADD COLUMN IF NOT EXISTS cancellation_reason TEXT,
 ADD COLUMN IF NOT EXISTS cancellation_note TEXT,
 ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP WITH TIME ZONE;
@@ -184,6 +185,7 @@ DROP POLICY IF EXISTS "Users can cancel eligible cash orders" ON orders;
 DROP POLICY IF EXISTS "Users can view order items from their orders" ON order_items;
 DROP POLICY IF EXISTS "Riders can view ready orders" ON orders;
 DROP POLICY IF EXISTS "Riders can view delivered orders" ON orders;
+DROP POLICY IF EXISTS "Riders can view customer profiles for deliveries" ON profiles;
 DROP POLICY IF EXISTS "Riders can mark ready orders delivered" ON orders;
 DROP POLICY IF EXISTS "Riders can view ready order items" ON order_items;
 DROP POLICY IF EXISTS "Riders can view delivered order items" ON order_items;
@@ -260,6 +262,17 @@ CREATE POLICY "Riders can view delivered orders"
   USING (
     public.is_rider_user(auth.uid())
     AND status = 'delivered'
+  );
+
+CREATE POLICY "Riders can view customer profiles for deliveries"
+  ON profiles FOR SELECT
+  USING (
+    public.is_rider_user(auth.uid())
+    AND id IN (
+      SELECT user_id
+      FROM orders
+      WHERE status IN ('ready', 'delivered')
+    )
   );
 
 CREATE POLICY "Riders can mark ready orders delivered"

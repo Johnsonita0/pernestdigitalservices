@@ -35,7 +35,6 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
     title: '',
     message: '',
     recipientMode: 'all',
-    recipientGroup: 'customer',
     recipientIds: [],
   })
   const [sendingNotification, setSendingNotification] = useState(false)
@@ -55,7 +54,7 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
     try {
       setSendingNotification(true)
       await onSendUserNotification?.(notificationForm)
-      setNotificationForm({ title: '', message: '', recipientMode: 'all', recipientGroup: 'customer', recipientIds: [] })
+      setNotificationForm({ title: '', message: '', recipientMode: 'all', recipientIds: [] })
       showToast('Notification sent to customers.', 'success')
     } catch (error) {
       showToast(error?.message || 'Could not send notification.', 'error')
@@ -519,44 +518,66 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
               {reviewTab === 'notifications' ? (
                 <form className="admin-menu-form" onSubmit={handleSendNotification}>
                   <h3>Send in-app notification</h3>
-                  <label className="admin-menu-field admin-menu-field-wide">
+                  <div className="notification-recipient-field">
                     <span>Send to</span>
-                    <select
-                      value={notificationForm.recipientMode}
-                      onChange={(event) => setNotificationForm((current) => ({ ...current, recipientMode: event.target.value, recipientIds: [] }))}
-                    >
-                      <option value="all">All user accounts</option>
-                      <option value="group">A group of accounts</option>
-                      <option value="individual">Specific accounts</option>
-                    </select>
-                  </label>
+                    <div className="notification-mode-grid" role="radiogroup" aria-label="Notification recipients">
+                      {[
+                        { value: 'all', label: 'Everyone', detail: 'All accounts' },
+                        { value: 'group', label: 'A group', detail: 'Choose several' },
+                        { value: 'individual', label: 'One account', detail: 'Choose one' },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`notification-mode-option ${notificationForm.recipientMode === option.value ? 'active' : ''}`}
+                          onClick={() => setNotificationForm((current) => ({ ...current, recipientMode: option.value, recipientIds: [] }))}
+                          aria-pressed={notificationForm.recipientMode === option.value}
+                        >
+                          <strong>{option.label}</strong>
+                          <small>{option.detail}</small>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   {notificationForm.recipientMode === 'group' && (
-                    <label className="admin-menu-field admin-menu-field-wide">
-                      <span>Account group</span>
-                      <select
-                        value={notificationForm.recipientGroup}
-                        onChange={(event) => setNotificationForm((current) => ({ ...current, recipientGroup: event.target.value }))}
-                      >
-                        <option value="customer">Customers</option>
-                        <option value="rider">Riders</option>
-                        <option value="admin">Admins</option>
-                      </select>
-                    </label>
+                    <div className="notification-recipient-field">
+                      <span>Choose accounts for this group</span>
+                      <div className="notification-account-picker">
+                        {allUsers.length === 0 ? (
+                          <p className="notification-empty-state">No accounts available.</p>
+                        ) : allUsers.map((userData) => (
+                          <label className="notification-account-option" key={userData.id}>
+                            <input
+                              type="checkbox"
+                              checked={notificationForm.recipientIds.includes(userData.id)}
+                              onChange={(event) => setNotificationForm((current) => ({
+                                ...current,
+                                recipientIds: event.target.checked
+                                  ? [...current.recipientIds, userData.id]
+                                  : current.recipientIds.filter((id) => id !== userData.id),
+                              }))}
+                            />
+                            <span>
+                              <strong>{userData.fullName}</strong>
+                              <small>{userData.email}</small>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <small className="notification-selection-count">{notificationForm.recipientIds.length} account{notificationForm.recipientIds.length === 1 ? '' : 's'} selected</small>
+                    </div>
                   )}
 
                   {notificationForm.recipientMode === 'individual' && (
                     <label className="admin-menu-field admin-menu-field-wide">
-                      <span>Specific accounts</span>
+                      <span>Choose account</span>
                       <select
-                        multiple
-                        value={notificationForm.recipientIds}
-                        onChange={(event) => setNotificationForm((current) => ({
-                          ...current,
-                          recipientIds: Array.from(event.target.selectedOptions, (option) => option.value),
-                        }))}
+                        value={notificationForm.recipientIds[0] || ''}
+                        onChange={(event) => setNotificationForm((current) => ({ ...current, recipientIds: event.target.value ? [event.target.value] : [] }))}
                         required
                       >
+                        <option value="">Select an account</option>
                         {allUsers.map((userData) => (
                           <option key={userData.id} value={userData.id}>
                             {userData.fullName} ({userData.email})
@@ -587,7 +608,7 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
                     />
                   </label>
                   <button type="submit" className="primary-btn" disabled={sendingNotification}>
-                    {sendingNotification ? 'Sending...' : 'Send to all customers'}
+                    {sendingNotification ? 'Sending...' : notificationForm.recipientMode === 'all' ? 'Send to everyone' : 'Send notification'}
                   </button>
                 </form>
               ) : (
