@@ -31,7 +31,13 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
   const [uploadingImage, setUploadingImage] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [toast, setToast] = useState(null)
-  const [notificationForm, setNotificationForm] = useState({ title: '', message: '' })
+  const [notificationForm, setNotificationForm] = useState({
+    title: '',
+    message: '',
+    recipientMode: 'all',
+    recipientGroup: 'customer',
+    recipientIds: [],
+  })
   const [sendingNotification, setSendingNotification] = useState(false)
 
   // Get user orders
@@ -49,7 +55,7 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
     try {
       setSendingNotification(true)
       await onSendUserNotification?.(notificationForm)
-      setNotificationForm({ title: '', message: '' })
+      setNotificationForm({ title: '', message: '', recipientMode: 'all', recipientGroup: 'customer', recipientIds: [] })
       showToast('Notification sent to customers.', 'success')
     } catch (error) {
       showToast(error?.message || 'Could not send notification.', 'error')
@@ -512,7 +518,54 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
 
               {reviewTab === 'notifications' ? (
                 <form className="admin-menu-form" onSubmit={handleSendNotification}>
-                  <h3>Notify customers</h3>
+                  <h3>Send in-app notification</h3>
+                  <label className="admin-menu-field admin-menu-field-wide">
+                    <span>Send to</span>
+                    <select
+                      value={notificationForm.recipientMode}
+                      onChange={(event) => setNotificationForm((current) => ({ ...current, recipientMode: event.target.value, recipientIds: [] }))}
+                    >
+                      <option value="all">All user accounts</option>
+                      <option value="group">A group of accounts</option>
+                      <option value="individual">Specific accounts</option>
+                    </select>
+                  </label>
+
+                  {notificationForm.recipientMode === 'group' && (
+                    <label className="admin-menu-field admin-menu-field-wide">
+                      <span>Account group</span>
+                      <select
+                        value={notificationForm.recipientGroup}
+                        onChange={(event) => setNotificationForm((current) => ({ ...current, recipientGroup: event.target.value }))}
+                      >
+                        <option value="customer">Customers</option>
+                        <option value="rider">Riders</option>
+                        <option value="admin">Admins</option>
+                      </select>
+                    </label>
+                  )}
+
+                  {notificationForm.recipientMode === 'individual' && (
+                    <label className="admin-menu-field admin-menu-field-wide">
+                      <span>Specific accounts</span>
+                      <select
+                        multiple
+                        value={notificationForm.recipientIds}
+                        onChange={(event) => setNotificationForm((current) => ({
+                          ...current,
+                          recipientIds: Array.from(event.target.selectedOptions, (option) => option.value),
+                        }))}
+                        required
+                      >
+                        {allUsers.map((userData) => (
+                          <option key={userData.id} value={userData.id}>
+                            {userData.fullName} ({userData.email})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
                   <label className="admin-menu-field admin-menu-field-wide">
                     <span>Notification title</span>
                     <input

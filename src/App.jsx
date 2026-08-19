@@ -695,19 +695,29 @@ function App() {
     await handleMarkNotificationRead(notification.id)
   }
 
-  const handleSendUserNotification = async ({ title, message }) => {
+  const handleSendUserNotification = async ({ title, message, recipientMode = 'all', recipientGroup = 'customer', recipientIds = [] }) => {
     if (!title?.trim() || !message?.trim()) throw new Error('Title and message are required.')
 
-    const { data: customerProfiles, error } = await supabase
+    let profilesQuery = supabase
       .from('profiles')
       .select('id')
-      .eq('role', 'customer')
+
+    if (recipientMode === 'group') {
+      profilesQuery = profilesQuery.eq('role', recipientGroup)
+    } else if (recipientMode === 'individual') {
+      if (recipientIds.length === 0) throw new Error('Select at least one account.')
+      profilesQuery = profilesQuery.in('id', recipientIds)
+    }
+
+    const { data: recipientProfiles, error } = await profilesQuery
 
     if (error) throw new Error(error.message)
 
-    await createNotifications((customerProfiles || []).map((profile) => ({
+    if (!recipientProfiles?.length) throw new Error('No matching accounts found.')
+
+    await createNotifications(recipientProfiles.map((profile) => ({
       recipient_id: profile.id,
-      notification_type: 'admin_broadcast',
+      notification_type: recipientMode === 'individual' ? 'direct_message' : 'admin_broadcast',
       title: title.trim(),
       message: message.trim(),
     })))
