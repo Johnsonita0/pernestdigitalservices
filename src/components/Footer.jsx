@@ -60,7 +60,7 @@ function Footer() {
           <ul>
             <li>
               <strong>Address:</strong><br />
-              No. 74 Aka Road, Uyo<br />
+              No. 33b Afaha Eket Road, Eket<br />
               Akwa Ibom State
             </li>
             <li>
