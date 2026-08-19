@@ -78,7 +78,7 @@ function ContactSection() {
           <div className="contact-info">
             <div className="info-card">
               <h3>📍 Address</h3>
-              <p>No. 74 Aka Road, Uyo<br />Akwa Ibom State, Nigeria</p>
+              <p>No. 33b Afaha Eket Road, Eket<br />Akwa Ibom State, Nigeria</p>
             </div>
 
             <div className="info-card">
