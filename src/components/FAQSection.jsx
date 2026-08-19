@@ -7,33 +7,33 @@ function FAQSection() {
   const faqs = [
     {
       id: 1,
-      question: 'What is your minimum order quantity?',
-      answer: 'We accept orders as small as 1 piece for custom printing. For bulk orders, we offer special pricing starting from 50+ pieces.'
+      question: 'What services do you provide?',
+      answer: 'We provide CAC registration, NIN services, SCUML registration, trademark registration, export license registration, and other business documentation support.'
     },
     {
       id: 2,
-      question: 'How long does production take?',
-      answer: 'Standard orders typically take 5-7 business days. Rush orders can be completed in 2-3 days with a small rush fee.'
+      question: 'Can you help register my business or company?',
+      answer: 'Yes. We assist with business name, company, NGO, and foundation registration, as well as annual returns and approved changes to business records.'
     },
     {
       id: 3,
-      question: 'Do you offer design services?',
-      answer: 'Yes! Our professional design team can create custom artwork for your project. Design consultation is free for all orders.'
+      question: 'Do you assist with NIN updates and verification?',
+      answer: 'Yes. We assist with changes to names, dates of birth, addresses, and phone numbers, as well as NIN verification.'
     },
     {
       id: 4,
-      question: 'What printing methods do you use?',
-      answer: 'We offer direct-to-garment printing, screen printing, embroidery, and heat transfer. Each method is chosen based on your design and garment.'
+      question: 'What compliance and brand-protection services do you offer?',
+      answer: 'We provide SCUML registration support and trademark registration guidance to help businesses meet requirements and protect their brands.'
     },
     {
       id: 5,
-      question: 'Can you do international shipping?',
-      answer: 'Yes, we ship internationally. Contact us for a shipping quote to your location.'
+      question: 'Do you assist with export license registration?',
+      answer: 'Yes. We help businesses prepare for international trade by providing export license registration support and regulatory guidance.'
     },
     {
       id: 6,
-      question: 'What about the internship program?',
-      answer: 'Our free 6-month internship covers T-shirt production, polo tailoring, face cap manufacturing, and quality finishing. Applications are open year-round.'
+      question: 'When is customer care available?',
+      answer: 'Our customer care team is available 24/7 to answer questions and provide support with your registration and documentation needs.'
     }
   ];
 

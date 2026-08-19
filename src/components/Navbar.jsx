@@ -59,12 +59,6 @@ function Navbar() {
             <button onClick={() => scrollToSection('team')}>Team</button>
           </li>
           <li>
-            <button onClick={() => scrollToSection('testimonials')}>Testimonials</button>
-          </li>
-          <li>
-            <button onClick={() => scrollToSection('faq')}>FAQ</button>
-          </li>
-          <li>
             <button onClick={() => scrollToSection('contact')}>Contact</button>
           </li>
           <li className="nav-divider"></li>
