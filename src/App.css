@@ -3622,13 +3622,13 @@ a {
   position: relative;
 }
 .mobile-bell-btn .mobile-nav-badge {
-  top: -7px;
-  right: -7px;
+  top: 1px;
+  right: 1px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
   font-size: 0.58rem;
-  border: 2px solid #fffaf7;
+  border: 2px solid #fff;
 }
   min-height: 58px;
   padding: 8px 6px;
