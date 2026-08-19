@@ -84,21 +84,22 @@ function RiderDashboard({ user, orders = [], notifications = [], onMarkNotificat
             notifications.map((notification) => (
               <button
                 type="button"
-                className="rider-order-card"
+                className="rider-order-card rider-notification-card"
                 key={notification.id}
                 onClick={() => {
-                  setActiveView('orders')
+                  if (notification.order_id) setActiveView('orders')
                   onNotificationClick?.(notification)
                 }}
                 style={{ textAlign: 'left', border: notification.is_read ? undefined : '2px solid #f97316' }}
               >
                 <div className="rider-order-heading">
                   <div>
-                    <span>{notification.is_read ? 'Read notification' : 'New notification'}</span>
+                    <span>{notification.is_read ? 'Read notification' : 'New notification'} · {notification.notification_type?.replaceAll('_', ' ') || 'Update'}</span>
                     <h2>{notification.title}</h2>
                   </div>
                 </div>
-                <p>{notification.message}</p>
+                <p>{notification.message || 'You have a new update from Trophy.'}</p>
+                {notification.order_id && <small className="rider-notification-order">Order #{String(notification.order_id).slice(0, 8)} · Tap to view delivery</small>}
                 <small>{new Date(notification.created_at).toLocaleString('en-NG')}</small>
               </button>
             ))

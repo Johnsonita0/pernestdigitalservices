@@ -3193,6 +3193,34 @@ a {
   box-shadow: 0 12px 30px rgba(58, 37, 28, 0.06);
 }
 
+.rider-notification-card {
+  display: block;
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.rider-notification-card p {
+  margin: 0 0 12px;
+  color: #765c52;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.rider-notification-card small {
+  display: block;
+  margin-top: 6px;
+  color: #a0847d;
+  font-size: 0.75rem;
+}
+
+.rider-notification-card .rider-notification-order {
+  color: #e95d2d;
+  font-weight: 700;
+}
+
 .rider-order-heading {
   display: flex;
   justify-content: space-between;
