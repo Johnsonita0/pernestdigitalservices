@@ -30,16 +30,16 @@ function HomePage() {
 
   useEffect(() => {
     const messages = [
-      'Need Branded Tees?',
-      'Lets Talk?',
-      'Custom Designs?',
-      'Team Uniforms?',
-      'Business Support?',
-      'Quality Printing?',
-      'Fast Delivery?',
-      'Best Prices?',
+      'Need CAC Registration?',
+      'Need NIN Support?',
+      'SCUML Registration?',
+      'Protect Your Brand?',
+      'Need an Export License?',
+      'Business Documentation?',
+      'Registration Questions?',
+      'Professional Guidance?',
       'Chat With Us!',
-      'Order Today!'
+      'Get Started Today!'
     ];
     let index = 0;
 
