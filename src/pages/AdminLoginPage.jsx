@@ -50,7 +50,7 @@ function AdminLoginPage({ onLoginSuccess }) {
           <div className="login-header">
             <div className="header-content">
               <a href="/" className="login-logo-link" aria-label="Go to home page">
-                <img src="/logo/logo2.jpeg" alt="T-Shirts Village" className="login-logo" />
+                <img src="/logo/logo2.jpeg" alt="Pernest Digital Services" className="login-logo" />
               </a>
               <div className="header-text">
                 <h1>Management Portal</h1>

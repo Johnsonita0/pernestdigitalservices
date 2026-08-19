@@ -214,7 +214,7 @@ function InternshipRegistrationPage() {
 
       try {
         if (typeof window !== 'undefined') {
-          const storageKey = 'tshirtvilage_local_internship_applications';
+          const storageKey = 'pernestdigitalservices_local_internship_applications';
           const existing = JSON.parse(window.localStorage.getItem(storageKey) || '[]');
           window.localStorage.setItem(storageKey, JSON.stringify([localEntry, ...existing]));
         }
@@ -246,7 +246,7 @@ function InternshipRegistrationPage() {
         {/* Header */}
         <div className="registration-header">
           <a href="/" className="header-logo" aria-label="Go to home page">
-            <img src="/logo/logo1.jpeg" alt="T-Shirts Village" className="logo" />
+            <img src="/logo/logo1.jpeg" alt="Pernest Digital Services" className="logo" />
           </a>
           <h1 className="registration-title">FREE Internship Program Registration</h1>
           <p className="registration-subtitle">
@@ -543,7 +543,7 @@ function Step2Education({ formData, errors, handleInputChange }) {
 function Step3Experience({ formData, errors, handleInputChange, handleSkillChange }) {
   const skillOptions = [
     'Practical Workshop Skills',
-    'T-Shirts Production Techniques',
+    'Digital Business Support Techniques',
     'Equipment Handling',
     'Quality & Finishing',
     'Work Ethics & Teamwork',
@@ -703,7 +703,7 @@ function Step4Review({ formData, errors, handleInputChange }) {
           <li>Punctuality and professionalism are essential throughout the program.</li>
           <li>All equipment must be handled with care. Damages will be charged to the intern.</li>
           <li>Successful completion will earn you a certificate of internship.</li>
-          <li>T-Shirts Village reserves the right to terminate the internship for misconduct.</li>
+          <li>Pernest Digital Services reserves the right to terminate the internship for misconduct.</li>
         </ul>
       </div>
     </div>
@@ -799,7 +799,7 @@ function SuccessStep({ data }) {
           <div className="contact-info">
             <p>
               <strong>Questions?</strong> Contact us at <a href="tel:+2340704781688">+234 (0) 704 781 6889</a> or{' '}
-              <a href="mailto:info@tshirtvilage.com">info@tshirtvilage.com</a>
+              <a href="mailto:info@pernestdigitalservices.com">info@pernestdigitalservices.com</a>
             </p>
           </div>
         </div>

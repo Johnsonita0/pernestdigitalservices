@@ -10,7 +10,7 @@ function ClientTestimonial() {
       name: 'Chioma Okafor',
       company: 'Fashion Hub Lagos',
       rating: 5,
-      message: 'Working with T-Shirts Village has been an incredible experience. Their quality and professionalism are unmatched. Highly recommended!',
+      message: 'Working with Pernest Digital Services has been an incredible experience. Their quality and professionalism are unmatched. Highly recommended!',
       image: '👩‍💼'
     },
     {

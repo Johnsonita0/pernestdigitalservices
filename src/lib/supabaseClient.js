@@ -10,7 +10,7 @@ export const supabase = missingSupabaseConfig
   ? null
   : createClient(supabaseUrl, supabaseAnonKey);
 
-const LOCAL_REGISTRATIONS_KEY = 'tshirtvilage_internship_registrations';
+const LOCAL_REGISTRATIONS_KEY = 'pernestdigitalservices_internship_registrations';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -47,7 +47,7 @@ function notifyRegistrationChange() {
     return;
   }
 
-  window.dispatchEvent(new CustomEvent('tshirtvilage:registrations-updated'));
+  window.dispatchEvent(new CustomEvent('pernestdigitalservices:registrations-updated'));
 }
 
 async function findDuplicateRegistrationByEmail(email) {

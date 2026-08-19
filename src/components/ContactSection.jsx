@@ -92,8 +92,8 @@ function ContactSection() {
             <div className="info-card">
               <h3>✉️ Email</h3>
               <p>
-                <a href="mailto:info@tshirtvilage.com">info@tshirtvilage.com</a><br />
-                <a href="mailto:orders@tshirtvilage.com">orders@tshirtvilage.com</a>
+                <a href="mailto:info@pernestdigitalservices.com">info@pernestdigitalservices.com</a><br />
+                <a href="mailto:orders@pernestdigitalservices.com">orders@pernestdigitalservices.com</a>
               </p>
             </div>
 

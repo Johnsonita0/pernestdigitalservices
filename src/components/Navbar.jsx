@@ -36,7 +36,7 @@ function Navbar() {
       <div className="navbar-container">
         {/* Logo */}
         <a href="/" className="navbar-logo" aria-label="Go to home page">
-          <img src="/logo/logo1.jpeg" alt="T-Shirts Village" className="logo-img" />
+          <img src="/logo/logo1.jpeg" alt="Pernest Digital Services" className="logo-img" />
         </a>
 
         {/* Menu Button */}

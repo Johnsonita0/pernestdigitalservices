@@ -9,7 +9,7 @@ function TeamSection() {
       id: 0,
       name: 'Hon. Akan Eyo',
       role: 'CEO & Founder',
-      bio: 'Visionary leader driving T-Shirts Village towards innovation and excellence in the textile industry.',
+      bio: 'Visionary leader driving Pernest Digital Services towards innovation and excellence in digital business support.',
       image: '/people/ceo.jpg',
       socials: { linkedin: '#', twitter: '#', instagram: '#' }
     }

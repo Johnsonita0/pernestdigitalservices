@@ -27,7 +27,7 @@ function InternshipSlider() {
           </div>
 
           <h2 className="internship-title">
-            <span className="highlight-blue">T-SHIRTS VILLAGE</span> IS <br />
+            <span className="highlight-blue">PERNEST DIGITAL SERVICES</span> IS <br />
             <span className="highlight-offer">OFFERING A</span>
           </h2>
 
@@ -42,7 +42,7 @@ function InternshipSlider() {
                 <span className="detail-label">FOR AN INTERESTED APPLICANTS</span>
                 <ul className="skills-list">
                   <li>Practical Workshop Skills</li>
-                  <li>T-Shirts Production Techniques</li>
+                  <li>Digital Business Support Techniques</li>
                   <li>Equipment Handling</li>
                   <li>Quality & Finishing</li>
                   <li>Work Ethics & Teamwork</li>
