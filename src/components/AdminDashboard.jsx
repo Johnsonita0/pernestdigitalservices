@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faShoppingBag, faComment, faUtensils, faToggleOn, faToggleOff, faStar, faUsers, faChevronRight, faPhone, faMapMarkerAlt, faEnvelope, faSyncAlt, faSignOutAlt, faChartLine, faFileInvoiceDollar, faBell } from '@fortawesome/free-solid-svg-icons'
 import { supabase } from '../lib/supabase'
 
-function AdminDashboard({ products, pendingTestimonials = [], notifications = [], onMarkNotificationRead, onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus, onSendUserNotification }) {
+function AdminDashboard({ products, pendingTestimonials = [], notifications = [], onMarkNotificationRead, onNotificationClick, onApproveTestimonial, onRejectTestimonial, user, onLogout, onRefresh, allUsers = [], allOrders = [], onCreateMenuItem, onUpdateOrderStatus, onSendUserNotification }) {
   const [activeTab, setActiveTab] = useState('users')
   const [reviewTab, setReviewTab] = useState('reviews')
   const [reportTab, setReportTab] = useState('transfers')
@@ -501,7 +501,7 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
 
           {activeTab === 'testimonials' && (
             <div className="tab-content">
-              <div className="admin-report-tabs" role="tablist" aria-label="Reviews and notifications">
+              <div className="admin-report-tabs reviews-tabs" role="tablist" aria-label="Reviews and notifications">
                 <button type="button" className={reviewTab === 'reviews' ? 'active' : ''} onClick={() => setReviewTab('reviews')}>
                   Reviews
                 </button>
@@ -595,7 +595,10 @@ function AdminDashboard({ products, pendingTestimonials = [], notifications = []
                       type="button"
                       className="testimonial-review-item"
                       key={notification.id}
-                      onClick={() => onMarkNotificationRead?.(notification.id)}
+                      onClick={() => {
+                        if (notification.notification_type === 'new_order') setActiveTab('orders')
+                        onNotificationClick?.(notification)
+                      }}
                       style={{ textAlign: 'left', border: notification.is_read ? undefined : '2px solid #f97316' }}
                     >
                       <div className="review-content">

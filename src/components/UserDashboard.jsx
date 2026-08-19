@@ -56,7 +56,7 @@ const resolveProfileImageUrl = async (storedValue) => {
   return error ? '' : data?.signedUrl || ''
 }
 
-function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], notifications = [], onMarkNotificationRead, onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
+function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteItems = [], userOrders = [], notifications = [], onMarkNotificationRead, onNotificationClick, onLogout, onRemoveFavorite, onViewMenu, onOpenAccount = null, onProfileImageChange, isAccountView = false, initialAccountSubmenu = null, initialExpandedOrderId = null }) {
   const [activeNav, setActiveNav] = useState(isAccountView ? 'account' : 'home')
   const [accountSubmenu, setAccountSubmenu] = useState(initialAccountSubmenu)
   const [expandedOrderId, setExpandedOrderId] = useState(initialExpandedOrderId)
@@ -152,6 +152,15 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
       }, { onConflict: 'user_id' })
 
     notifyToast(permission === 'granted' ? 'Browser notifications enabled.' : 'Browser notifications were not enabled.', permission === 'granted' ? 'success' : 'warning')
+  }
+
+  const handleNotificationClick = (notification) => {
+    if (notification.notification_type === 'order_status' && notification.order_id) {
+      setAccountSubmenu('orders')
+      setExpandedOrderId(notification.order_id)
+    }
+
+    onNotificationClick?.(notification)
   }
 
   const openCancelOrderModal = (orderId) => {
@@ -864,7 +873,7 @@ function UserDashboard({ user, userType = 'customer', menuItems = [], favoriteIt
                         <button
                           key={notification.id}
                           type="button"
-                          onClick={() => onMarkNotificationRead?.(notification.id)}
+                          onClick={() => handleNotificationClick(notification)}
                           style={{ display: 'block', width: '100%', textAlign: 'left', padding: '14px', marginBottom: '10px', border: '1px solid #eaded8', borderRadius: '12px', background: notification.is_read ? '#fff' : '#fff7f1', cursor: 'pointer' }}
                         >
                           <strong style={{ display: 'block', color: '#201814', marginBottom: '4px' }}>{notification.title}</strong>

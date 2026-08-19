@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBox, faCheck, faClipboardCheck, faList, faMapMarkerAlt, faPhone, faSignOutAlt, faTruck } from '@fortawesome/free-solid-svg-icons'
 import { notifyToast } from '../lib/toast'
 
-function RiderDashboard({ user, orders = [], notifications = [], onMarkNotificationRead, onUpdateOrderStatus, onLogout }) {
+function RiderDashboard({ user, orders = [], notifications = [], onMarkNotificationRead, onNotificationClick, onUpdateOrderStatus, onLogout }) {
   const [updatingOrderId, setUpdatingOrderId] = useState(null)
   const [activeView, setActiveView] = useState('orders')
 
@@ -86,7 +86,10 @@ function RiderDashboard({ user, orders = [], notifications = [], onMarkNotificat
                 type="button"
                 className="rider-order-card"
                 key={notification.id}
-                onClick={() => onMarkNotificationRead?.(notification.id)}
+                onClick={() => {
+                  setActiveView('orders')
+                  onNotificationClick?.(notification)
+                }}
                 style={{ textAlign: 'left', border: notification.is_read ? undefined : '2px solid #f97316' }}
               >
                 <div className="rider-order-heading">

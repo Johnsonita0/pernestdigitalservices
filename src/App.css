@@ -3322,6 +3322,10 @@ a {
   box-shadow: 0 8px 18px rgba(255, 107, 53, 0.2);
 }
 
+.reviews-tabs {
+  margin-bottom: 28px;
+}
+
 .report-content {
   margin-top: 0;
 }

@@ -674,6 +674,27 @@ function App() {
     )))
   }
 
+  const handleCustomerNotificationClick = async (notification) => {
+    await handleMarkNotificationRead(notification.id)
+
+    if (notification.notification_type === 'order_status' && notification.order_id) {
+      setOrderToTrackId(notification.order_id)
+      updateRoute('account')
+      return
+    }
+
+    if (notification.notification_type === 'menu_update') updateRoute('shop')
+  }
+
+  const handleAdminNotificationClick = async (notification) => {
+    await handleMarkNotificationRead(notification.id)
+    if (notification.notification_type === 'new_order') updateRoute('admin')
+  }
+
+  const handleRiderNotificationClick = async (notification) => {
+    await handleMarkNotificationRead(notification.id)
+  }
+
   const handleSendUserNotification = async ({ title, message }) => {
     if (!title?.trim() || !message?.trim()) throw new Error('Title and message are required.')
 
@@ -1460,6 +1481,7 @@ function App() {
           onProfileImageChange={setProfileImageUrl}
           notifications={notifications}
           onMarkNotificationRead={handleMarkNotificationRead}
+          onNotificationClick={handleCustomerNotificationClick}
           initialAccountSubmenu={orderToTrackId ? 'orders' : null}
           initialExpandedOrderId={orderToTrackId}
           isAccountView
@@ -1472,6 +1494,7 @@ function App() {
           orders={riderOrders}
           notifications={notifications}
           onMarkNotificationRead={handleMarkNotificationRead}
+          onNotificationClick={handleRiderNotificationClick}
           onUpdateOrderStatus={handleUpdateRiderOrderStatus}
           onLogout={handleLogout}
         />
@@ -1483,6 +1506,7 @@ function App() {
             products={menuCatalog}
             notifications={notifications}
             onMarkNotificationRead={handleMarkNotificationRead}
+            onNotificationClick={handleAdminNotificationClick}
             pendingTestimonials={pendingTestimonials}
             onApproveTestimonial={handleApproveTestimonial}
             onRejectTestimonial={handleRejectTestimonial}
