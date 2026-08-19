@@ -798,7 +798,7 @@ function SuccessStep({ data }) {
 
           <div className="contact-info">
             <p>
-              <strong>Questions?</strong> Contact us at <a href="tel:+2340704781688">+234 (0) 704 781 6889</a> or{' '}
+              <strong>Questions?</strong> Contact us at <a href="tel:+2348130801666">+234 (0) 813 080 1666</a> or{' '}
               <a href="mailto:info@pernestdigitalservices.com">info@pernestdigitalservices.com</a>
             </p>
           </div>

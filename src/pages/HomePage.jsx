@@ -113,7 +113,7 @@ function HomePage() {
         <div className="floating-whatsapp-wrap">
           {showWhatsappTip && <span className="whatsapp-tip">{whatsappTip}</span>}
           <a
-            href="https://wa.me/234704781688?text=Hello%20Pernest%20Digital%20Services%2C%20I%20want%20to%20chat%20with%20you."
+            href="https://wa.me/2348130801666?text=Hello%20Pernest%20Digital%20Services%2C%20I%20want%20to%20chat%20with%20you."
             className="floating-whatsapp"
             target="_blank"
             rel="noreferrer"

@@ -65,7 +65,7 @@ function Footer() {
             </li>
             <li>
               <strong>Phone:</strong><br />
-              <a href="tel:+2340704781688">+234 (0) 704 781 688</a>
+              <a href="tel:+2348130801666">+234 (0) 813 080 1666</a>
             </li>
             <li>
               <strong>Email:</strong><br />
