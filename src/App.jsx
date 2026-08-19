@@ -176,13 +176,14 @@ function App() {
   }, [cartItems])
 
   useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+    const wasDismissed = window.localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) === 'true'
+
+    if (!isStandalone && !wasDismissed) setShowInstallPrompt(true)
+
     const handleBeforeInstallPrompt = (event) => {
       event.preventDefault()
       setInstallPromptEvent(event)
-
-      if (window.localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) !== 'true') {
-        setShowInstallPrompt(true)
-      }
     }
 
     const handleAppInstalled = () => {
@@ -199,7 +200,11 @@ function App() {
   }, [])
 
   const handleInstallApp = async () => {
-    if (!installPromptEvent) return
+    if (!installPromptEvent) {
+      notifyToast('Open your browser menu and choose Install app or Add to Home Screen.', 'info')
+      return
+    }
+
     installPromptEvent.prompt()
     await installPromptEvent.userChoice
     setInstallPromptEvent(null)
@@ -1247,14 +1252,14 @@ function App() {
 
   return (
     <div className="page-shell">
-      {showInstallPrompt && installPromptEvent && (
+      {showInstallPrompt && (
         <aside className="install-app-banner" role="dialog" aria-label="Install Trophy app">
           <img src="/logo/logo1.png" alt="" />
           <div>
             <strong>Install Trophy</strong>
             <span>Keep Trophy on your home screen for faster ordering.</span>
           </div>
-          <button type="button" className="primary-btn" onClick={handleInstallApp}>Install</button>
+          <button type="button" className="primary-btn" onClick={handleInstallApp}>{installPromptEvent ? 'Install' : 'How to install'}</button>
           <button type="button" className="install-dismiss-btn" onClick={dismissInstallPrompt} aria-label="Dismiss install prompt">×</button>
         </aside>
       )}

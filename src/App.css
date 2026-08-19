@@ -3618,6 +3618,18 @@ a {
   display: grid;
   justify-items: center;
   gap: 5px;
+.mobile-bell-btn {
+  position: relative;
+}
+.mobile-bell-btn .mobile-nav-badge {
+  top: -7px;
+  right: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 0.58rem;
+  border: 2px solid #fffaf7;
+}
   min-height: 58px;
   padding: 8px 6px;
   border: 0;
@@ -3632,6 +3644,25 @@ a {
 }
 
 .admin-bottom-nav-item svg {
+.admin-header-icon {
+  position: relative;
+}
+.admin-header-icon b {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  place-items: center;
+  border: 2px solid #fff8f3;
+  border-radius: 999px;
+  background: #ff6b35;
+  color: #fff;
+  font-size: 0.58rem;
+  line-height: 1;
+}
   font-size: 1.05rem;
 }
 
