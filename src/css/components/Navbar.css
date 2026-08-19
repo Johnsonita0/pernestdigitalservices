@@ -38,10 +38,11 @@
 }
 
 .logo-img {
-  width: 100px;
+  width: 230px;
   height: 100px;
   object-fit: contain;
-  border-radius: 8px;
+  border-radius: 0;
+  mix-blend-mode: multiply;
   transition: filter 0.3s ease;
 }
 
@@ -187,7 +188,7 @@
   }
 
   .logo-img {
-    width: 76px;
+    width: 190px;
     height: 76px;
   }
 
