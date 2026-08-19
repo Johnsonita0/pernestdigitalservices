@@ -26,6 +26,7 @@ const RIDER_USER_ID = '054bb3f4-feb1-45b6-bd0c-0bede0a24e9d'
 const BROWSER_NOTIFICATION_PROMPT_KEY = 'trophy-browser-notification-prompted'
 const CART_STORAGE_KEY = 'trophy-cart-items'
 const getProofStorageKey = (userId) => `trophy-proof-of-payment-${userId || 'guest'}`
+const INSTALL_PROMPT_DISMISSED_KEY = 'trophy-install-prompt-dismissed'
 
 const resolveStoredProfileImageUrl = async (storedValue) => {
   if (!storedValue) return ''
@@ -167,10 +168,48 @@ function App() {
   const [mobileAuthView, setMobileAuthView] = useState('login') // 'login', 'signup', or 'forgot'
   const [toast, setToast] = useState(null)
   const [notifications, setNotifications] = useState([])
+  const [installPromptEvent, setInstallPromptEvent] = useState(null)
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false)
 
   useEffect(() => {
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems))
   }, [cartItems])
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault()
+      setInstallPromptEvent(event)
+
+      if (window.localStorage.getItem(INSTALL_PROMPT_DISMISSED_KEY) !== 'true') {
+        setShowInstallPrompt(true)
+      }
+    }
+
+    const handleAppInstalled = () => {
+      setInstallPromptEvent(null)
+      setShowInstallPrompt(false)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('appinstalled', handleAppInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleAppInstalled)
+    }
+  }, [])
+
+  const handleInstallApp = async () => {
+    if (!installPromptEvent) return
+    installPromptEvent.prompt()
+    await installPromptEvent.userChoice
+    setInstallPromptEvent(null)
+    setShowInstallPrompt(false)
+  }
+
+  const dismissInstallPrompt = () => {
+    window.localStorage.setItem(INSTALL_PROMPT_DISMISSED_KEY, 'true')
+    setShowInstallPrompt(false)
+  }
 
   useEffect(() => {
     const handleToast = (event) => {
@@ -1208,6 +1247,17 @@ function App() {
 
   return (
     <div className="page-shell">
+      {showInstallPrompt && installPromptEvent && (
+        <aside className="install-app-banner" role="dialog" aria-label="Install Trophy app">
+          <img src="/logo/logo1.png" alt="" />
+          <div>
+            <strong>Install Trophy</strong>
+            <span>Keep Trophy on your home screen for faster ordering.</span>
+          </div>
+          <button type="button" className="primary-btn" onClick={handleInstallApp}>Install</button>
+          <button type="button" className="install-dismiss-btn" onClick={dismissInstallPrompt} aria-label="Dismiss install prompt">×</button>
+        </aside>
+      )}
       {toast && (
         <div className={`global-toast global-toast-${toast.tone}`} role="status" aria-live="polite">
           <span>{toast.message}</span>

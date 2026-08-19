@@ -2773,6 +2773,64 @@ a {
   color: #1a1516;
 }
 
+.install-app-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 2900;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, calc(100vw - 28px));
+  padding: 12px 14px;
+  transform: translateX(-50%);
+  border: 1px solid #eadbce;
+  border-radius: 16px;
+  background: rgba(255, 250, 247, 0.97);
+  box-shadow: 0 16px 34px rgba(86, 48, 29, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.install-app-banner img {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 11px;
+}
+
+.install-app-banner div {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.install-app-banner strong {
+  color: #30211c;
+  font-size: 0.9rem;
+}
+
+.install-app-banner span {
+  color: #84695d;
+  font-size: 0.76rem;
+}
+
+.install-app-banner .primary-btn {
+  min-height: 38px;
+  padding: 8px 14px;
+  white-space: nowrap;
+}
+
+.install-dismiss-btn {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  color: #84695d;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .global-toast {
   position: fixed;
   top: 18px;
