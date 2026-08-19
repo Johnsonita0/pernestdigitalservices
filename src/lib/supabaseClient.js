@@ -14,6 +14,10 @@ const LOCAL_REGISTRATIONS_KEY = 'pernestdigitalservices_internship_registrations
 const LOCAL_NGO_APPLICATIONS_KEY = 'pernestdigitalservices_ngo_applications';
 const LOCAL_COMPANY_APPLICATIONS_KEY = 'pernestdigitalservices_company_applications';
 const LOCAL_BUSINESS_APPLICATIONS_KEY = 'pernestdigitalservices_business_applications';
+const LOCAL_SCUMl_APPLICATIONS_KEY = 'pernestdigitalservices_scuml_applications';
+const LOCAL_NIN_APPLICATIONS_KEY = 'pernestdigitalservices_nin_applications';
+const LOCAL_NIN_NAME_CHANGES_KEY = 'pernestdigitalservices_nin_name_changes';
+const LOCAL_NIN_DATE_CHANGES_KEY = 'pernestdigitalservices_nin_date_changes';
 
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
@@ -252,6 +256,97 @@ export async function updateBusinessPaymentSlip(referenceNumber, paymentSlip) {
 
   const { error } = await supabase.from('business_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
   return { error };
+}
+
+export async function submitSCUMLApplication(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_SCUMl_APPLICATIONS_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_SCUMl_APPLICATIONS_KEY, JSON.stringify([{ ...application, id: `local-scuml-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save the SCUML application on this device.') };
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.from('scuml_applications').insert(application).select().single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the SCUML application. Please try again.') };
+  }
+}
+
+export async function updateSCUMLPaymentSlip(referenceNumber, paymentSlip) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_SCUMl_APPLICATIONS_KEY) || '[]');
+      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' } : application);
+      window.localStorage.setItem(LOCAL_SCUMl_APPLICATIONS_KEY, JSON.stringify(updated));
+      return { error: null };
+    } catch (error) {
+      return { error: new Error('Unable to save the payment slip on this device.') };
+    }
+  }
+
+  const { error } = await supabase.from('scuml_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
+  return { error };
+}
+
+export async function submitNINApplication(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_NIN_APPLICATIONS_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_NIN_APPLICATIONS_KEY, JSON.stringify([{ ...application, id: `local-nin-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save the NIN request on this device.') };
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.from('nin_applications').insert(application).select().single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the NIN request. Please try again.') };
+  }
+}
+
+export async function submitNINNameChange(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_NIN_NAME_CHANGES_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_NIN_NAME_CHANGES_KEY, JSON.stringify([{ ...application, id: `local-nin-name-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save the NIN name-change request on this device.') };
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.from('nin_name_changes').insert(application).select().single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the NIN name-change request. Please try again.') };
+  }
+}
+
+export async function submitNINDateChange(application) {
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(LOCAL_NIN_DATE_CHANGES_KEY) || '[]');
+      window.localStorage.setItem(LOCAL_NIN_DATE_CHANGES_KEY, JSON.stringify([{ ...application, id: `local-nin-date-${Date.now()}` }, ...stored]));
+      return { data: application, error: null };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to save the NIN date-change request on this device.') };
+    }
+  }
+  try {
+    const { data, error } = await supabase.from('nin_date_changes').insert(application).select().single();
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: new Error('Unable to submit the NIN date-change request. Please try again.') };
+  }
 }
 
 export async function deleteTrainingRegistration(registrationId) {

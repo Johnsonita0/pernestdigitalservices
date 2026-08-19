@@ -1,0 +1,39 @@
+.scuml-page { min-height: 100vh; padding: 32px 18px; background: linear-gradient(135deg, #eaf7ff, #fff8e3); }
+.scuml-card { width: min(100%, 1040px); margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-md); overflow: hidden; }
+.scuml-header { padding: 34px 28px 28px; text-align: center; color: white; background: linear-gradient(135deg, var(--brand-dark), var(--brand), #168ca3); }
+.scuml-header img, .scuml-payment > img { width: 170px; height: 70px; object-fit: contain; mix-blend-mode: screen; margin: 0 auto 12px; display: block; }
+.scuml-header p, .scuml-kicker { color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 8px; }
+.scuml-header h1, .scuml-payment h1 { color: white; font-size: clamp(2rem, 4vw, 3.4rem); margin: 0 0 10px; }
+.scuml-header span { color: rgba(255,255,255,.88); }
+.scuml-progress { height: 7px; background: #e7edf4; }
+.scuml-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--accent)); transition: width .25s ease; }
+.scuml-step { padding: 18px 32px 0; color: var(--muted); font-size: .85rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.scuml-section { padding: 22px 32px 10px; }
+.scuml-section h2 { margin: 0 0 20px; font-size: 1.55rem; }
+.scuml-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.scuml-field { display: flex; flex-direction: column; gap: 7px; color: var(--brand-dark); font-size: .88rem; font-weight: 700; }
+.scuml-field input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 11px 12px; color: var(--text); background: #fbfdff; outline: none; }
+.scuml-field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,87,184,.12); }
+.scuml-error { color: #c62828; font-weight: 600; font-size: .78rem; }
+.scuml-help { color: var(--muted); }
+.scuml-person { padding: 20px; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 12px; background: #fbfdff; }
+.scuml-person h3 { margin: 0 0 16px; }
+.scuml-review, .scuml-notes, .scuml-account { display: grid; gap: 10px; padding: 18px; border-radius: 10px; background: var(--surface-alt); }
+.scuml-review p { margin: 0; }
+.scuml-notes { margin-top: 20px; border-left: 4px solid var(--accent); }
+.scuml-notes span, .scuml-account span { color: var(--muted); }
+.scuml-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 32px 30px; }
+.scuml-primary, .scuml-secondary, .add-person { border: 0; border-radius: 8px; padding: 12px 20px; font-weight: 800; cursor: pointer; }
+.scuml-primary { background: var(--brand); color: white; }
+.scuml-primary:hover { background: var(--brand-dark); }
+.scuml-primary:disabled { opacity: .6; cursor: wait; }
+.scuml-secondary { background: var(--surface-alt); color: var(--brand-dark); }
+.add-person { background: var(--accent-soft); color: var(--brand-dark); }
+.scuml-payment { padding: 40px; text-align: center; }
+.scuml-payment h1 { color: var(--brand-dark); }
+.scuml-payment > p { max-width: 680px; margin: 12px auto; }
+.scuml-account { max-width: 460px; margin: 24px auto; text-align: left; border: 1px solid var(--accent); background: var(--accent-soft); }
+.scuml-file { display: flex; flex-direction: column; gap: 8px; max-width: 460px; margin: 20px auto; padding: 13px; border: 1px dashed var(--brand); border-radius: 8px; color: var(--brand-dark); font-weight: 700; text-align: left; background: var(--brand-soft); }
+.scuml-file input { font-size: .78rem; }
+.scuml-payment .scuml-secondary { margin-left: 10px; }
+@media (max-width: 680px) { .scuml-page { padding: 0; } .scuml-card { border-radius: 0; min-height: 100vh; } .scuml-header { padding: 28px 20px; } .scuml-section { padding: 20px; } .scuml-step { padding: 16px 20px 0; } .scuml-grid { grid-template-columns: 1fr; } .scuml-actions { padding: 18px 20px 24px; } .scuml-actions button { flex: 1; } .scuml-payment { padding: 28px 20px; } }

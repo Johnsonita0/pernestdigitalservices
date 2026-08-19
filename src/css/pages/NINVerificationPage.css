@@ -1,0 +1,29 @@
+.nin-page { min-height: 100vh; padding: 32px 18px; background: linear-gradient(135deg, #eaf7ff, #fff8e3); }
+.nin-card { width: min(100%, 900px); margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow-md); overflow: hidden; }
+.nin-header { padding: 34px 28px 28px; text-align: center; color: white; background: linear-gradient(135deg, var(--brand-dark), var(--brand), #168ca3); }
+.nin-header img, .nin-success > img { width: 170px; height: 70px; object-fit: contain; mix-blend-mode: screen; margin: 0 auto 12px; display: block; }
+.nin-header p, .nin-kicker { color: var(--accent); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin: 0 0 8px; }
+.nin-header h1, .nin-success h1 { color: white; font-size: clamp(2rem, 4vw, 3.4rem); margin: 0 0 10px; }
+.nin-header span { color: rgba(255,255,255,.88); }
+.nin-progress { height: 7px; background: #e7edf4; }
+.nin-progress span { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--accent)); transition: width .25s ease; }
+.nin-step { padding: 18px 32px 0; color: var(--muted); font-size: .85rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.nin-section { padding: 22px 32px 10px; }
+.nin-section h2 { margin: 0 0 20px; font-size: 1.55rem; }
+.nin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.nin-field { display: flex; flex-direction: column; gap: 7px; color: var(--brand-dark); font-size: .88rem; font-weight: 700; }
+.nin-field input, .nin-field select { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 11px 12px; color: var(--text); background: #fbfdff; outline: none; }
+.nin-field input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(0,87,184,.12); }
+.nin-help { color: var(--muted); margin-bottom: 18px; }
+.nin-error { color: #c62828; font-weight: 600; font-size: .78rem; }
+.nin-review { display: grid; gap: 10px; margin-top: 22px; padding: 18px; border-radius: 10px; background: var(--surface-alt); }
+.nin-review p { margin: 0; overflow-wrap: anywhere; }
+.nin-actions { display: flex; justify-content: flex-end; gap: 12px; padding: 20px 32px 30px; }
+.nin-primary, .nin-secondary { border: 0; border-radius: 8px; padding: 12px 20px; font-weight: 800; cursor: pointer; }
+.nin-primary { background: var(--brand); color: white; }
+.nin-primary:hover { background: var(--brand-dark); }
+.nin-secondary { background: var(--surface-alt); color: var(--brand-dark); }
+.nin-success { padding: 44px; text-align: center; }
+.nin-success h1 { color: var(--brand-dark); }
+.nin-success > p { max-width: 650px; margin: 12px auto 24px; }
+@media (max-width: 680px) { .nin-page { padding: 0; } .nin-card { border-radius: 0; min-height: 100vh; } .nin-header { padding: 28px 20px; } .nin-section { padding: 20px; } .nin-step { padding: 16px 20px 0; } .nin-grid { grid-template-columns: 1fr; } .nin-actions { padding: 18px 20px 24px; } .nin-actions button { flex: 1; } .nin-success { padding: 28px 20px; } }

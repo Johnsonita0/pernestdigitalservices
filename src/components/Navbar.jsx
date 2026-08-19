@@ -77,6 +77,26 @@ function Navbar() {
                   Business Registration
                 </Link>
               </li>
+              <li>
+                <Link to="/scuml-register" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  SCUML Registration
+                </Link>
+              </li>
+              <li>
+                <Link to="/nin-verify" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  NIN Verification
+                </Link>
+              </li>
+              <li>
+                <Link to="/nin-name-change" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  NIN Change of Name
+                </Link>
+              </li>
+              <li>
+                <Link to="/nin-date-of-birth-change" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
+                  NIN Date of Birth Change
+                </Link>
+              </li>
             </ul>
           </li>
           <li>

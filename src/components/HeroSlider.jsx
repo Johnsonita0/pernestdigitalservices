@@ -41,6 +41,38 @@ function HeroSlider({ onContactClick }) {
       href: '/business-register'
     },
     {
+      id: 9,
+      title: 'SCUML Registration Support',
+      description: 'Submit your entity, registration, tax, proprietor, director, trustee, BVN, NIN, and account details through a guided SCUML application.',
+      image: '/image/SCUML.jpg',
+      cta: 'Start SCUML Registration',
+      href: '/scuml-register'
+    },
+    {
+      id: 10,
+      title: 'NIN Verification Support',
+      description: 'Request NIN verification using any one of your NIN, phone number, or surname, first name, and date of birth.',
+      image: '/image/nin.jpg',
+      cta: 'Start NIN Verification',
+      href: '/nin-verify'
+    },
+    {
+      id: 11,
+      title: 'NIN Change of Name',
+      description: 'Submit your NIN, new surname, new first name, new middle name, and new phone number for name-change support.',
+      image: '/image/nin.jpg',
+      cta: 'Start NIN Name Change',
+      href: '/nin-name-change'
+    },
+    {
+      id: 12,
+      title: 'NIN Date of Birth Change',
+      description: 'Submit your NIN, old and new dates of birth, applicant details, residence information, and parent information for support.',
+      image: '/image/nin.jpg',
+      cta: 'Start Date Change Request',
+      href: '/nin-date-of-birth-change'
+    },
+    {
       id: 2,
       title: 'NIN Services Without the Stress',
       description: 'Get help with name, date of birth, address, phone number changes, and NIN verification through a simple process.',

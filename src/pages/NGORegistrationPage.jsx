@@ -1,6 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitNGOApplication, updateNGOPaymentSlip } from '../lib/supabaseClient';
+import { COMMON_LGAS, GENDERS, NIGERIAN_STATES } from '../data/nigeriaLocations';
+import { useLocationData } from '../lib/locationData';
+import SearchableLocationField from '../components/SearchableLocationField';
 import '../css/pages/NGORegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -12,7 +15,7 @@ const initialTrustee = {
 
 const initialForm = {
   proposedName1: '', proposedName2: '', proposedName3: '', email: '', officeAddress: '', state: '', lga: '', town: '', houseNumber: '', streetName: '',
-  trusteeCount: 1, trusteeTenure: '', aims: '', sourceOfIncome: '', trustees: [initialTrustee], paymentSlip: null,
+  trusteeCount: 2, trusteeTenure: '', aims: '', sourceOfIncome: '', trustees: [{ ...initialTrustee }, { ...initialTrustee }], paymentSlip: null,
 };
 
 function NGORegistrationPage() {
@@ -27,20 +30,22 @@ function NGORegistrationPage() {
 
   const progress = useMemo(() => `${(step / TOTAL_STEPS) * 100}%`, [step]);
 
-  const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+  const updateField = (field, value) => setForm((current) => ({ ...current, [field]: value, ...(field === 'state' ? { lga: '' } : {}) }));
   const updateTrustee = (index, field, value) => setForm((current) => ({
     ...current,
-    trustees: current.trustees.map((trustee, trusteeIndex) => trusteeIndex === index ? { ...trustee, [field]: value } : trustee),
+    trustees: current.trustees.map((trustee, trusteeIndex) => trusteeIndex === index ? { ...trustee, [field]: value, ...(field === 'state' ? { lga: '' } : {}) } : trustee),
   }));
 
   const updateTrusteeCount = (value) => {
-    const count = Math.min(20, Math.max(1, Number(value) || 1));
+    const count = Math.min(20, Math.max(2, Number(value) || 2));
     setForm((current) => ({
       ...current,
       trusteeCount: count,
       trustees: Array.from({ length: count }, (_, index) => current.trustees[index] || { ...initialTrustee }),
     }));
   };
+
+  const addTrustee = () => updateTrusteeCount(form.trusteeCount + 1);
 
   const validateStep = () => {
     const nextErrors = {};
@@ -50,6 +55,7 @@ function NGORegistrationPage() {
       if (!form.officeAddress.trim()) nextErrors.officeAddress = 'Registered office address is required.';
     }
     if (step === 2) {
+      if (form.trusteeCount < 2) nextErrors.trusteeCount = 'At least two trustees are required.';
       if (!form.trusteeTenure) nextErrors.trusteeTenure = 'Enter the trustee tenure.';
     }
     if (step === 3 && !form.aims.trim()) nextErrors.aims = 'List the aims and objectives.';
@@ -169,8 +175,8 @@ function NGORegistrationPage() {
         <div className="ngo-progress"><span style={{ width: progress }} /></div>
         <div className="ngo-step-label">Step {step} of {TOTAL_STEPS}</div>
         <form onSubmit={handleSubmit}>
-          {step === 1 && <Step title="NGO details"><div className="form-grid"><Field label="Proposed name 1" value={form.proposedName1} error={errors.proposedName1} onChange={(value) => updateField('proposedName1', value)} required /><Field label="Proposed name 2" value={form.proposedName2} onChange={(value) => updateField('proposedName2', value)} /><Field label="Proposed name 3" value={form.proposedName3} onChange={(value) => updateField('proposedName3', value)} /><Field label="Email" type="email" value={form.email} error={errors.email} onChange={(value) => updateField('email', value)} required /><Field label="Registered office address" value={form.officeAddress} error={errors.officeAddress} onChange={(value) => updateField('officeAddress', value)} required /><Field label="State" value={form.state} onChange={(value) => updateField('state', value)} /><Field label="LGA" value={form.lga} onChange={(value) => updateField('lga', value)} /><Field label="City / town / village" value={form.town} onChange={(value) => updateField('town', value)} /><Field label="House number" value={form.houseNumber} onChange={(value) => updateField('houseNumber', value)} /><Field label="Street name" value={form.streetName} onChange={(value) => updateField('streetName', value)} /></div></Step>}
-          {step === 2 && <Step title="Constitution"><div className="form-grid"><Field label="Number of trustees" type="number" min="1" max="20" value={form.trusteeCount} onChange={updateTrusteeCount} required /><Field label="Trustee tenure (years)" type="number" min="1" value={form.trusteeTenure} error={errors.trusteeTenure} onChange={(value) => updateField('trusteeTenure', value)} required /></div></Step>}
+          {step === 1 && <Step title="NGO details"><div className="form-grid"><Field label="Proposed name 1" value={form.proposedName1} error={errors.proposedName1} onChange={(value) => updateField('proposedName1', value)} required /><Field label="Proposed name 2" value={form.proposedName2} onChange={(value) => updateField('proposedName2', value)} /><Field label="Proposed name 3" value={form.proposedName3} onChange={(value) => updateField('proposedName3', value)} /><Field label="Email" type="email" value={form.email} error={errors.email} onChange={(value) => updateField('email', value)} required /><Field label="Registered office address" value={form.officeAddress} error={errors.officeAddress} onChange={(value) => updateField('officeAddress', value)} required /><Field label="State" options={NIGERIAN_STATES} value={form.state} onChange={(value) => updateField('state', value)} /><Field label="LGA" options={COMMON_LGAS} value={form.lga} onChange={(value) => updateField('lga', value)} /><Field label="City / town / village" value={form.town} onChange={(value) => updateField('town', value)} /><Field label="House number" value={form.houseNumber} onChange={(value) => updateField('houseNumber', value)} /><Field label="Street name" value={form.streetName} onChange={(value) => updateField('streetName', value)} /></div></Step>}
+          {step === 2 && <Step title="Constitution"><div className="form-grid"><Field label="Number of trustees (minimum 2)" type="number" min="2" max="20" value={form.trusteeCount} error={errors.trusteeCount} onChange={updateTrusteeCount} required /><Field label="Trustee tenure (years)" type="number" min="1" value={form.trusteeTenure} error={errors.trusteeTenure} onChange={(value) => updateField('trusteeTenure', value)} required /></div><button className="add-trustee-btn" type="button" onClick={addTrustee} disabled={form.trusteeCount >= 20}>+ Add another trustee</button><p className="form-help">The chairman must be entered first, followed by the secretary and any additional trustees.</p></Step>}
           {step === 3 && <Step title="Aims and objectives"><TextArea label="State as many aims and objectives as possible in precise terms" value={form.aims} error={errors.aims} onChange={(value) => updateField('aims', value)} required /></Step>}
           {step === 4 && <Step title="Trustee information"><p className="form-help">Enter the chairman first, followed by the secretary and other trustees. Repeat this section for every trustee.</p>{form.trustees.map((trustee, index) => <TrusteeFields key={index} index={index} trustee={trustee} errors={errors} updateTrustee={updateTrustee} handleTrusteeFile={handleTrusteeFile} />)}</Step>}
           {step === 5 && <Step title="Source of income"><TextArea label="State all sources of income in precise terms" value={form.sourceOfIncome} error={errors.sourceOfIncome} onChange={(value) => updateField('sourceOfIncome', value)} required /></Step>}
@@ -184,9 +190,9 @@ function NGORegistrationPage() {
 }
 
 function Step({ title, children }) { return <section className="ngo-step"><h2>{title}</h2>{children}</section>; }
-function Field({ label, value, onChange, error, type = 'text', ...props }) { return <label className="field">{label}{props.required && ' *'}<input {...props} type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} />{error && <small className="form-error">{error}</small>}</label>; }
+function Field({ label, value, onChange, error, type = 'text', options, ...props }) { const { states, lgasByState } = useLocationData(); const fieldRef = useRef(null); const [selectedState, setSelectedState] = useState(''); useEffect(() => { if (label !== 'LGA' || !fieldRef.current) return undefined; const stateInput = fieldRef.current.closest('.form-grid')?.querySelector('.location-search-trigger'); if (!stateInput) return undefined; const syncState = (event) => setSelectedState(event.detail || stateInput.textContent.replace('▾', '').trim()); syncState({ detail: '' }); stateInput.addEventListener('change', syncState); return () => stateInput.removeEventListener('change', syncState); }, [label]); const fieldOptions = label === 'State' ? states : label === 'LGA' ? lgasByState[selectedState] || [] : options; return <label ref={fieldRef} className="field">{label}{props.required && ' *'}{fieldOptions ? (label === 'State' || label === 'LGA' ? <SearchableLocationField label={label} value={value} options={fieldOptions} onChange={onChange} /> : <select value={value ?? ''} onChange={(event) => onChange(event.target.value)}><option value="">Select {label}</option>{fieldOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select>) : <input {...props} type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} />}{error && <small className="form-error">{error}</small>}</label>; }
 function TextArea({ label, value, onChange, error, ...props }) { return <label className="field full-field">{label}{props.required && ' *'}<textarea {...props} value={value} onChange={(event) => onChange(event.target.value)} rows="8" />{error && <small className="form-error">{error}</small>}</label>; }
-function TrusteeFields({ index, trustee, errors, updateTrustee, handleTrusteeFile }) { const fields = [['surname', 'Surname'], ['firstName', 'First name'], ['otherName', 'Other name'], ['dateOfBirth', 'Date of birth', 'date'], ['gender', 'Gender'], ['nationality', 'Nationality'], ['phone', 'Phone number'], ['email', 'Email', 'email'], ['occupation', 'Occupation'], ['country', 'Country'], ['state', 'State'], ['lga', 'LGA'], ['town', 'City / town / village'], ['houseNumber', 'House number'], ['streetName', 'Street name'], ['idType', 'ID type'], ['idNumber', 'ID number']]; return <div className="trustee-block"><h3>Trustee {index + 1}{index === 0 ? ' (Chairman first)' : ''}</h3><div className="form-grid">{fields.map(([field, label, type]) => <Field key={field} label={label} type={type || 'text'} value={trustee[field]} error={errors[`trustee-${index}-${field}`]} onChange={(value) => updateTrustee(index, field, value)} required={field !== 'otherName' && field !== 'houseNumber'} />)}</div><div className="file-grid">{[['idDocument', 'Means of ID'], ['signature', 'Signature'], ['passport', 'Passport photograph']].map(([field, label]) => <label className="file-upload" key={field}>{label}<input type="file" accept="image/*,.pdf" onChange={(event) => handleTrusteeFile(index, field, event.target.files[0])} /></label>)}</div></div>; }
+function TrusteeFields({ index, trustee, errors, updateTrustee, handleTrusteeFile }) { const fields = [['surname', 'Surname'], ['firstName', 'First name'], ['otherName', 'Other name'], ['dateOfBirth', 'Date of birth', 'date'], ['gender', 'Gender'], ['nationality', 'Nationality'], ['phone', 'Phone number'], ['email', 'Email', 'email'], ['occupation', 'Occupation'], ['country', 'Country'], ['state', 'State'], ['lga', 'LGA'], ['town', 'City / town / village'], ['houseNumber', 'House number'], ['streetName', 'Street name'], ['idType', 'ID type'], ['idNumber', 'ID number']]; return <div className="trustee-block"><h3>Trustee {index + 1}{index === 0 ? ' (Chairman first)' : ''}</h3><div className="form-grid">{fields.map(([field, label, type]) => <Field key={field} label={label} type={type || 'text'} options={field === 'gender' ? GENDERS : field === 'state' ? NIGERIAN_STATES : field === 'lga' ? COMMON_LGAS : undefined} value={trustee[field]} error={errors[`trustee-${index}-${field}`]} onChange={(value) => updateTrustee(index, field, value)} required={field !== 'otherName' && field !== 'houseNumber'} />)}</div><div className="file-grid">{[['idDocument', 'Means of ID'], ['signature', 'Signature'], ['passport', 'Passport photograph']].map(([field, label]) => <label className="file-upload" key={field}>{label}<input type="file" accept="image/*,.pdf" onChange={(event) => handleTrusteeFile(index, field, event.target.files[0])} /></label>)}</div></div>; }
 function Review({ form }) { return <div className="review-grid"><p><strong>Names:</strong> {form.proposedName1}, {form.proposedName2}, {form.proposedName3}</p><p><strong>Email:</strong> {form.email}</p><p><strong>Office:</strong> {form.officeAddress}</p><p><strong>Trustees:</strong> {form.trusteeCount}</p><p><strong>Tenure:</strong> {form.trusteeTenure} years</p><p><strong>Aims:</strong> {form.aims}</p><p><strong>Income sources:</strong> {form.sourceOfIncome}</p></div>; }
 
 export default NGORegistrationPage;

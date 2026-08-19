@@ -12,6 +12,10 @@ function AdminDashboardPage({ user, onLogout }) {
   const [ngoApplications, setNgoApplications] = useState([]);
   const [companyApplications, setCompanyApplications] = useState([]);
   const [businessApplications, setBusinessApplications] = useState([]);
+  const [scumlApplications, setSCUMLApplications] = useState([]);
+  const [ninApplications, setNINApplications] = useState([]);
+  const [ninNameChanges, setNINNameChanges] = useState([]);
+  const [ninDateChanges, setNINDateChanges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
@@ -48,12 +52,36 @@ function AdminDashboardPage({ user, onLogout }) {
         .select('*')
         .order('created_at', { ascending: false });
       if (!error) setCompanyApplications(data || []);
-    } else {
+    } else if (activeTab === 'business') {
       const { data, error } = await supabase
         .from('business_applications')
         .select('*')
         .order('created_at', { ascending: false });
       if (!error) setBusinessApplications(data || []);
+    } else if (activeTab === 'scuml') {
+      const { data, error } = await supabase
+        .from('scuml_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setSCUMLApplications(data || []);
+    } else if (activeTab === 'nin') {
+      const { data, error } = await supabase
+        .from('nin_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setNINApplications(data || []);
+    } else if (activeTab === 'nin-name') {
+      const { data, error } = await supabase
+        .from('nin_name_changes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setNINNameChanges(data || []);
+    } else {
+      const { data, error } = await supabase
+        .from('nin_date_changes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error) setNINDateChanges(data || []);
     }
     setLoading(false);
   };
@@ -108,12 +136,36 @@ function AdminDashboardPage({ user, onLogout }) {
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
       if (!error) setCompanyApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
-    } else {
+    } else if (activeTab === 'business') {
       const { error } = await supabase
         .from('business_applications')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
       if (!error) setBusinessApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    } else if (activeTab === 'scuml') {
+      const { error } = await supabase
+        .from('scuml_applications')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setSCUMLApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    } else if (activeTab === 'nin') {
+      const { error } = await supabase
+        .from('nin_applications')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setNINApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    } else if (activeTab === 'nin-name') {
+      const { error } = await supabase
+        .from('nin_name_changes')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setNINNameChanges((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    } else {
+      const { error } = await supabase
+        .from('nin_date_changes')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', messageId);
+      if (!error) setNINDateChanges((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     }
   };
 
@@ -127,7 +179,15 @@ function AdminDashboardPage({ user, onLogout }) {
           ? ngoApplications.filter((app) => filter === 'all' || app.status === filter)
           : activeTab === 'company'
             ? companyApplications.filter((app) => filter === 'all' || app.status === filter)
-            : businessApplications.filter((app) => filter === 'all' || app.status === filter);
+            : activeTab === 'business'
+              ? businessApplications.filter((app) => filter === 'all' || app.status === filter)
+              : activeTab === 'scuml'
+                ? scumlApplications.filter((app) => filter === 'all' || app.status === filter)
+                : activeTab === 'nin'
+                  ? ninApplications.filter((app) => filter === 'all' || app.status === filter)
+                  : activeTab === 'nin-name'
+                    ? ninNameChanges.filter((app) => filter === 'all' || app.status === filter)
+                    : ninDateChanges.filter((app) => filter === 'all' || app.status === filter);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -225,12 +285,52 @@ function AdminDashboardPage({ user, onLogout }) {
           >
             🧾 Business Registrations ({businessApplications.length})
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'scuml' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('scuml');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            🛡️ SCUML Applications ({scumlApplications.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'nin' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('nin');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            🪪 NIN Requests ({ninApplications.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'nin-name' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('nin-name');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            ✏️ NIN Name Changes ({ninNameChanges.length})
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'nin-date' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('nin-date');
+              setFilter('all');
+              setSelectedItem(null);
+            }}
+          >
+            📅 NIN Date Changes ({ninDateChanges.length})
+          </button>
         </div>
 
         {/* Sidebar */}
         <div className="dashboard-sidebar">
           <div className="sidebar-section">
-            <h3>{activeTab === 'messages' ? 'Filter Messages' : activeTab === 'testimonials' ? 'Filter Testimonials' : activeTab === 'applications' ? 'Filter Applications' : activeTab === 'ngo' ? 'Filter NGO Registrations' : activeTab === 'company' ? 'Filter Company Registrations' : 'Filter Business Registrations'}</h3>
+            <h3>{activeTab === 'messages' ? 'Filter Messages' : activeTab === 'testimonials' ? 'Filter Testimonials' : activeTab === 'applications' ? 'Filter Applications' : activeTab === 'ngo' ? 'Filter NGO Registrations' : activeTab === 'company' ? 'Filter Company Registrations' : activeTab === 'business' ? 'Filter Business Registrations' : activeTab === 'scuml' ? 'Filter SCUML Applications' : activeTab === 'nin' ? 'Filter NIN Requests' : activeTab === 'nin-name' ? 'Filter NIN Name Changes' : 'Filter NIN Date Changes'}</h3>
             <div className="filter-buttons">
               {activeTab === 'messages' ? (
                 <>
@@ -327,12 +427,43 @@ function AdminDashboardPage({ user, onLogout }) {
                   <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({companyApplications.filter((a) => a.status === 'approved').length})</button>
                   <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({companyApplications.filter((a) => a.status === 'rejected').length})</button>
                 </>
-              ) : (
+              ) : activeTab === 'business' ? (
                 <>
                   <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({businessApplications.length})</button>
                   <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({businessApplications.filter((a) => a.status === 'payment_submitted').length})</button>
                   <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({businessApplications.filter((a) => a.status === 'approved').length})</button>
                   <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({businessApplications.filter((a) => a.status === 'rejected').length})</button>
+                </>
+              ) : activeTab === 'scuml' ? (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({scumlApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({scumlApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({scumlApplications.filter((a) => a.status === 'approved').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({scumlApplications.filter((a) => a.status === 'rejected').length})</button>
+                </>
+              ) : activeTab === 'nin' ? (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({ninApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>Pending ({ninApplications.filter((a) => a.status === 'pending').length})</button>
+                  <button className={`filter-btn ${filter === 'in_review' ? 'active' : ''}`} onClick={() => setFilter('in_review')}>In Review ({ninApplications.filter((a) => a.status === 'in_review').length})</button>
+                  <button className={`filter-btn ${filter === 'completed' ? 'active' : ''}`} onClick={() => setFilter('completed')}>Completed ({ninApplications.filter((a) => a.status === 'completed').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({ninApplications.filter((a) => a.status === 'rejected').length})</button>
+                </>
+              ) : activeTab === 'nin-name' ? (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({ninNameChanges.length})</button>
+                  <button className={`filter-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>Pending ({ninNameChanges.filter((a) => a.status === 'pending').length})</button>
+                  <button className={`filter-btn ${filter === 'in_review' ? 'active' : ''}`} onClick={() => setFilter('in_review')}>In Review ({ninNameChanges.filter((a) => a.status === 'in_review').length})</button>
+                  <button className={`filter-btn ${filter === 'completed' ? 'active' : ''}`} onClick={() => setFilter('completed')}>Completed ({ninNameChanges.filter((a) => a.status === 'completed').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({ninNameChanges.filter((a) => a.status === 'rejected').length})</button>
+                </>
+              ) : (
+                <>
+                  <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({ninDateChanges.length})</button>
+                  <button className={`filter-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>Pending ({ninDateChanges.filter((a) => a.status === 'pending').length})</button>
+                  <button className={`filter-btn ${filter === 'in_review' ? 'active' : ''}`} onClick={() => setFilter('in_review')}>In Review ({ninDateChanges.filter((a) => a.status === 'in_review').length})</button>
+                  <button className={`filter-btn ${filter === 'completed' ? 'active' : ''}`} onClick={() => setFilter('completed')}>Completed ({ninDateChanges.filter((a) => a.status === 'completed').length})</button>
+                  <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({ninDateChanges.filter((a) => a.status === 'rejected').length})</button>
                 </>
               )}
             </div>
@@ -342,10 +473,10 @@ function AdminDashboardPage({ user, onLogout }) {
         {/* Main Content */}
         <div className="dashboard-main">
           {loading ? (
-            <div className="loading">Loading {activeTab === 'messages' ? 'messages' : activeTab === 'ngo' ? 'NGO registrations' : activeTab === 'company' ? 'company registrations' : activeTab === 'business' ? 'business registrations' : 'applications'}...</div>
+            <div className="loading">Loading {activeTab === 'messages' ? 'messages' : activeTab === 'ngo' ? 'NGO registrations' : activeTab === 'company' ? 'company registrations' : activeTab === 'business' ? 'business registrations' : activeTab === 'scuml' ? 'SCUML applications' : activeTab === 'nin' ? 'NIN requests' : activeTab === 'nin-name' ? 'NIN name changes' : 'NIN date changes'}...</div>
           ) : filteredData.length === 0 ? (
             <div className="empty-state">
-              <p>No {activeTab === 'messages' ? 'messages' : activeTab === 'ngo' ? 'NGO registrations' : activeTab === 'company' ? 'company registrations' : activeTab === 'business' ? 'business registrations' : 'applications'} found</p>
+              <p>No {activeTab === 'messages' ? 'messages' : activeTab === 'ngo' ? 'NGO registrations' : activeTab === 'company' ? 'company registrations' : activeTab === 'business' ? 'business registrations' : activeTab === 'scuml' ? 'SCUML applications' : activeTab === 'nin' ? 'NIN requests' : activeTab === 'nin-name' ? 'NIN name changes' : 'NIN date changes'} found</p>
             </div>
           ) : (
             <div className="messages-container">
@@ -449,6 +580,58 @@ function AdminDashboardPage({ user, onLogout }) {
                             <p className="message-preview">{item.directors?.length || 0} director(s) · {item.shareholders?.length || 0} shareholder(s) · {item.payment_slip ? 'Payment slip uploaded' : 'Awaiting payment slip'}</p>
                             <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
                           </>
+                        ) : activeTab === 'scuml' ? (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.entity_name}</h4>
+                                <p className="message-email">{item.registration_number}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">{item.persons?.length || 0} person(s) · {item.payment_slip ? 'Payment slip uploaded' : 'Awaiting payment slip'}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
+                        ) : activeTab === 'nin' ? (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.first_name} {item.surname}</h4>
+                                <p className="message-email">{item.email}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">{item.nin || item.phone || 'Name and date of birth search'}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
+                        ) : activeTab === 'nin-name' ? (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.new_first_name} {item.new_surname}</h4>
+                                <p className="message-email">{item.email}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">NIN: {item.nin} · New phone: {item.new_phone_number}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
+                        ) : activeTab === 'nin-date' ? (
+                          <>
+                            <div className="message-header">
+                              <div className="message-info">
+                                <h4>{item.first_name} {item.surname}</h4>
+                                <p className="message-email">{item.email}</p>
+                              </div>
+                              <span className="message-status" style={{ backgroundColor: getStatusColor(item.status) }}>{item.status}</span>
+                            </div>
+                            <p className="message-subject">{item.reference_number}</p>
+                            <p className="message-preview">{item.old_date_of_birth} → {item.new_date_of_birth} · NIN: {item.nin}</p>
+                            <p className="message-date">{new Date(item.created_at).toLocaleString()}</p>
+                          </>
                         ) : (
                           <>
                             <div className="message-header">
@@ -477,8 +660,16 @@ function AdminDashboardPage({ user, onLogout }) {
                             <NGOApplicationDetail item={item} onStatusChange={handleStatusChange} />
                           ) : activeTab === 'company' ? (
                             <CompanyApplicationDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : (
+                          ) : activeTab === 'business' ? (
                             <BusinessApplicationDetail item={item} onStatusChange={handleStatusChange} />
+                          ) : activeTab === 'nin' ? (
+                            <NINApplicationDetail item={item} onStatusChange={handleStatusChange} />
+                          ) : activeTab === 'nin-name' ? (
+                            <NINNameChangeDetail item={item} onStatusChange={handleStatusChange} />
+                          ) : activeTab === 'nin-date' ? (
+                            <NINDateChangeDetail item={item} onStatusChange={handleStatusChange} />
+                          ) : (
+                            <SCUMLApplicationDetail item={item} onStatusChange={handleStatusChange} />
                           )}
                         </div>
                       )}
@@ -778,6 +969,93 @@ function BusinessApplicationDetail({ item, onStatusChange }) {
       <div className="application-sections">
         {(item.proprietors || []).map((person, index) => <div className="app-section" key={index}><h4>Proprietor {index + 1}: {person.firstName} {person.surname}</h4><p>{person.email} · {person.phone} · {person.occupation}</p><p>{person.idDocument?.dataUrl ? <a href={person.idDocument.dataUrl} target="_blank" rel="noreferrer">View ID</a> : 'ID not uploaded'} · {person.signature?.dataUrl ? <a href={person.signature.dataUrl} target="_blank" rel="noreferrer">View signature</a> : 'Signature not uploaded'} · {person.passport?.dataUrl ? <a href={person.passport.dataUrl} target="_blank" rel="noreferrer">View passport</a> : 'Passport not uploaded'}</p></div>)}
       </div>
+    </div>
+  );
+}
+
+function SCUMLApplicationDetail({ item, onStatusChange }) {
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>SCUML Application: {item.entity_name}</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>Registration:</strong><span>{item.registration_number}</span></div>
+        <div className="info-row"><strong>Tax ID:</strong><span>{item.tax_id}</span></div>
+        <div className="info-row"><strong>Address:</strong><span>{item.registered_address}</span></div>
+        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+      </div>
+      <div className="application-sections">
+        <div className="app-section"><h4>Account details</h4><p>{item.bank_name} · {item.account_number} · {item.account_name}</p></div>
+        {(item.persons || []).map((person, index) => <div className="app-section" key={index}><h4>Person {index + 1}: {person.name}</h4><p>{person.email} · {person.phone} · BVN: {person.bvn} · NIN: {person.nin}</p><p>{person.address}</p></div>)}
+      </div>
+    </div>
+  );
+}
+
+function NINApplicationDetail({ item, onStatusChange }) {
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>NIN Request: {item.first_name} {item.surname}</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>NIN:</strong><span>{item.nin || 'Not provided'}</span></div>
+        <div className="info-row"><strong>Phone:</strong><span>{item.phone || 'Not provided'}</span></div>
+        <div className="info-row"><strong>Name:</strong><span>{item.first_name} {item.surname}</span></div>
+        <div className="info-row"><strong>Date of birth:</strong><span>{item.date_of_birth || 'Not provided'}</span></div>
+        <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="pending">Pending</option><option value="in_review">In Review</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select></div>
+      </div>
+      <div className="detail-message"><h3>Address</h3><p>{item.address || 'Not provided'}</p></div>
+    </div>
+  );
+}
+
+function NINNameChangeDetail({ item, onStatusChange }) {
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>NIN Name Change Request</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>NIN:</strong><span>{item.nin}</span></div>
+        <div className="info-row"><strong>New surname:</strong><span>{item.new_surname}</span></div>
+        <div className="info-row"><strong>New first name:</strong><span>{item.new_first_name}</span></div>
+        <div className="info-row"><strong>New middle name:</strong><span>{item.new_middle_name || 'Not provided'}</span></div>
+        <div className="info-row"><strong>New phone:</strong><span>{item.new_phone_number}</span></div>
+        <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="pending">Pending</option><option value="in_review">In Review</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select></div>
+      </div>
+    </div>
+  );
+}
+
+function NINDateChangeDetail({ item, onStatusChange }) {
+  return (
+    <div className="message-detail">
+      <div className="detail-header">
+        <h2>NIN Date of Birth Change</h2>
+        <button className="close-btn" onClick={() => window.location.reload()}>×</button>
+      </div>
+      <div className="detail-info">
+        <div className="info-row"><strong>Reference:</strong><span>{item.reference_number}</span></div>
+        <div className="info-row"><strong>NIN:</strong><span>{item.nin}</span></div>
+        <div className="info-row"><strong>Applicant:</strong><span>{item.first_name} {item.middle_name} {item.surname}</span></div>
+        <div className="info-row"><strong>Old date:</strong><span>{item.old_date_of_birth}</span></div>
+        <div className="info-row"><strong>New date:</strong><span>{item.new_date_of_birth}</span></div>
+        <div className="info-row"><strong>Phone:</strong><span>{item.phone}</span></div>
+        <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="pending">Pending</option><option value="in_review">In Review</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select></div>
+      </div>
+      <div className="application-sections"><div className="app-section"><h4>Residence and education</h4><p>{item.state_of_residence}, {item.lga_of_residence}. {item.residential_address}</p><p>{item.education} · {item.occupation}</p></div><div className="app-section"><h4>Parent information</h4><p>Father: {item.father_first_name} {item.father_surname}, {item.father_state}, {item.father_lga}</p><p>Mother: {item.mother_first_name} {item.mother_surname} ({item.mother_maiden_name}), {item.mother_state}, {item.mother_lga}</p></div></div>
     </div>
   );
 }

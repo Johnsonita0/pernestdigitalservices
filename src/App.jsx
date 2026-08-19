@@ -13,6 +13,10 @@ import MorePage from './pages/MorePage';
 import NGORegistrationPage from './pages/NGORegistrationPage';
 import CompanyRegistrationPage from './pages/CompanyRegistrationPage';
 import BusinessRegistrationPage from './pages/BusinessRegistrationPage';
+import SCUMLRegistrationPage from './pages/SCUMLRegistrationPage';
+import NINVerificationPage from './pages/NINVerificationPage';
+import NINNameChangePage from './pages/NINNameChangePage';
+import NINDateOfBirthChangePage from './pages/NINDateOfBirthChangePage';
 import './css/App.css';
 
 function AppLoader() {
@@ -97,6 +101,10 @@ function App() {
         <Route path="/ngo-register" element={<NGORegistrationPage />} />
         <Route path="/company-register" element={<CompanyRegistrationPage />} />
         <Route path="/business-register" element={<BusinessRegistrationPage />} />
+        <Route path="/scuml-register" element={<SCUMLRegistrationPage />} />
+        <Route path="/nin-verify" element={<NINVerificationPage />} />
+        <Route path="/nin-name-change" element={<NINNameChangePage />} />
+        <Route path="/nin-date-of-birth-change" element={<NINDateOfBirthChangePage />} />
 
         {/* Admin Routes */}
         <Route
