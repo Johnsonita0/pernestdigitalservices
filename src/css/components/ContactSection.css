@@ -44,12 +44,18 @@
   color: var(--muted);
   line-height: 1.8;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .info-card a {
+  display: inline-block;
+  max-width: 100%;
   color: var(--accent);
   text-decoration: none;
   font-weight: 500;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   transition: all 0.3s ease;
 }
 
