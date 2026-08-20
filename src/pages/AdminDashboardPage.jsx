@@ -811,9 +811,11 @@ function AdminDashboardPage({ user, onLogout }) {
                 ) : (
                   <>
                     {renderDetail(selectedItem)}
-                    <CollectedFields item={selectedItem} />
-                    <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
-                    <UploadedImages item={selectedItem} />
+                    <div className="record-modal-section-stack">
+                      <CollectedFields item={selectedItem} />
+                      <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
+                      <UploadedImages item={selectedItem} />
+                    </div>
                   </>
                 )}
               </div>
@@ -1315,6 +1317,7 @@ export default AdminDashboardPage;
 
 function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], onUpload, onLabelChange, onRemove, onSave, uploadBusy = false }) {
   const documents = Array.isArray(item.registration_documents) ? item.registration_documents : [];
+  if (!documents.length && !pendingDocuments.length) return null;
   return (
     <section className="registration-documents-panel">
       <div className="registration-documents-heading">
@@ -1325,7 +1328,7 @@ function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], o
         <p className="registration-documents-note">Name each document before saving. Saving will mark this application approved.</p>
         {pendingDocuments.map((document, index) => <div className="pending-registration-document" key={`${document.name}-${index}`}>
           <div className="pending-registration-preview">
-            {document.dataUrl && document.type?.startsWith('image/') && <img src={document.dataUrl} alt={`Preview of ${document.name}`} />}
+            {document.dataUrl && (document.type?.startsWith('image/') || document.dataUrl.startsWith('data:image/')) && <img src={document.dataUrl} alt={`Preview of ${document.name}`} />}
             {document.dataUrl && document.type === 'application/pdf' && <iframe src={document.dataUrl} title={`Preview of ${document.name}`} />}
             {!document.dataUrl && <span>Preview unavailable</span>}
           </div>

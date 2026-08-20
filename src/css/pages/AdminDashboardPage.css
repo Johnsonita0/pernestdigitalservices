@@ -387,6 +387,22 @@
   display: none;
 }
 
+.record-modal-section-stack {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.record-modal-section-stack > .collected-fields,
+.record-modal-section-stack > .registration-documents-panel,
+.record-modal-section-stack > .uploaded-images {
+  margin: 0;
+  padding: 18px;
+  border: 1px solid #eadfca;
+  border-radius: 10px;
+  background: #fffdf8;
+}
+
 .ngo-modal {
   width: min(1060px, 100%);
   padding: 0;

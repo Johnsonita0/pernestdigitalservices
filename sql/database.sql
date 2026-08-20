@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS public.ngo_applications (
   source_of_income text NOT NULL,
   trustees jsonb NOT NULL,
   payment_slip jsonb,
-  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'approved', 'rejected')),
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -253,7 +253,7 @@ CREATE TABLE IF NOT EXISTS public.company_applications (
   directors jsonb NOT NULL,
   shareholders jsonb NOT NULL,
   payment_slip jsonb,
-  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'approved', 'rejected')),
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS public.business_applications (
   street_name text,
   proprietors jsonb NOT NULL,
   payment_slip jsonb,
-  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'approved', 'rejected')),
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -297,7 +297,7 @@ CREATE TABLE IF NOT EXISTS public.scuml_applications (
   account_number text NOT NULL,
   account_name text NOT NULL,
   payment_slip jsonb,
-  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'approved', 'rejected')),
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
