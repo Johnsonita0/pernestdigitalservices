@@ -23,13 +23,6 @@ function SearchableLocationField({ label, value, options, onChange }) {
     containerRef.current?.querySelector('.location-search-trigger')?.dispatchEvent(new CustomEvent('change', { bubbles: true, detail: option }));
   };
 
-  const selectOptionFromPointer = (event, option) => {
-    if (event.pointerType === 'touch') {
-      event.preventDefault();
-      selectOption(option);
-    }
-  };
-
   return (
     <div ref={containerRef} className="location-search">
       <button type="button" className="location-search-trigger" onClick={() => { setOpen(!open); setQuery(''); }} aria-haspopup="listbox" aria-expanded={open}>
@@ -50,7 +43,7 @@ function SearchableLocationField({ label, value, options, onChange }) {
           />
           <div className="location-search-options" role="listbox">
             {filteredOptions.length ? filteredOptions.map((option) => (
-              <button key={option} type="button" role="option" aria-selected={option === value} onPointerDown={(event) => selectOptionFromPointer(event, option)} onClick={() => selectOption(option)}>{option}</button>
+              <button key={option} type="button" role="option" aria-selected={option === value} onPointerDown={(event) => { event.preventDefault(); selectOption(option); }}>{option}</button>
             )) : <span className="location-search-empty">No matches found</span>}
           </div>
         </div>
