@@ -45,6 +45,15 @@ function App() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
+    let lastNetworkToast = { message: '', timestamp: 0 };
+
+    const showNetworkToast = (message, type = 'error') => {
+      const now = Date.now();
+      if (lastNetworkToast.message === message && now - lastNetworkToast.timestamp < 4000) return;
+      lastNetworkToast = { message, timestamp: now };
+      window.dispatchEvent(new CustomEvent('app:toast', { detail: { message, type, duration: 4000 } }));
+    };
+
     const handleToast = (event) => {
       const { message = '', type = 'success', duration = 4000 } = event.detail || {};
       const id = Date.now() + Math.random();
@@ -54,7 +63,26 @@ function App() {
       }, duration);
     };
 
+    const handleOffline = () => showNetworkToast('You are offline. Your form data is saved on this device.', 'error');
+    const handleOnline = () => showNetworkToast('Connection restored. You can continue.', 'success');
+    const handleUnhandledRejection = (event) => {
+      const message = String(event.reason?.message || event.reason || '').toLowerCase();
+      if (message.includes('network') || message.includes('fetch') || message.includes('failed to load')) {
+        showNetworkToast('Network problem. Please check your connection and try again.');
+      }
+    };
+    const handleWindowError = (event) => {
+      const message = String(event.message || '').toLowerCase();
+      if (message.includes('network') || message.includes('fetch') || message.includes('failed to load')) {
+        showNetworkToast('Network problem. Please check your connection and try again.');
+      }
+    };
+
     window.addEventListener('app:toast', handleToast);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleWindowError);
 
     const adminAuth = localStorage.getItem('adminAuth');
     if (adminAuth) {
@@ -71,6 +99,10 @@ function App() {
 
     return () => {
       window.removeEventListener('app:toast', handleToast);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleWindowError);
     };
   }, []);
 
