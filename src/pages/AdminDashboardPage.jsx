@@ -63,69 +63,50 @@ function AdminDashboardPage({ user, onLogout }) {
   }, [selectedItem?.id]);
 
   useEffect(() => {
-    loadData();
-  }, [activeTab]);
+    loadAllData();
+  }, []);
 
-  const loadData = async () => {
+  const loadAllData = async () => {
     setLoading(true);
-    if (activeTab === 'messages') {
-      const { data } = await getAllContactMessages();
-      setMessages(data || []);
-    } else if (activeTab === 'testimonials') {
-      const { data } = await getAllTestimonials();
-      setTestimonials(data || []);
-    } else if (activeTab === 'applications') {
-      const { data, error } = await supabase
-        .from('internship_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) {
-        setApplications(data || []);
-      }
-    } else if (activeTab === 'ngo') {
-      const { data, error } = await supabase
-        .from('ngo_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setNgoApplications(data || []);
-    } else if (activeTab === 'company') {
-      const { data, error } = await supabase
-        .from('company_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setCompanyApplications(data || []);
-    } else if (activeTab === 'business') {
-      const { data, error } = await supabase
-        .from('business_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setBusinessApplications(data || []);
-    } else if (activeTab === 'scuml') {
-      const { data, error } = await supabase
-        .from('scuml_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setSCUMLApplications(data || []);
-    } else if (activeTab === 'nin') {
-      const { data, error } = await supabase
-        .from('nin_applications')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setNINApplications(data || []);
-    } else if (activeTab === 'nin-name') {
-      const { data, error } = await supabase
-        .from('nin_name_changes')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setNINNameChanges(data || []);
-    } else {
-      const { data, error } = await supabase
-        .from('nin_date_changes')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (!error) setNINDateChanges(data || []);
-    }
+    const fetchTable = (table) => supabase
+      .from(table)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const results = await Promise.all([
+      getAllContactMessages(),
+      getAllTestimonials(),
+      fetchTable('internship_applications'),
+      fetchTable('ngo_applications'),
+      fetchTable('company_applications'),
+      fetchTable('business_applications'),
+      fetchTable('scuml_applications'),
+      fetchTable('nin_applications'),
+      fetchTable('nin_name_changes'),
+      fetchTable('nin_date_changes'),
+    ]);
+
+    const [messagesResult, testimonialsResult, applicationsResult, ngoResult, companyResult, businessResult, scumlResult, ninResult, ninNameResult, ninDateResult] = results;
+    setMessages(messagesResult.data || []);
+    setTestimonials(testimonialsResult.data || []);
+    setApplications(applicationsResult.data || []);
+    setNgoApplications(ngoResult.data || []);
+    setCompanyApplications(companyResult.data || []);
+    setBusinessApplications(businessResult.data || []);
+    setSCUMLApplications(scumlResult.data || []);
+    setNINApplications(ninResult.data || []);
+    setNINNameChanges(ninNameResult.data || []);
+    setNINDateChanges(ninDateResult.data || []);
     setLoading(false);
+
+    const errors = results.filter((result) => result.error);
+    window.dispatchEvent(new CustomEvent('app:toast', {
+      detail: {
+        message: errors.length ? 'Some admin records could not be updated. Please try again.' : 'All admin records updated successfully.',
+        type: errors.length ? 'error' : 'success',
+        duration: 5000,
+      },
+    }));
   };
 
   const handleStatusChange = async (messageId, newStatus) => {
@@ -267,7 +248,7 @@ function AdminDashboardPage({ user, onLogout }) {
     if (!error) {
       setSelectedItem((item) => ({ ...item, registration_documents: nextDocuments, status: 'approved', updated_at: new Date().toISOString() }));
       setPendingDocuments([]);
-      await loadData();
+      await loadAllData();
     }
     else window.alert(`Unable to save documents: ${error.message}`);
     setDocumentUploadBusy(false);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faClock, faRotate } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClock, faDownload, faRotate } from '@fortawesome/free-solid-svg-icons';
 import { lookupApplicationStatus } from '../lib/supabaseClient';
 import '../css/pages/VerificationPage.css';
 
@@ -94,7 +94,26 @@ function RegistrationDocuments({ documents }) {
       <h2>Registration documents</h2>
       <p>Documents released for download by our registration team.</p>
       <div className="status-document-list">
-        {documents.map((document, index) => <a className="status-document-link" href={document.dataUrl} download={document.name || `registration-document-${index + 1}`} target="_blank" rel="noreferrer" key={`${document.name}-${index}`}><span>{document.label || document.name || `Registration document ${index + 1}`}</span><strong>Download</strong></a>)}
+        {documents.map((document, index) => {
+          const documentLabel = document.label || document.name || `Registration document ${index + 1}`;
+          const isImage = document.type?.startsWith('image/') || document.dataUrl?.startsWith('data:image/');
+          const isPdf = document.type === 'application/pdf' || document.dataUrl?.startsWith('data:application/pdf');
+          return (
+            <article className="status-document-card" key={`${document.name}-${index}`}>
+              <div className="status-document-preview">
+                {isImage && <img src={document.dataUrl} alt={`Preview of ${documentLabel}`} />}
+                {isPdf && <iframe src={document.dataUrl} title={`Preview of ${documentLabel}`} />}
+                {!isImage && !isPdf && <span>Preview unavailable</span>}
+              </div>
+              <div className="status-document-footer">
+                <span>{documentLabel}</span>
+                <a className="status-document-download" href={document.dataUrl} download={document.name || `registration-document-${index + 1}`} target="_blank" rel="noreferrer" title={`Download ${documentLabel}`} aria-label={`Download ${documentLabel}`}>
+                  <FontAwesomeIcon icon={faDownload} />
+                </a>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
