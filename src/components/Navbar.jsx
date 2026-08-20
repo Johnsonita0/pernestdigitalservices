@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faBagShopping, faXmark } from '@fortawesome/free-solid-svg-icons';
 import '../css/components/Navbar.css';
 
 function Navbar() {
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -43,20 +44,26 @@ function Navbar() {
 
         {/* Nav Links */}
         <ul className={`nav-menu ${menuOpen ? 'active' : ''}`}>
-          <li>
-            <button onClick={() => scrollToSection('hero')}>Home</button>
-          </li>
-          <li>
-            <button onClick={() => scrollToSection('about')}>About</button>
-          </li>
-          <li>
-            <button onClick={() => scrollToSection('services')}>Services</button>
-          </li>
-          <li className="nav-registration">
-            <button onClick={() => setRegistrationOpen((open) => !open)} aria-expanded={registrationOpen}>
-              Registration
-            </button>
-            <ul className={`registration-dropdown ${registrationOpen ? 'open' : ''}`}>
+          {location.pathname === '/shop' ? (
+            <li>
+              <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            </li>
+          ) : (
+            <>
+              <li>
+                <button onClick={() => scrollToSection('hero')}>Home</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('about')}>About</button>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('services')}>Services</button>
+              </li>
+              <li className="nav-registration">
+                <button onClick={() => setRegistrationOpen((open) => !open)} aria-expanded={registrationOpen}>
+                  Registration
+                </button>
+                <ul className={`registration-dropdown ${registrationOpen ? 'open' : ''}`}>
               <li>
                 <Link to="/ngo-register" onClick={() => { setRegistrationOpen(false); setMenuOpen(false); }}>
                   NGO Registration
@@ -92,18 +99,20 @@ function Navbar() {
                   NIN Date of Birth Change
                 </Link>
               </li>
-            </ul>
-          </li>
-          <li>
-            <button onClick={() => scrollToSection('contact')}>Contact</button>
-          </li>
-          <li className="nav-divider"></li>
-          <li className="nav-shop">
-            <Link to="/shop" onClick={() => setMenuOpen(false)} className="shop-link">
-              <FontAwesomeIcon icon={faBagShopping} aria-hidden="true" />
-              <span>Shop Now</span>
-            </Link>
-          </li>
+                </ul>
+              </li>
+              <li>
+                <button onClick={() => scrollToSection('contact')}>Contact</button>
+              </li>
+              <li className="nav-divider"></li>
+              <li className="nav-shop">
+                <Link to="/shop" onClick={() => setMenuOpen(false)} className="shop-link">
+                  <FontAwesomeIcon icon={faBagShopping} aria-hidden="true" />
+                  <span>Shop Now</span>
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
       </div>
     </nav>
