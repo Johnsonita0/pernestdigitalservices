@@ -278,6 +278,7 @@
   .nav-menu.active {
     max-height: calc(100dvh - 84px);
     overflow-y: auto;
+    overflow-x: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     box-shadow: 0 16px 32px rgba(0, 29, 77, 0.12);
@@ -314,11 +315,8 @@
 
   .registration-dropdown.open {
     display: block;
-    max-height: min(360px, 42dvh);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    max-height: none;
+    overflow: visible;
     opacity: 1;
     visibility: visible;
   }
