@@ -5,7 +5,6 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import EventRegistrationPage from './pages/EventRegistrationPage';
 import RegistrationPage from './pages/RegistrationPage';
-import InternshipRegistrationPage from './pages/InternshipRegistrationPage';
 import VerificationPage from './pages/VerificationPage';
 import VerificationStatusPage from './pages/VerificationStatusPage';
 import SuccessPage from './pages/SuccessPage';
@@ -93,7 +92,6 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<InternshipRegistrationPage />} />
         <Route path="/event-register" element={<EventRegistrationPage />} />
         <Route path="/verify" element={<VerificationPage />} />
         <Route path="/verification-status" element={<VerificationStatusPage />} />

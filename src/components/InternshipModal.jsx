@@ -73,14 +73,6 @@ function InternshipModal({ isOpen, onClose }) {
       cta: 'Start date change',
       href: '/nin-date-of-birth-change'
     },
-    {
-      eyebrow: 'Grow with experience',
-      title: 'Learn, contribute, and build your future',
-      description: 'Join our structured internship program for hands-on experience, mentorship, and career growth.',
-      image: '/image/cac.jpg',
-      cta: 'Apply for internship',
-      href: '/register'
-    }
   ];
 
   useEffect(() => {
