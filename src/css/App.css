@@ -184,6 +184,70 @@
   fill: currentColor;
 }
 
+.global-whatsapp-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1200;
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #25d366 0%, #1ebc5a 100%);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
+  animation: whatsappPulse 2.2s infinite ease-in-out;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.global-whatsapp-button svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+}
+
+.global-whatsapp-button:hover,
+.global-whatsapp-button:focus-visible {
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.global-whatsapp-button:focus-visible {
+  outline: 3px solid rgba(37, 211, 102, 0.38);
+  outline-offset: 4px;
+}
+
+.global-scroll-top {
+  position: fixed;
+  left: 24px;
+  bottom: 30px;
+  z-index: 1200;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(11, 29, 53, 0.92);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  animation: fadeInUp 0.25s ease-out;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.global-scroll-top:hover,
+.global-scroll-top:focus-visible {
+  background: var(--brand);
+  transform: translateY(-2px);
+}
+
+.global-scroll-top:focus-visible {
+  outline: 3px solid rgba(227, 169, 40, 0.45);
+  outline-offset: 4px;
+}
+
 .floating-whatsapp:hover,
 .floating-scroll-top:hover {
   transform: translateY(-2px);
@@ -284,12 +348,19 @@
   animation: toastIn 0.25s ease-out;
 }
 
+.toast-success,
+.toast-error,
+.toast-warning,
+.toast-info {
+  --toast-accent: rgba(255, 255, 255, .88);
+}
+
 .toast::before {
   position: absolute;
   inset: 0 auto 0 0;
   width: 5px;
   content: '';
-  background: rgba(255, 255, 255, .82);
+  background: var(--toast-accent);
 }
 
 .toast-success {
@@ -302,6 +373,13 @@
 
 .toast-info {
   background: linear-gradient(135deg, rgba(0, 76, 145, .98), rgba(59, 130, 246, .96));
+}
+
+.toast-warning {
+  color: #4f3200;
+  border-color: rgba(255, 255, 255, .6);
+  background: linear-gradient(135deg, #ffd166, #f4a261);
+  --toast-accent: #9a5b08;
 }
 
 @keyframes toastIn {
@@ -334,6 +412,20 @@
     bottom: 18px;
     width: 54px;
     height: 54px;
+  }
+
+  .global-whatsapp-button {
+    right: 12px;
+    bottom: 18px;
+    width: 54px;
+    height: 54px;
+  }
+
+  .global-scroll-top {
+    left: 12px;
+    bottom: 21px;
+    width: 44px;
+    height: 44px;
   }
 
   .whatsapp-tip {

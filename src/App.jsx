@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import HomePage from './pages/HomePage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
@@ -40,6 +43,32 @@ function AppLoader() {
   );
 }
 
+function UserWhatsAppButton() {
+  const location = useLocation();
+  if (location.pathname === '/' || location.pathname.startsWith('/admin')) return null;
+
+  return <a className="global-whatsapp-button" href="https://wa.me/2348130801666?text=Hello%20Pernest%20Digital%20Services%2C%20I%20need%20assistance." target="_blank" rel="noreferrer" aria-label="Chat with Pernest Digital Services on WhatsApp" title="Chat on WhatsApp"><FontAwesomeIcon icon={faWhatsapp} aria-hidden="true" /></a>;
+}
+
+function UserFloatingActions() {
+  const location = useLocation();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 280);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  if (location.pathname === '/' || location.pathname.startsWith('/admin')) return null;
+
+  return <>
+    <UserWhatsAppButton />
+    {showScrollTop && <button type="button" className="global-scroll-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Scroll back to top" title="Scroll back to top"><FontAwesomeIcon icon={faArrowUp} aria-hidden="true" /></button>}
+  </>;
+}
+
 function App() {
   const [adminUser, setAdminUser] = useState(null);
   const [adminLoading, setAdminLoading] = useState(true);
@@ -57,8 +86,9 @@ function App() {
 
     const handleToast = (event) => {
       const { message = '', type = 'success', duration = 4000 } = event.detail || {};
+      const toastType = ['success', 'error', 'warning', 'info'].includes(type) ? type : 'info';
       const id = Date.now() + Math.random();
-      setToasts((current) => [...current, { id, message, type }]);
+      setToasts((current) => [...current, { id, message, type: toastType }]);
       window.setTimeout(() => {
         setToasts((current) => current.filter((toast) => toast.id !== id));
       }, duration);
@@ -159,6 +189,8 @@ function App() {
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+
+      <UserFloatingActions />
 
       <div className="toast-container" aria-live="polite" aria-atomic="true">
         {toasts.map((toast) => (
