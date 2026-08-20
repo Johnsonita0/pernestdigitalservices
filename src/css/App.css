@@ -116,7 +116,9 @@
 }
 
 .floating-whatsapp-wrap {
-  position: relative;
+  position: fixed;
+  right: 40px;
+  bottom: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -129,6 +131,9 @@
 .floating-scroll-top {
   order: 1;
   margin-right: auto;
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
 }
 
 .whatsapp-tip {
@@ -311,6 +316,8 @@
 
   .floating-whatsapp-wrap {
     margin-left: auto;
+    right: 12px;
+    bottom: 18px;
     width: 54px;
     height: 54px;
   }
@@ -346,6 +353,8 @@
     width: 42px;
     height: 42px;
     font-size: 1.2rem;
+    left: 12px;
+    bottom: 18px;
   }
 
   .toast-container {
