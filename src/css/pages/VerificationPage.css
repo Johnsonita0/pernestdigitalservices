@@ -391,6 +391,15 @@
   background: #fff4f1;
 }
 
+.status-detail.status-cell-payment_pending,
+.status-detail.status-cell-pending { border-color: #e6c66e; background: #fff4d6; }
+.status-detail.status-cell-payment_submitted { border-color: #8dd5df; background: #e0f7fb; }
+.status-detail.status-cell-payment_confirmed,
+.status-detail.status-cell-approved,
+.status-detail.status-cell-completed { border-color: #8acbad; background: #e1f7ed; }
+.status-detail.status-cell-in_review { border-color: #9ebce8; background: #e8f0ff; }
+.status-detail.status-cell-rejected { border-color: #e5b6ae; background: #fff0ed; }
+
 .status-detail.rejected strong {
   color: #a43f31;
 }

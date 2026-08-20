@@ -284,6 +284,21 @@
   background: rgba(0, 58, 112, 0.035);
 }
 
+.status-table-cell,
+.generic-status-cell {
+  color: #172b3a;
+  font-weight: 700;
+}
+
+.status-cell-payment_pending,
+.status-cell-pending { background: #fff4d6 !important; }
+.status-cell-payment_submitted { background: #e0f7fb !important; }
+.status-cell-payment_confirmed,
+.status-cell-approved,
+.status-cell-completed { background: #e1f7ed !important; }
+.status-cell-in_review { background: #e8f0ff !important; }
+.status-cell-rejected { background: #fff0ed !important; }
+
 .record-name-cell {
   min-width: 190px;
   font-weight: 700;
@@ -352,6 +367,122 @@
   box-shadow: 0 24px 70px rgba(4, 20, 41, 0.3);
 }
 
+.record-modal-card:not(.ngo-modal) {
+  width: min(1060px, 100%);
+  padding: 0;
+  background: #eef2f5;
+}
+
+.generic-document-shell {
+  color: #172b3a;
+  background: #fff;
+}
+
+.generic-document-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 22px;
+  color: #fff;
+  background: #123f63;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.generic-document-toolbar > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.generic-document-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 140px;
+  padding: 28px 34px;
+  border-bottom: 3px solid #d08712;
+  background: #fff;
+}
+
+.generic-document-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 20px 34px;
+  border: 1px solid #d7e0e6;
+  background: #d7e0e6;
+}
+
+.generic-document-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #f7fafb;
+}
+
+.generic-document-meta strong {
+  color: #5d707d;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.generic-document-meta span {
+  color: #172b3a;
+  font-size: 0.86rem;
+}
+
+.application-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 9px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: capitalize;
+}
+
+.generic-status-cell .application-status-badge {
+  border-color: transparent;
+  color: #172b3a;
+  background: transparent;
+}
+
+.status-badge-payment_pending,
+.status-badge-pending { color: #9a5b08; background: #fff4d6; }
+.status-badge-payment_submitted { color: #08758a; background: #e0f7fb; }
+.status-badge-payment_confirmed,
+.status-badge-approved,
+.status-badge-completed { color: #08734f; background: #e1f7ed; }
+.status-badge-in_review { color: #255ea8; background: #e8f0ff; }
+.status-badge-rejected { color: #a43f31; background: #fff0ed; }
+
+.ngo-status-control {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-control-select {
+  min-width: 145px;
+  padding: 4px 7px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  color: inherit;
+  background: #fff;
+  font-weight: 700;
+}
+
 .record-modal-header {
   display: flex;
   align-items: flex-start;
@@ -360,6 +491,90 @@
   margin-bottom: 18px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
+}
+
+.generic-document-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.generic-document-brand img {
+  width: 68px;
+  height: 68px;
+  flex: 0 0 auto;
+  border: 1px solid #c9d8e1;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.generic-document-eyebrow {
+  margin: 0 0 5px;
+  color: #d08712;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.generic-document-brand h2 {
+  margin: 0;
+  color: #123f63;
+  font-size: 1.35rem;
+  text-transform: capitalize;
+}
+
+.generic-document-brand p:last-child {
+  margin: 5px 0 0;
+  color: #687985;
+  font-size: 0.8rem;
+}
+
+.record-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.modal-payment-preview {
+  position: relative;
+  width: 92px;
+  height: 112px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid #9aabb7;
+  background: #edf2f5;
+}
+
+.modal-payment-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.modal-payment-preview > span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #a43f31;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.modal-payment-preview a {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 6px;
+  color: #fff;
+  background: #123f63;
 }
 
 .record-modal-header h2 {
@@ -377,30 +592,34 @@
   text-transform: uppercase;
 }
 
-.record-modal-card > .message-detail {
-  padding: 0;
+.record-modal-card > .message-detail,
+.generic-document-shell .message-detail {
+  padding: 0 34px 24px;
   border: 0;
   box-shadow: none;
 }
 
-.record-modal-card > .message-detail > .detail-header {
+.record-modal-card > .message-detail > .detail-header,
+.generic-document-shell .message-detail > .detail-header {
   display: none;
 }
 
 .record-modal-section-stack {
   display: grid;
   gap: 18px;
-  margin-top: 18px;
+  margin: 0 34px 20px;
 }
 
 .record-modal-section-stack > .collected-fields,
 .record-modal-section-stack > .registration-documents-panel,
 .record-modal-section-stack > .uploaded-images {
   margin: 0;
-  padding: 18px;
-  border: 1px solid #eadfca;
-  border-radius: 10px;
-  background: #fffdf8;
+  padding-top: 0;
+}
+
+.generic-document-shell .detail-actions {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .ngo-modal {
@@ -720,9 +939,7 @@
 }
 
 .collected-fields {
-  margin-top: 22px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
+  margin: 0;
 }
 
 .collected-fields-heading {
@@ -730,13 +947,16 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  padding: 11px 14px;
+  margin: 0;
+  border-bottom: 1px solid #d7e0e6;
+  background: #edf4f8;
 }
 
 .collected-fields-heading h3 {
   margin: 0;
-  color: var(--brand-dark);
-  font-size: 1.05rem;
+  color: #123f63;
+  font-size: 0.9rem;
 }
 
 .collected-fields-heading span {
@@ -746,22 +966,23 @@
 
 .collected-fields-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
 }
 
 .collected-field-card {
   min-width: 0;
-  padding: 14px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 8px;
-  background: #fbfdff;
+  padding: 11px 14px;
+  border-bottom: 1px solid #e2e9ed;
+  border-radius: 0;
+  background: #fff;
 }
 
+.collected-field-card:nth-child(odd) { border-right: 1px solid #e2e9ed; }
+
 .collected-field-card h4 {
-  margin: 0 0 7px;
-  color: var(--muted);
+  margin: 0 0 5px;
+  color: #5d707d;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -770,17 +991,15 @@
 
 .collected-field-card p {
   margin: 0;
-  color: var(--text);
-  font-size: 0.9rem;
+  color: #172b3a;
+  font-size: 0.88rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
 .uploaded-images {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border);
+  margin: 0;
 }
 
 .registration-documents-panel {
@@ -1471,6 +1690,55 @@
 
   .ngo-modal {
     padding: 0;
+  }
+
+  .generic-document-toolbar,
+  .generic-document-heading {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .generic-document-heading {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .generic-document-meta {
+    grid-template-columns: 1fr;
+    margin: 16px 18px;
+  }
+
+  .generic-document-shell .message-detail {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .generic-document-shell .record-modal-section-stack {
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .generic-document-brand {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .generic-document-brand img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .generic-document-brand h2 {
+    font-size: 1.05rem;
+  }
+
+  .record-modal-header-actions .print-document-btn {
+    display: none;
+  }
+
+  .modal-payment-preview {
+    width: 70px;
+    height: 88px;
   }
 
   .ngo-document-toolbar,

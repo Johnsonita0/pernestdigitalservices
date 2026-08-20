@@ -12,6 +12,26 @@ const formatRecordValue = (value) => {
   return String(value);
 };
 
+const statusLabels = {
+  payment_pending: 'Payment pending',
+  payment_submitted: 'Payment submitted',
+  payment_confirmed: 'Payment confirmed',
+  pending: 'Pending',
+  in_review: 'In review',
+  approved: 'Approved',
+  completed: 'Completed',
+  rejected: 'Rejected',
+};
+
+function StatusBadge({ status }) {
+  const normalizedStatus = String(status || 'unknown').toLowerCase();
+  return <span className={`application-status-badge status-badge-${normalizedStatus}`}>{statusLabels[normalizedStatus] || normalizedStatus.replace(/_/g, ' ')}</span>;
+}
+
+function showStatusToast(message, type = 'success') {
+  window.dispatchEvent(new CustomEvent('app:toast', { detail: { message, type, duration: type === 'error' ? 5000 : 4000 } }));
+}
+
 function getRecordColumns(tab, item) {
   const common = [
     ['Email', item.email],
@@ -110,13 +130,18 @@ function AdminDashboardPage({ user, onLogout }) {
   };
 
   const handleStatusChange = async (messageId, newStatus) => {
+    let statusUpdateError = null;
     if (activeTab === 'messages') {
-      await updateMessageStatus(messageId, newStatus);
+      const result = await updateMessageStatus(messageId, newStatus);
+      statusUpdateError = result.error;
+      if (statusUpdateError) return showStatusToast(`Unable to update message status: ${statusUpdateError.message}`, 'error');
       setMessages((prev) =>
         prev.map((msg) => (msg.id === messageId ? { ...msg, status: newStatus } : msg))
       );
     } else if (activeTab === 'testimonials') {
-      await updateTestimonialStatus(messageId, newStatus);
+      const result = await updateTestimonialStatus(messageId, newStatus);
+      statusUpdateError = result.error;
+      if (statusUpdateError) return showStatusToast(`Unable to update testimonial status: ${statusUpdateError.message}`, 'error');
       setTestimonials((prev) =>
         prev.map((item) => (item.id === messageId ? { ...item, status: newStatus } : item))
       );
@@ -127,6 +152,7 @@ function AdminDashboardPage({ user, onLogout }) {
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
 
+      statusUpdateError = error;
       if (!error) {
         setApplications(
           applications.map((app) =>
@@ -154,46 +180,56 @@ function AdminDashboardPage({ user, onLogout }) {
         .eq('id', messageId);
       if (!error) {
         setNgoApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus, updated_at: new Date().toISOString() } : item));
-        window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: `NGO application marked ${newStatus.replace(/_/g, ' ')}.`, type: 'success', duration: 4000 } }));
       } else {
-        window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: `Unable to update NGO status: ${error.message}`, type: 'error', duration: 5000 } }));
+        statusUpdateError = error;
       }
     } else if (activeTab === 'company') {
       const { error } = await supabase
         .from('company_applications')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
+      statusUpdateError = error;
       if (!error) setCompanyApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     } else if (activeTab === 'business') {
       const { error } = await supabase
         .from('business_applications')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
+      statusUpdateError = error;
       if (!error) setBusinessApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     } else if (activeTab === 'scuml') {
       const { error } = await supabase
         .from('scuml_applications')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
+      statusUpdateError = error;
       if (!error) setSCUMLApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     } else if (activeTab === 'nin') {
       const { error } = await supabase
         .from('nin_applications')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
+      statusUpdateError = error;
       if (!error) setNINApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     } else if (activeTab === 'nin-name') {
       const { error } = await supabase
         .from('nin_name_changes')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
+      statusUpdateError = error;
       if (!error) setNINNameChanges((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     } else {
       const { error } = await supabase
         .from('nin_date_changes')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
+      statusUpdateError = error;
       if (!error) setNINDateChanges((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+    }
+    if (statusUpdateError) {
+      showStatusToast(`Unable to update ${activeTab.replace('-', ' ')} status: ${statusUpdateError.message}`, 'error');
+    } else {
+      showStatusToast(`${activeTab.replace('-', ' ')} status updated to ${newStatus.replace(/_/g, ' ')}.`, 'success');
     }
     setSelectedItem((item) => item?.id === messageId ? { ...item, status: newStatus, updated_at: new Date().toISOString() } : item);
   };
@@ -609,7 +645,7 @@ function AdminDashboardPage({ user, onLogout }) {
                             {getRecordName(activeTab, item) || 'Unnamed applicant'}
                           </button>
                         </td>
-                        {getRecordColumns(activeTab, item).map(([label, value]) => <td key={label}>{formatRecordValue(value)}</td>)}
+                        {getRecordColumns(activeTab, item).map(([label, value]) => <td className={label === 'Status' ? `status-table-cell status-cell-${String(value || 'unknown').toLowerCase()}` : ''} key={label}>{formatRecordValue(value)}</td>)}
                         <td className="records-actions-cell"><button type="button" className="record-delete-table-btn" onClick={() => handleDelete(item.id)}>Delete</button></td>
                       </tr>
                     ))}
@@ -799,24 +835,23 @@ function AdminDashboardPage({ user, onLogout }) {
           {selectedItem && !loading && (
             <div className="record-modal-backdrop" role="presentation" onMouseDown={() => setSelectedItem(null)}>
               <div className={`record-modal-card ${activeTab === 'ngo' ? 'ngo-modal' : ''}`} role="dialog" aria-modal="true" aria-label="Record details" onMouseDown={(event) => event.stopPropagation()}>
-                <div className="record-modal-header">
-                  <div>
-                    <p className="record-modal-kicker">{activeTab.replace('-', ' ')}</p>
-                    <h2>{getRecordName(activeTab, selectedItem) || 'Record details'}</h2>
-                  </div>
-                  <button type="button" className="close-btn" onClick={() => setSelectedItem(null)} aria-label="Close details">×</button>
-                </div>
                 {activeTab === 'ngo' ? (
                   <NGOApplicationDocument item={selectedItem} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />
                 ) : (
-                  <>
+                  <div className="generic-document-shell">
+                    <div className="generic-document-toolbar"><span>{activeTab.replace('-', ' ')} application</span><div><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
+                    <header className="generic-document-heading">
+                      <div className="generic-document-brand"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><div><p className="generic-document-eyebrow">PERNEST DIGITAL ENTERPRISES</p><h2>{activeTab.replace('-', ' ')} application</h2><p>Official administrative review copy</p></div></div>
+                      <ModalPaymentPreview paymentSlip={selectedItem.payment_slip} />
+                    </header>
+                    <div className="generic-document-meta"><div><strong>Reference number</strong><span>{selectedItem.reference_number || 'Not available'}</span></div><div className={`generic-status-cell status-cell-${String(selectedItem.status || 'unknown').toLowerCase()}`}><strong>Application status</strong><StatusBadge status={selectedItem.status} /></div><div><strong>Date submitted</strong><span>{selectedItem.created_at ? new Date(selectedItem.created_at).toLocaleString() : 'Not available'}</span></div></div>
                     {renderDetail(selectedItem)}
                     <div className="record-modal-section-stack">
                       <CollectedFields item={selectedItem} />
                       <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
                       <UploadedImages item={selectedItem} />
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -1051,6 +1086,12 @@ function PaymentSlipPreview({ paymentSlip }) {
   );
 }
 
+function ModalPaymentPreview({ paymentSlip }) {
+  if (!paymentSlip?.dataUrl) return null;
+  const isImage = paymentSlip.type?.startsWith('image/') || paymentSlip.dataUrl.startsWith('data:image/');
+  return <div className="modal-payment-preview" title={paymentSlip.name || 'Payment slip'}>{isImage ? <img src={paymentSlip.dataUrl} alt="Payment slip preview" /> : <span>PDF</span>}<a href={paymentSlip.dataUrl} target="_blank" rel="noreferrer" aria-label="View payment slip"><FontAwesomeIcon icon={faDownload} /></a></div>;
+}
+
 function NGOApplicationDetail({ item, onStatusChange }) {
   const trustees = Array.isArray(item.trustees) ? item.trustees : [];
   return (
@@ -1239,7 +1280,7 @@ function NGOApplicationDocument({ item, onStatusChange, onClose, documentUploadB
 
       <div className="ngo-document-meta">
         <div><strong>Reference number</strong><span>{item.reference_number}</span></div>
-        <div><strong>Application status</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div className={`generic-status-cell status-cell-${String(item.status || 'unknown').toLowerCase()}`}><strong>Application status</strong><div className="ngo-status-control"><StatusBadge status={item.status} /><select className={`status-control-select status-badge-${item.status}`} value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div></div>
         <div><strong>Date submitted</strong><span>{new Date(item.created_at).toLocaleString()}</span></div>
       </div>
 
@@ -1392,11 +1433,8 @@ function CollectedFields({ item }) {
   collectFields(item);
 
   return (
-    <section className="collected-fields">
-      <div className="collected-fields-heading">
-        <h3>All submitted fields</h3>
-        <span>{fields.length} fields</span>
-      </div>
+    <section className="ngo-document-section collected-fields">
+      <div className="collected-fields-heading"><h3>All submitted fields</h3><span>{fields.length} fields</span></div>
       <div className="collected-fields-grid">
         {fields.map((field) => (
           <article className="collected-field-card" key={field.path}>
@@ -1411,31 +1449,35 @@ function CollectedFields({ item }) {
 
 function UploadedImages({ item }) {
   const uploads = [];
-
-  const collectImages = (value, label = 'Uploaded image') => {
-    if (!value || typeof value !== 'object') return;
-    if (value.dataUrl && String(value.dataUrl).startsWith('data:image/')) {
-      uploads.push({ label: humanizeFieldLabel(label), src: value.dataUrl });
-      return;
+  const addImage = (file, label) => {
+    if (file?.dataUrl && (file.type?.startsWith('image/') || String(file.dataUrl).startsWith('data:image/'))) {
+      uploads.push({ label, src: file.dataUrl });
     }
-    if (Array.isArray(value)) {
-      value.forEach((entry, index) => collectImages(entry, `${label} ${index + 1}`));
-      return;
-    }
-    Object.entries(value).forEach(([key, child]) => {
-      if (key !== 'dataUrl' && key !== 'name' && key !== 'type') collectImages(child, key);
-    });
   };
 
-  collectImages(item);
+  (item.proprietors || []).forEach((person, index) => {
+    addImage(person.passport, `Proprietor ${index + 1} - Passport`);
+    addImage(person.signature, `Proprietor ${index + 1} - Signature`);
+    addImage(person.idDocument, `Proprietor ${index + 1} - ID document`);
+  });
+  if (item.witness) {
+    addImage(item.witness.signature, 'Witness - Signature');
+    addImage(item.witness.idDocument, 'Witness - ID document');
+  }
+  [...(item.directors || []), ...(item.shareholders || [])].forEach((person, index) => {
+    const group = item.directors?.includes(person) ? 'Director' : 'Shareholder';
+    addImage(person.signature, `${group} ${index + 1} - Signature`);
+    addImage(person.idDocument, `${group} ${index + 1} - ID document`);
+  });
+  addImage(item.payment_slip, 'Payment slip');
   if (!uploads.length) return null;
 
   return (
-    <section className="uploaded-images">
+    <section className="ngo-document-section uploaded-images">
       <h3>Uploaded images</h3>
-      <div className="uploaded-images-grid">
+      <div className="ngo-document-upload-grid">
         {uploads.map((upload, index) => (
-          <figure key={`${upload.label}-${index}`} className="uploaded-image-card">
+          <figure key={`${upload.label}-${index}`} className="ngo-document-upload">
             <div className="document-image-frame"><img src={upload.src} alt={upload.label} /><ImageDownloadButton src={upload.src} label={upload.label} /></div>
             <figcaption>{upload.label}</figcaption>
           </figure>
