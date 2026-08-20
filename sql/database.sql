@@ -422,7 +422,7 @@ DROP POLICY IF EXISTS "Allow admins to delete contact messages" ON public.contac
 CREATE POLICY "Allow admins to delete contact messages" ON public.contact_messages FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public NGO submissions" ON public.ngo_applications;
-CREATE POLICY "Allow public NGO submissions" ON public.ngo_applications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public NGO submissions" ON public.ngo_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow public payment updates" ON public.ngo_applications;
 CREATE POLICY "Allow public payment updates" ON public.ngo_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated NGO review" ON public.ngo_applications;
@@ -433,7 +433,7 @@ DROP POLICY IF EXISTS "Allow admins to delete NGO applications" ON public.ngo_ap
 CREATE POLICY "Allow admins to delete NGO applications" ON public.ngo_applications FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public company submissions" ON public.company_applications;
-CREATE POLICY "Allow public company submissions" ON public.company_applications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public company submissions" ON public.company_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow public company payment updates" ON public.company_applications;
 CREATE POLICY "Allow public company payment updates" ON public.company_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated company review" ON public.company_applications;
@@ -444,7 +444,7 @@ DROP POLICY IF EXISTS "Allow admins to delete company applications" ON public.co
 CREATE POLICY "Allow admins to delete company applications" ON public.company_applications FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public business submissions" ON public.business_applications;
-CREATE POLICY "Allow public business submissions" ON public.business_applications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public business submissions" ON public.business_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow public business payment updates" ON public.business_applications;
 CREATE POLICY "Allow public business payment updates" ON public.business_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated business review" ON public.business_applications;
@@ -455,7 +455,7 @@ DROP POLICY IF EXISTS "Allow admins to delete business applications" ON public.b
 CREATE POLICY "Allow admins to delete business applications" ON public.business_applications FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public SCUML submissions" ON public.scuml_applications;
-CREATE POLICY "Allow public SCUML submissions" ON public.scuml_applications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public SCUML submissions" ON public.scuml_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow public SCUML payment updates" ON public.scuml_applications;
 CREATE POLICY "Allow public SCUML payment updates" ON public.scuml_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated SCUML review" ON public.scuml_applications;
@@ -466,7 +466,7 @@ DROP POLICY IF EXISTS "Allow admins to delete SCUML applications" ON public.scum
 CREATE POLICY "Allow admins to delete SCUML applications" ON public.scuml_applications FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public NIN submissions" ON public.nin_applications;
-CREATE POLICY "Allow public NIN submissions" ON public.nin_applications FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public NIN submissions" ON public.nin_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated NIN review" ON public.nin_applications;
 CREATE POLICY "Allow authenticated NIN review" ON public.nin_applications FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated NIN status updates" ON public.nin_applications;
@@ -475,7 +475,7 @@ DROP POLICY IF EXISTS "Allow admins to delete NIN applications" ON public.nin_ap
 CREATE POLICY "Allow admins to delete NIN applications" ON public.nin_applications FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public NIN name-change submissions" ON public.nin_name_changes;
-CREATE POLICY "Allow public NIN name-change submissions" ON public.nin_name_changes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public NIN name-change submissions" ON public.nin_name_changes FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated NIN name-change review" ON public.nin_name_changes;
 CREATE POLICY "Allow authenticated NIN name-change review" ON public.nin_name_changes FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated NIN name-change status updates" ON public.nin_name_changes;
@@ -484,7 +484,7 @@ DROP POLICY IF EXISTS "Allow admins to delete NIN name changes" ON public.nin_na
 CREATE POLICY "Allow admins to delete NIN name changes" ON public.nin_name_changes FOR DELETE TO authenticated USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Allow public NIN date-change submissions" ON public.nin_date_changes;
-CREATE POLICY "Allow public NIN date-change submissions" ON public.nin_date_changes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public NIN date-change submissions" ON public.nin_date_changes FOR INSERT TO anon, authenticated WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated NIN date-change review" ON public.nin_date_changes;
 CREATE POLICY "Allow authenticated NIN date-change review" ON public.nin_date_changes FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated NIN date-change status updates" ON public.nin_date_changes;

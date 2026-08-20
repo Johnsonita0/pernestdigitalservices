@@ -154,12 +154,10 @@ export async function submitNGOApplication(application) {
   }
 
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('ngo_applications')
-      .insert(application)
-      .select()
-      .single();
-    return { data, error };
+      .insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the NGO application. Please try again.') };
   }
@@ -198,8 +196,8 @@ export async function submitCompanyApplication(application) {
   }
 
   try {
-    const { data, error } = await supabase.from('company_applications').insert(application).select().single();
-    return { data, error };
+    const { error } = await supabase.from('company_applications').insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the company application. Please try again.') };
   }
@@ -233,8 +231,8 @@ export async function submitBusinessApplication(application) {
   }
 
   try {
-    const { data, error } = await supabase.from('business_applications').insert(application).select().single();
-    return { data, error };
+    const { error } = await supabase.from('business_applications').insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the business application. Please try again.') };
   }
@@ -268,8 +266,8 @@ export async function submitSCUMLApplication(application) {
   }
 
   try {
-    const { data, error } = await supabase.from('scuml_applications').insert(application).select().single();
-    return { data, error };
+    const { error } = await supabase.from('scuml_applications').insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the SCUML application. Please try again.') };
   }
@@ -303,8 +301,8 @@ export async function submitNINApplication(application) {
   }
 
   try {
-    const { data, error } = await supabase.from('nin_applications').insert(application).select().single();
-    return { data, error };
+    const { error } = await supabase.from('nin_applications').insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the NIN request. Please try again.') };
   }
@@ -322,8 +320,8 @@ export async function submitNINNameChange(application) {
   }
 
   try {
-    const { data, error } = await supabase.from('nin_name_changes').insert(application).select().single();
-    return { data, error };
+    const { error } = await supabase.from('nin_name_changes').insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the NIN name-change request. Please try again.') };
   }
@@ -340,8 +338,8 @@ export async function submitNINDateChange(application) {
     }
   }
   try {
-    const { data, error } = await supabase.from('nin_date_changes').insert(application).select().single();
-    return { data, error };
+    const { error } = await supabase.from('nin_date_changes').insert(application);
+    return { data: error ? null : application, error };
   } catch (error) {
     return { data: null, error: new Error('Unable to submit the NIN date-change request. Please try again.') };
   }
