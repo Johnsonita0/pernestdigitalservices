@@ -18,9 +18,16 @@ function SearchableLocationField({ label, value, options, onChange }) {
   const filteredOptions = options.filter((option) => option.toLowerCase().includes(query.toLowerCase())).slice(0, 80);
   const selectOption = (option) => {
     onChange(option);
-    setQuery(option);
+    setQuery('');
     setOpen(false);
     containerRef.current?.querySelector('.location-search-trigger')?.dispatchEvent(new CustomEvent('change', { bubbles: true, detail: option }));
+  };
+
+  const selectOptionFromPointer = (event, option) => {
+    if (event.pointerType === 'touch') {
+      event.preventDefault();
+      selectOption(option);
+    }
   };
 
   return (
@@ -43,7 +50,7 @@ function SearchableLocationField({ label, value, options, onChange }) {
           />
           <div className="location-search-options" role="listbox">
             {filteredOptions.length ? filteredOptions.map((option) => (
-              <button key={option} type="button" role="option" aria-selected={option === value} onClick={() => selectOption(option)}>{option}</button>
+              <button key={option} type="button" role="option" aria-selected={option === value} onPointerDown={(event) => selectOptionFromPointer(event, option)} onClick={() => selectOption(option)}>{option}</button>
             )) : <span className="location-search-empty">No matches found</span>}
           </div>
         </div>
