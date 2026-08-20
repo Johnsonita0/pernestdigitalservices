@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitNINNameChange } from '../lib/supabaseClient';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NINVerificationPage.css';
 
 function NINNameChangePage() {
@@ -14,7 +15,9 @@ function NINNameChangePage() {
   const submit = async (event) => {
     event.preventDefault();
     if (!form.nin || !form.newSurname || !form.newFirstName || !form.newPhoneNumber || !form.email) {
-      setError('NIN, new surname, new first name, new phone number, and email are required.');
+      const message = 'NIN, new surname, new first name, new phone number, and email are required.';
+      setError(message);
+      reportValidationErrors({ required: message });
       return;
     }
     const reference = `NIN-NAME-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;

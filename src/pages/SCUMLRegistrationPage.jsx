@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { submitSCUMLApplication, updateSCUMLPaymentSlip } from '../lib/supabaseClient';
 import '../css/pages/SCUMLRegistrationPage.css';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 
 const emptyPerson = { name: '', dateOfBirth: '', phone: '', email: '', bvn: '', nin: '', address: '' };
 
@@ -27,6 +28,7 @@ function SCUMLRegistrationPage() {
     if (step === 2) form.persons.forEach((person, index) => ['name', 'dateOfBirth', 'phone', 'email', 'bvn', 'nin', 'address'].forEach((field) => { if (!person[field].trim()) nextErrors[`person-${index}-${field}`] = 'Required'; }));
     if (step === 3) ['bankName', 'accountNumber', 'accountName'].forEach((field) => { if (!form[field].trim()) nextErrors[field] = 'Required'; });
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) reportValidationErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
   const next = () => { if (validate()) setStep((current) => Math.min(4, current + 1)); };

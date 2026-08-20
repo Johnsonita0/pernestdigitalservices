@@ -5,6 +5,7 @@ import { COMMON_LGAS, GENDERS, NIGERIAN_STATES } from '../data/nigeriaLocations'
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/CompanyRegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -70,6 +71,7 @@ function CompanyRegistrationPage() {
       people.forEach(([group, person, index]) => ['idDocument', 'signature'].forEach((field) => { if (!person[field]) nextErrors[`${group}-${index}-${field}`] = 'Upload required'; }));
     }
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) reportValidationErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 

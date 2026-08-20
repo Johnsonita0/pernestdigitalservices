@@ -5,6 +5,7 @@ import { COMMON_LGAS, NIGERIAN_STATES } from '../data/nigeriaLocations';
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/BusinessRegistrationPage.css';
 
 const emptyProprietor = { surname: '', firstName: '', otherName: '', phone: '', email: '', dateOfBirth: '', occupation: '', state: '', lga: '', town: '', houseNumber: '', streetName: '', idDocument: null, signature: null, passport: null };
@@ -36,6 +37,7 @@ function BusinessRegistrationPage() {
     if (step === 2) form.proprietors.forEach((person, index) => ['surname', 'firstName', 'phone', 'email', 'dateOfBirth', 'occupation', 'state', 'lga', 'town', 'streetName'].forEach((field) => { if (!String(person[field] || '').trim()) nextErrors[`person-${index}-${field}`] = 'Required'; }));
     if (step === 3) form.proprietors.forEach((person, index) => ['idDocument', 'signature', 'passport'].forEach((field) => { if (!person[field]) nextErrors[`person-${index}-${field}`] = 'Upload required'; }));
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) reportValidationErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
   const next = () => { if (validate()) setStep((current) => Math.min(4, current + 1)); };

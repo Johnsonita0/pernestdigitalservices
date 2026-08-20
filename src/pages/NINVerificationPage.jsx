@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitNINApplication } from '../lib/supabaseClient';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NINVerificationPage.css';
 
 function NINVerificationPage() {
@@ -20,6 +21,7 @@ function NINVerificationPage() {
     }
     if (step === 2 && !form.email.trim()) nextErrors.email = 'Email is required.';
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) reportValidationErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
   const next = () => { if (validate()) setStep(2); };

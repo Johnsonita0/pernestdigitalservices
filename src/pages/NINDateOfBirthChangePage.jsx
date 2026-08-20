@@ -5,6 +5,7 @@ import { GENDERS, MARITAL_STATUSES } from '../data/nigeriaLocations';
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NINVerificationPage.css';
 
 const initialForm = {
@@ -28,7 +29,7 @@ function NINDateOfBirthChangePage() {
   const submit = async (event) => {
     event.preventDefault();
     const required = ['nin', 'surname', 'firstName', 'gender', 'oldDateOfBirth', 'newDateOfBirth', 'maritalStatus', 'stateOfOrigin', 'lgaOfOrigin', 'townOfOrigin', 'phone', 'stateOfBirth', 'lgaOfBirth', 'stateOfResidence', 'lgaOfResidence', 'residentialAddress', 'education', 'occupation', 'fatherSurname', 'fatherFirstName', 'fatherState', 'fatherLga', 'fatherTown', 'motherSurname', 'motherFirstName', 'motherMaidenName', 'motherState', 'motherLga', 'motherTown', 'email'];
-    if (required.some((field) => !String(form[field] || '').trim())) { setError('Please complete all required fields.'); return; }
+    if (required.some((field) => !String(form[field] || '').trim())) { const message = 'Please complete all required fields.'; setError(message); reportValidationErrors({ required: message }); return; }
     const reference = `NIN-DOB-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const { error: submitError } = await submitNINDateChange({ reference_number: reference, ...form, status: 'pending', created_at: new Date().toISOString() });
     if (submitError) setError(submitError.message); else { setSubmitted(reference); clearDraft(); }

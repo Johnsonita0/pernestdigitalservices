@@ -5,6 +5,7 @@ import { COMMON_LGAS, GENDERS, NIGERIAN_STATES } from '../data/nigeriaLocations'
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
+import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NGORegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -75,6 +76,7 @@ function NGORegistrationPage() {
       });
     }
     setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) reportValidationErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
 
