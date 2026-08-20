@@ -95,8 +95,8 @@
 
 .floating-actions {
   position: fixed;
-  left: auto;
-  right: auto;
+  left: 24px;
+  right: 24px;
   bottom: 24px;
   display: flex;
   justify-content: space-between;
@@ -104,12 +104,15 @@
   gap: 14px;
   pointer-events: none;
   z-index: 1200;
-  width: calc(100% - 48px);
-  padding: 0 24px;
+  width: auto;
 }
 
 .floating-actions-single {
   justify-content: space-between;
+}
+
+.floating-actions-single .floating-whatsapp-wrap {
+  margin-left: auto;
 }
 
 .floating-whatsapp-wrap {
