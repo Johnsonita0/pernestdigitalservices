@@ -4,8 +4,6 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const missingSupabaseConfig = !supabaseUrl || !supabaseAnonKey;
 
-export const ALLOWED_ADMIN_USER_ID = 'a9044df5-bf6b-42be-95d1-1f4337b2ff33';
-
 export const supabase = missingSupabaseConfig
   ? null
   : createClient(supabaseUrl, supabaseAnonKey);
@@ -395,6 +393,18 @@ export async function signInAdmin(email, password) {
   const user = data?.user;
   if (!user) {
     return { data: null, error: new Error('No active Supabase user was returned.') };
+  }
+
+  const { data: adminRecord, error: adminError } = await supabase
+    .from('admin_users')
+    .select('user_id, email, role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (adminError || !adminRecord) {
+    await supabase.auth.signOut();
+    return { data: null, error: new Error('This account is not authorized for admin access.') };
   }
 
   return { data: { session: data.session, user }, error: null };
