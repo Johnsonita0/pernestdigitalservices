@@ -114,13 +114,13 @@
 
 .floating-whatsapp-wrap {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   pointer-events: auto;
   order: 2;
-  gap: 8px;
+  width: 60px;
+  height: 60px;
 }
 
 .floating-scroll-top {
@@ -129,7 +129,9 @@
 }
 
 .whatsapp-tip {
-  position: relative;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
   background: rgba(15, 23, 42, 0.94);
   color: white;
   font-size: 0.75rem;
@@ -140,9 +142,6 @@
   white-space: nowrap;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   animation: tipSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  order: 1;
-  bottom: auto;
-  right: auto;
 }
 
 .floating-whatsapp,
@@ -309,6 +308,8 @@
 
   .floating-whatsapp-wrap {
     margin-left: auto;
+    width: 54px;
+    height: 54px;
   }
 
   .whatsapp-tip {
