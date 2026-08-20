@@ -21,6 +21,10 @@
 .business-files { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .business-file { display: flex; flex-direction: column; gap: 8px; padding: 13px; border: 1px dashed var(--brand); border-radius: 8px; color: var(--brand-dark); font-size: .85rem; font-weight: 700; background: var(--brand-soft); }
 .business-file input { max-width: 100%; font-size: .78rem; }
+.upload-preview { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--muted); font-size: .72rem; font-weight: 600; }
+.upload-preview img { width: 58px; height: 58px; flex: 0 0 58px; object-fit: cover; border: 1px solid var(--border); border-radius: 6px; background: white; }
+.upload-preview small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upload-file-icon { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; color: #b42318; background: #fff1f0; border: 1px solid #f4b4ae; border-radius: 6px; font-size: .65rem; font-weight: 900; }
 .business-review, .business-notes, .business-account { display: grid; gap: 10px; padding: 18px; border-radius: 10px; background: var(--surface-alt); }
 .business-review p { margin: 0; }
 .business-notes { margin-top: 20px; border-left: 4px solid var(--accent); }

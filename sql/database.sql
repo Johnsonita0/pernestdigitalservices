@@ -3,6 +3,19 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Supabase Storage buckets for registration uploads.
+-- Keep these buckets private because they contain identity and payment documents.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES
+  ('application-id-documents', 'application-id-documents', false, 10485760, ARRAY['image/*', 'application/pdf']),
+  ('application-signatures', 'application-signatures', false, 5242880, ARRAY['image/*', 'application/pdf']),
+  ('application-passport-photos', 'application-passport-photos', false, 5242880, ARRAY['image/*']),
+  ('application-payment-slips', 'application-payment-slips', false, 10485760, ARRAY['image/*', 'application/pdf'])
+ON CONFLICT (id) DO UPDATE
+SET public = EXCLUDED.public,
+    file_size_limit = EXCLUDED.file_size_limit,
+    allowed_mime_types = EXCLUDED.allowed_mime_types;
+
 -- Admin access control
 CREATE TABLE IF NOT EXISTS public.admin_users (
   user_id uuid PRIMARY KEY,
@@ -36,6 +49,64 @@ $$;
 
 REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+
+DROP POLICY IF EXISTS "Allow application upload submissions" ON storage.objects;
+CREATE POLICY "Allow application upload submissions" ON storage.objects
+  FOR INSERT TO anon, authenticated
+  WITH CHECK (bucket_id IN (
+    'application-id-documents',
+    'application-signatures',
+    'application-passport-photos',
+    'application-payment-slips'
+  ));
+
+DROP POLICY IF EXISTS "Allow admins to view application uploads" ON storage.objects;
+CREATE POLICY "Allow admins to view application uploads" ON storage.objects
+  FOR SELECT TO authenticated
+  USING (
+    bucket_id IN (
+      'application-id-documents',
+      'application-signatures',
+      'application-passport-photos',
+      'application-payment-slips'
+    )
+    AND public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "Allow admins to manage application uploads" ON storage.objects;
+CREATE POLICY "Allow admins to manage application uploads" ON storage.objects
+  FOR UPDATE TO authenticated
+  USING (
+    bucket_id IN (
+      'application-id-documents',
+      'application-signatures',
+      'application-passport-photos',
+      'application-payment-slips'
+    )
+    AND public.is_admin()
+  )
+  WITH CHECK (
+    bucket_id IN (
+      'application-id-documents',
+      'application-signatures',
+      'application-passport-photos',
+      'application-payment-slips'
+    )
+    AND public.is_admin()
+  );
+
+DROP POLICY IF EXISTS "Allow admins to delete application uploads" ON storage.objects;
+CREATE POLICY "Allow admins to delete application uploads" ON storage.objects
+  FOR DELETE TO authenticated
+  USING (
+    bucket_id IN (
+      'application-id-documents',
+      'application-signatures',
+      'application-passport-photos',
+      'application-payment-slips'
+    )
+    AND public.is_admin()
+  );
 
 -- Location reference data. Populate nigerian_lgas with the official LGA list.
 CREATE TABLE IF NOT EXISTS public.nigerian_states (
