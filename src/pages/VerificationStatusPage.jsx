@@ -1,11 +1,49 @@
 import React from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck, faClock, faRotate } from '@fortawesome/free-solid-svg-icons';
+import '../css/pages/VerificationPage.css';
+
+const steps = [
+  ['Received', 'Your application was received'],
+  ['Under review', 'Our team is reviewing your details'],
+  ['Processing', 'Registration work is in progress'],
+  ['Completed', 'Your application is complete'],
+];
+
+function getProgress(status) {
+  if (status === 'rejected') return 1;
+  if (status === 'payment_pending') return 0;
+  if (status === 'payment_submitted' || status === 'pending') return 1;
+  if (status === 'in_review') return 2;
+  if (status === 'approved' || status === 'completed') return 3;
+  return 0;
+}
 
 function VerificationStatusPage() {
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const application = state?.application;
+  if (!application) return <main className="verification-status-page"><section className="status-result-card"><p className="status-kicker">Application support</p><h1>Check your status</h1><p className="status-copy">Use your reference number to view the latest update.</p><Link className="status-new-search" to="/verify">Check a reference number</Link></section></main>;
+
+  const progress = getProgress(application.status);
+  const isRejected = application.status === 'rejected';
   return (
-    <div style={{ padding: '40px', textAlign: 'center' }}>
-      <h1>Verification Status Page</h1>
-      <p>Coming Soon</p>
-    </div>
+    <main className="verification-status-page">
+      <section className="status-result-card">
+        <div className="status-mark"><FontAwesomeIcon icon={isRejected ? faClock : faCheck} /></div>
+        <p className="status-kicker">Application status</p>
+        <h1>{application.application_type || 'Registration application'}</h1>
+        <p className="status-copy">Here is the latest update available for your application.</p>
+        <span className="status-reference">{application.reference_number}</span>
+        <div className="status-progress" aria-label="Application progress">
+          {steps.map(([label], index) => <div className={`status-step ${index < progress ? 'complete' : ''} ${index === progress ? 'current' : ''}`} key={label}>{label}</div>)}
+        </div>
+        <div className="status-detail"><strong>{isRejected ? 'Needs attention' : application.status.replace(/_/g, ' ')}</strong><span>{isRejected ? 'Please contact our support team for guidance.' : steps[progress][1]}</span></div>
+        <p className="status-copy">Applicant: {application.applicant_name || 'Applicant'}<br />Last updated: {new Date(application.updated_at || application.created_at).toLocaleString()}</p>
+        <div className="success-slip-actions"><button type="button" className="status-new-search" onClick={() => navigate('/verify')}><FontAwesomeIcon icon={faRotate} /> Check another</button><Link to="/">Return to website</Link></div>
+      </section>
+    </main>
   );
 }
 

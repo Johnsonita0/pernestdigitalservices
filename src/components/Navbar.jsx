@@ -57,7 +57,7 @@ function Navbar() {
                 <button onClick={() => scrollToSection('about')}>About</button>
               </li>
               <li>
-                <button onClick={() => scrollToSection('services')}>Services</button>
+                <Link to="/verify" onClick={() => setMenuOpen(false)}>Verify Registration</Link>
               </li>
               <li className="nav-registration">
                 <button onClick={() => setRegistrationOpen((open) => !open)} aria-expanded={registrationOpen}>

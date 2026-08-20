@@ -17,6 +17,38 @@ const LOCAL_NIN_APPLICATIONS_KEY = 'pernestdigitalservices_nin_applications';
 const LOCAL_NIN_NAME_CHANGES_KEY = 'pernestdigitalservices_nin_name_changes';
 const LOCAL_NIN_DATE_CHANGES_KEY = 'pernestdigitalservices_nin_date_changes';
 
+const APPLICATION_STATUS_SOURCES = [
+  ['internship_applications', 'Internship', (item) => `${item.first_name || ''} ${item.last_name || ''}`.trim()],
+  ['ngo_applications', 'NGO Registration', (item) => item.proposed_name_1],
+  ['company_applications', 'Company Registration', (item) => item.proposed_name_1],
+  ['business_applications', 'Business Registration', (item) => item.proposed_name_1],
+  ['scuml_applications', 'SCUML Registration', (item) => item.entity_name],
+  ['nin_applications', 'NIN Verification', (item) => `${item.first_name || ''} ${item.surname || ''}`.trim()],
+  ['nin_name_changes', 'NIN Name Change', (item) => `${item.new_first_name || ''} ${item.new_surname || ''}`.trim()],
+  ['nin_date_changes', 'NIN Date Change', (item) => `${item.first_name || ''} ${item.surname || ''}`.trim()],
+];
+
+export async function lookupApplicationStatus(referenceNumber) {
+  const reference = String(referenceNumber || '').trim().toUpperCase();
+  if (!reference) return { data: null, error: new Error('Enter your reference number.') };
+
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const localRecords = APPLICATION_STATUS_SOURCES.flatMap(([table, type]) => {
+        const key = table === 'internship_applications' ? LOCAL_REGISTRATIONS_KEY : `pernestdigitalservices_${table}`;
+        return JSON.parse(window.localStorage.getItem(key) || '[]').map((item) => ({ ...item, application_type: type }));
+      });
+      const record = localRecords.find((item) => String(item.reference_number || '').toUpperCase() === reference);
+      return { data: record || null, error: record ? null : new Error('No application was found for that reference number.') };
+    } catch (error) {
+      return { data: null, error: new Error('Unable to check application status.') };
+    }
+  }
+
+  const { data, error } = await supabase.rpc('lookup_application_status', { lookup_reference: reference });
+  return { data: data?.[0] || null, error: error || (data?.length ? null : new Error('No application was found for that reference number.')) };
+}
+
 function normalizeEmail(value) {
   return String(value || '').trim().toLowerCase();
 }

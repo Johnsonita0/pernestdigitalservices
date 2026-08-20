@@ -6,6 +6,7 @@ import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
 import { reportValidationErrors } from '../lib/reportValidationErrors';
+import PaymentSuccessModal from '../components/PaymentSuccessModal';
 import '../css/pages/NGORegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -141,13 +142,16 @@ function NGORegistrationPage() {
   };
 
   if (submitted) {
+    const finishPayment = () => navigate('/');
     return (
       <main className="ngo-page">
+        <PaymentSuccessModal isOpen={paymentSubmitted} reference={referenceNumber} onComplete={finishPayment} />
         <section className="ngo-card payment-card">
           <img src="/logo/logo2.jpeg" alt="Pernest Digital Services" className="ngo-logo" />
           <p className="ngo-kicker">Application received</p>
           <h1>Complete Your NGO Registration Payment</h1>
           <p>Your application reference is <strong>{referenceNumber}</strong>. Upload your payment slip below so our admin team can confirm it.</p>
+          <p className="registration-status-note">After submitting, use <a href="/verify">Confirm Registration Status</a> with this reference number to follow your application.</p>
           <div className="payment-account">
             <strong>Registration fee: N150,000</strong>
             <span>Account: 8130801666</span>

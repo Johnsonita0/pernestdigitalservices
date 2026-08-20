@@ -381,6 +381,27 @@ CREATE INDEX IF NOT EXISTS nin_date_changes_status_idx ON public.nin_date_change
 CREATE INDEX IF NOT EXISTS nin_date_changes_email_idx ON public.nin_date_changes (email);
 
 -- Row-level security
+-- Public status lookup returns only non-sensitive tracking details by reference number.
+CREATE OR REPLACE FUNCTION public.lookup_application_status(lookup_reference text)
+RETURNS TABLE (application_type text, applicant_name text, reference_number text, status text, created_at timestamptz, updated_at timestamptz)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT 'Internship', concat_ws(' ', first_name, last_name), reference_number, status, created_at, updated_at FROM public.internship_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NGO Registration', proposed_name_1, reference_number, status, created_at, updated_at FROM public.ngo_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'Company Registration', proposed_name_1, reference_number, status, created_at, updated_at FROM public.company_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'Business Registration', proposed_name_1, reference_number, status, created_at, updated_at FROM public.business_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'SCUML Registration', entity_name, reference_number, status, created_at, updated_at FROM public.scuml_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NIN Verification', concat_ws(' ', first_name, surname), reference_number, status, created_at, updated_at FROM public.nin_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NIN Name Change', concat_ws(' ', new_first_name, new_surname), reference_number, status, created_at, updated_at FROM public.nin_name_changes WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NIN Date Change', concat_ws(' ', first_name, surname), reference_number, status, created_at, updated_at FROM public.nin_date_changes WHERE upper(reference_number) = upper(lookup_reference)
+  LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.lookup_application_status(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.lookup_application_status(text) TO anon, authenticated;
+
 ALTER TABLE public.internship_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;

@@ -2,7 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import '../css/pages/AdminDashboardPage.css';
+
+const formatRecordValue = (value) => {
+  if (value === null || value === undefined || value === '') return '—';
+  if (Array.isArray(value)) return `${value.length} item(s)`;
+  return String(value);
+};
+
+function getRecordColumns(tab, item) {
+  const common = [
+    ['Email', item.email],
+    ['Phone', item.phone || item.new_phone_number],
+    ['Status', item.status],
+    ['Submitted', item.created_at ? new Date(item.created_at).toLocaleString() : '—'],
+  ];
+
+  if (tab === 'messages') return [['Subject', item.subject || 'No subject'], ['Message', item.message], ...common];
+  if (tab === 'testimonials') return [['Company', item.company], ['Rating', `${item.rating || 0}/5`], ['Review', item.message], ...common];
+  if (tab === 'applications') return [['Reference', item.reference_number], ['Institution', item.institution], ['Course', item.course_field], ...common];
+  if (tab === 'ngo') return [['Reference', item.reference_number], ['Trustees', item.trustee_count], ['Payment', item.payment_slip ? 'Uploaded' : 'Not uploaded'], ...common];
+  if (tab === 'company') return [['Reference', item.reference_number], ['Directors', item.directors], ['Shareholders', item.shareholders], ['Payment', item.payment_slip ? 'Uploaded' : 'Not uploaded'], ...common];
+  if (tab === 'business') return [['Reference', item.reference_number], ['Proprietors', item.proprietors], ['Payment', item.payment_slip ? 'Uploaded' : 'Not uploaded'], ...common];
+  if (tab === 'scuml') return [['Reference', item.reference_number], ['Registration', item.registration_number], ['Persons', item.persons], ['Payment', item.payment_slip ? 'Uploaded' : 'Not uploaded'], ...common];
+  if (tab === 'nin') return [['Reference', item.reference_number], ['NIN', item.nin], ['Date of birth', item.date_of_birth], ...common];
+  if (tab === 'nin-name') return [['Reference', item.reference_number], ['NIN', item.nin], ['New name', `${item.new_first_name || ''} ${item.new_surname || ''}`.trim()], ...common];
+  return [['Reference', item.reference_number], ['NIN', item.nin], ['Old date', item.old_date_of_birth], ['New date', item.new_date_of_birth], ...common];
+}
+
+function getRecordName(tab, item) {
+  if (tab === 'messages' || tab === 'testimonials') return item.name;
+  if (tab === 'applications' || tab === 'nin') return `${item.first_name || ''} ${item.last_name || item.surname || ''}`.trim();
+  if (tab === 'nin-name') return `${item.new_first_name || ''} ${item.new_surname || ''}`.trim();
+  if (tab === 'scuml') return item.entity_name;
+  return item.proposed_name_1 || `${item.first_name || ''} ${item.surname || ''}`.trim();
+}
 
 function AdminDashboardPage({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('messages');
@@ -227,6 +263,19 @@ function AdminDashboardPage({ user, onLogout }) {
     };
     return colors[status] || '#999';
   };
+
+  const renderDetail = (item) => (
+    activeTab === 'messages' ? <MessageDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
+      : activeTab === 'testimonials' ? <TestimonialDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
+        : activeTab === 'applications' ? <ApplicationDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
+          : activeTab === 'ngo' ? <NGOApplicationDetail item={item} onStatusChange={handleStatusChange} />
+            : activeTab === 'company' ? <CompanyApplicationDetail item={item} onStatusChange={handleStatusChange} />
+              : activeTab === 'business' ? <BusinessApplicationDetail item={item} onStatusChange={handleStatusChange} />
+                : activeTab === 'nin' ? <NINApplicationDetail item={item} onStatusChange={handleStatusChange} />
+                  : activeTab === 'nin-name' ? <NINNameChangeDetail item={item} onStatusChange={handleStatusChange} />
+                    : activeTab === 'nin-date' ? <NINDateChangeDetail item={item} onStatusChange={handleStatusChange} />
+                      : <SCUMLApplicationDetail item={item} onStatusChange={handleStatusChange} />
+  );
 
   return (
     <div className="admin-dashboard">
@@ -505,8 +554,32 @@ function AdminDashboardPage({ user, onLogout }) {
             </div>
           ) : (
             <div className="messages-container">
+              <div className="records-table-wrap">
+                <table className="records-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      {getRecordColumns(activeTab, filteredData[0]).map(([label]) => <th key={label}>{label}</th>)}
+                      <th aria-label="Actions" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredData.map((item) => (
+                      <tr key={item.id}>
+                        <td className="record-name-cell" onClick={() => setSelectedItem(item)}>
+                          <button type="button" className="record-name-btn" onClick={() => setSelectedItem(item)} aria-label={`Open details for ${getRecordName(activeTab, item) || 'record'}`}>
+                            {getRecordName(activeTab, item) || 'Unnamed applicant'}
+                          </button>
+                        </td>
+                        {getRecordColumns(activeTab, item).map(([label, value]) => <td key={label}>{formatRecordValue(value)}</td>)}
+                        <td><button type="button" className="record-delete-table-btn" onClick={() => handleDelete(item.id)}>Delete</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               {/* List */}
-              <div className="messages-list">
+              <div className="messages-list legacy-record-list">
                 {filteredData.map((item) => {
                   const isSelected = selectedItem?.id === item.id;
 
@@ -676,32 +749,34 @@ function AdminDashboardPage({ user, onLogout }) {
 
                       {isSelected && (
                         <div className="selected-detail-panel">
-                          {activeTab === 'messages' ? (
-                            <MessageDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'testimonials' ? (
-                            <TestimonialDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'applications' ? (
-                            <ApplicationDetail item={item} getStatusColor={getStatusColor} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'ngo' ? (
-                            <NGOApplicationDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'company' ? (
-                            <CompanyApplicationDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'business' ? (
-                            <BusinessApplicationDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'nin' ? (
-                            <NINApplicationDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'nin-name' ? (
-                            <NINNameChangeDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : activeTab === 'nin-date' ? (
-                            <NINDateChangeDetail item={item} onStatusChange={handleStatusChange} />
-                          ) : (
-                            <SCUMLApplicationDetail item={item} onStatusChange={handleStatusChange} />
-                          )}
+                          {renderDetail(item)}
                         </div>
                       )}
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+          {selectedItem && !loading && (
+            <div className="record-modal-backdrop" role="presentation" onMouseDown={() => setSelectedItem(null)}>
+              <div className={`record-modal-card ${activeTab === 'ngo' ? 'ngo-modal' : ''}`} role="dialog" aria-modal="true" aria-label="Record details" onMouseDown={(event) => event.stopPropagation()}>
+                <div className="record-modal-header">
+                  <div>
+                    <p className="record-modal-kicker">{activeTab.replace('-', ' ')}</p>
+                    <h2>{getRecordName(activeTab, selectedItem) || 'Record details'}</h2>
+                  </div>
+                  <button type="button" className="close-btn" onClick={() => setSelectedItem(null)} aria-label="Close details">×</button>
+                </div>
+                {activeTab === 'ngo' ? (
+                  <NGOApplicationDocument item={selectedItem} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} />
+                ) : (
+                  <>
+                    {renderDetail(selectedItem)}
+                    <CollectedFields item={selectedItem} />
+                    <UploadedImages item={selectedItem} />
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -1086,4 +1161,209 @@ function NINDateChangeDetail({ item, onStatusChange }) {
   );
 }
 
+function NGOApplicationDocument({ item, onStatusChange, onClose }) {
+  const trustees = Array.isArray(item.trustees) ? item.trustees : [];
+  const passport = trustees[0]?.passport?.dataUrl;
+  const names = [item.proposed_name_1, item.proposed_name_2, item.proposed_name_3].filter(Boolean);
+
+  return (
+    <div className="ngo-document">
+      <div className="ngo-document-toolbar">
+        <span>NGO registration application</span>
+        <div><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={onClose} aria-label="Close document">×</button></div>
+      </div>
+
+      <header className="ngo-document-heading">
+        <div className="ngo-document-brand">
+          <img src="/logo/logo2.jpeg" alt="Pernest Digital Services" />
+          <div>
+            <p className="ngo-document-eyebrow">PERNEST DIGITAL ENTERPRISES</p>
+            <h2>NGO Registration Application</h2>
+            <p>Official administrative review copy</p>
+          </div>
+        </div>
+        {passport ? <div className="ngo-document-passport-frame"><img className="ngo-document-passport" src={passport} alt="Chairman passport photograph" /><ImageDownloadButton src={passport} label="Chairman passport" /></div> : <div className="ngo-document-passport placeholder">Passport<br />photograph</div>}
+      </header>
+
+      <div className="ngo-document-meta">
+        <div><strong>Reference number</strong><span>{item.reference_number}</span></div>
+        <div><strong>Application status</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div><strong>Date submitted</strong><span>{new Date(item.created_at).toLocaleString()}</span></div>
+      </div>
+
+      <DocumentSection title="1. Proposed NGO names">
+        <div className="ngo-document-names">{names.map((name, index) => <div key={name}><b>{index + 1}.</b> {name}</div>)}</div>
+      </DocumentSection>
+
+      <DocumentSection title="2. Applicant and registered office">
+        <DocumentFields fields={[
+          ['Email address', item.email], ['Office address', item.office_address], ['State', item.state],
+          ['LGA', item.lga], ['Town / city', item.town], ['House number', item.house_number], ['Street name', item.street_name],
+        ]} />
+      </DocumentSection>
+
+      <DocumentSection title="3. Constitution and objectives">
+        <DocumentFields fields={[["Number of trustees", item.trustee_count], ['Trustee tenure', item.trustee_tenure ? `${item.trustee_tenure} years` : ''], ['Aims and objectives', item.aims], ['Sources of income', item.source_of_income]]} wide />
+      </DocumentSection>
+
+      <DocumentSection title={`4. Trustee information (${trustees.length})`}>
+        <div className="ngo-trustee-list">
+          {trustees.map((trustee, index) => (
+            <article className="ngo-trustee-card" key={index}>
+              <div className="ngo-trustee-card-heading"><h4>Trustee {index + 1}{index === 0 ? ' · Chairman' : index === 1 ? ' · Secretary' : ''}</h4><span>{trustee.idType || 'Identification'}: {trustee.idNumber || 'Not provided'}</span></div>
+              <DocumentFields fields={[
+                ['Full name', [trustee.firstName, trustee.otherName, trustee.surname].filter(Boolean).join(' ')], ['Date of birth', trustee.dateOfBirth], ['Gender', trustee.gender], ['Nationality', trustee.nationality],
+                ['Phone number', trustee.phone], ['Email address', trustee.email], ['Occupation', trustee.occupation], ['Address', [trustee.houseNumber, trustee.streetName, trustee.town, trustee.lga, trustee.state].filter(Boolean).join(', ')],
+              ]} />
+              <div className="ngo-trustee-documents"><span>{trustee.idDocument?.dataUrl ? 'ID document uploaded' : 'ID document not uploaded'}</span><span>{trustee.signature?.dataUrl ? 'Signature uploaded' : 'Signature not uploaded'}</span><span>{trustee.passport?.dataUrl ? 'Passport uploaded' : 'Passport not uploaded'}</span></div>
+            </article>
+          ))}
+        </div>
+      </DocumentSection>
+
+      <NGODocumentUploads item={item} trustees={trustees} />
+
+      <footer className="ngo-document-footer">
+        <span>System record ID: {item.id}</span>
+        <span>Created: {item.created_at ? new Date(item.created_at).toISOString() : 'Not available'}</span>
+        <span>Generated: {new Date().toISOString()}</span>
+      </footer>
+    </div>
+  );
+}
+
+function DocumentSection({ title, children }) {
+  return <section className="ngo-document-section"><h3>{title}</h3>{children}</section>;
+}
+
+function DocumentFields({ fields, wide = false }) {
+  return <div className={`ngo-document-fields ${wide ? 'wide' : ''}`}>{fields.map(([label, value]) => <div className="ngo-document-field" key={label}><strong>{label}</strong><span>{value === null || value === undefined || value === '' ? 'Not provided' : value}</span></div>)}</div>;
+}
+
+function NGODocumentUploads({ item, trustees }) {
+  const uploads = [];
+  trustees.forEach((trustee, index) => {
+    [['idDocument', 'ID document'], ['signature', 'Signature'], ['passport', 'Passport photograph']].forEach(([field, label]) => {
+      if (index === 0 && field === 'passport') return;
+      if (trustee[field]?.dataUrl?.startsWith('data:image/')) uploads.push({ label: `Trustee ${index + 1} - ${label}`, src: trustee[field].dataUrl });
+    });
+  });
+  if (item.payment_slip?.dataUrl?.startsWith('data:image/')) uploads.push({ label: 'Payment slip', src: item.payment_slip.dataUrl });
+  if (!uploads.length) return null;
+
+  return (
+    <DocumentSection title="5. Supporting documents">
+      <div className="ngo-document-upload-grid">
+        {uploads.map((upload) => <figure className="ngo-document-upload" key={upload.label}><div className="document-image-frame"><img src={upload.src} alt={upload.label} /><ImageDownloadButton src={upload.src} label={upload.label} /></div><figcaption>{upload.label}</figcaption></figure>)}
+      </div>
+    </DocumentSection>
+  );
+}
+
 export default AdminDashboardPage;
+
+function humanizeFieldLabel(value) {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, (character) => character.toUpperCase())
+    .replace(/\bId\b/g, 'ID');
+}
+
+function formatFieldValue(value) {
+  if (value === null || value === undefined || value === '') return 'Not provided';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return String(value);
+}
+
+function CollectedFields({ item }) {
+  const fields = [];
+  const collectFields = (value, label = 'Field', path = 'field') => {
+    if (value === null || value === undefined || typeof value !== 'object') {
+      fields.push({ label: humanizeFieldLabel(label), value: formatFieldValue(value), path });
+      return;
+    }
+
+    if (value.dataUrl && String(value.dataUrl).startsWith('data:')) {
+      fields.push({ label: humanizeFieldLabel(label), value: 'Image uploaded', path });
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      if (!value.length) {
+        fields.push({ label: humanizeFieldLabel(label), value: 'None', path });
+        return;
+      }
+      value.forEach((entry, index) => collectFields(entry, `${label} ${index + 1}`, `${path}-${index}`));
+      return;
+    }
+
+    Object.entries(value).forEach(([key, child]) => {
+      if (key !== 'dataUrl' && key !== 'name' && key !== 'type') {
+        collectFields(child, key, `${path}-${key}`);
+      }
+    });
+  };
+
+  collectFields(item);
+
+  return (
+    <section className="collected-fields">
+      <div className="collected-fields-heading">
+        <h3>All submitted fields</h3>
+        <span>{fields.length} fields</span>
+      </div>
+      <div className="collected-fields-grid">
+        {fields.map((field) => (
+          <article className="collected-field-card" key={field.path}>
+            <h4>{field.label}</h4>
+            <p>{field.value}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function UploadedImages({ item }) {
+  const uploads = [];
+
+  const collectImages = (value, label = 'Uploaded image') => {
+    if (!value || typeof value !== 'object') return;
+    if (value.dataUrl && String(value.dataUrl).startsWith('data:image/')) {
+      uploads.push({ label: humanizeFieldLabel(label), src: value.dataUrl });
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => collectImages(entry, `${label} ${index + 1}`));
+      return;
+    }
+    Object.entries(value).forEach(([key, child]) => {
+      if (key !== 'dataUrl' && key !== 'name' && key !== 'type') collectImages(child, key);
+    });
+  };
+
+  collectImages(item);
+  if (!uploads.length) return null;
+
+  return (
+    <section className="uploaded-images">
+      <h3>Uploaded images</h3>
+      <div className="uploaded-images-grid">
+        {uploads.map((upload, index) => (
+          <figure key={`${upload.label}-${index}`} className="uploaded-image-card">
+            <div className="document-image-frame"><img src={upload.src} alt={upload.label} /><ImageDownloadButton src={upload.src} label={upload.label} /></div>
+            <figcaption>{upload.label}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ImageDownloadButton({ src, label }) {
+  const fileName = `${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'uploaded-image'}.png`;
+  return <a className="image-download-btn" href={src} download={fileName} aria-label={`Download ${label}`} title={`Download ${label}`}><FontAwesomeIcon icon={faDownload} aria-hidden="true" /></a>;
+}
