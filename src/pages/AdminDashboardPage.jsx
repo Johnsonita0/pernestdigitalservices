@@ -169,6 +169,31 @@ function AdminDashboardPage({ user, onLogout }) {
     }
   };
 
+  const handleDelete = async (recordId) => {
+    if (!window.confirm('Delete this record permanently?')) return;
+    const tableSetters = {
+      messages: ['contact_messages', setMessages],
+      testimonials: ['testimonials', setTestimonials],
+      applications: ['internship_applications', setApplications],
+      ngo: ['ngo_applications', setNgoApplications],
+      company: ['company_applications', setCompanyApplications],
+      business: ['business_applications', setBusinessApplications],
+      scuml: ['scuml_applications', setSCUMLApplications],
+      nin: ['nin_applications', setNINApplications],
+      'nin-name': ['nin_name_changes', setNINNameChanges],
+      'nin-date': ['nin_date_changes', setNINDateChanges],
+    };
+    const [table, setRecords] = tableSetters[activeTab] || [];
+    if (!table) return;
+    const { error } = await supabase.from(table).delete().eq('id', recordId);
+    if (error) {
+      window.alert(`Unable to delete this record: ${error.message}`);
+      return;
+    }
+    setRecords((records) => records.filter((record) => record.id !== recordId));
+    setSelectedItem(null);
+  };
+
   const filteredData = activeTab === 'messages'
     ? messages.filter((msg) => filter === 'all' || msg.status === filter)
     : activeTab === 'testimonials'
@@ -491,6 +516,7 @@ function AdminDashboardPage({ user, onLogout }) {
                         className={`message-card ${isSelected ? 'selected' : ''}`}
                         onClick={() => setSelectedItem(isSelected ? null : item)}
                       >
+                        <button type="button" className="record-delete-btn" onClick={(event) => { event.stopPropagation(); handleDelete(item.id); }} aria-label="Delete record" title="Delete record">Delete</button>
                         {activeTab === 'messages' ? (
                           <>
                             <div className="message-header">

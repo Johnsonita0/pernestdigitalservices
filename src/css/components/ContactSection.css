@@ -1,25 +1,28 @@
 .contact-section {
-  padding: 80px 0;
+  padding: 96px 0;
   background: var(--bg);
 }
 
 .contact-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  margin-top: 50px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  align-items: start;
+  gap: 48px;
+  margin: 48px auto 0;
+  max-width: 1120px;
 }
 
 .contact-info {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 25px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .info-card {
   background: var(--surface);
-  padding: 25px;
-  border-radius: 12px;
+  min-height: 138px;
+  padding: 22px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   transition: all 0.3s ease;
 }
@@ -57,8 +60,8 @@
 
 .contact-form {
   background: var(--surface);
-  padding: 40px;
-  border-radius: 12px;
+  padding: 32px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   box-shadow: 0 8px 20px rgba(0, 61, 153, 0.08);
 }

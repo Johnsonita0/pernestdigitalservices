@@ -227,9 +227,30 @@
 }
 
 .message-card {
+  position: relative;
   padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.record-delete-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  padding: 6px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff1f2;
+  color: #b42318;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.record-delete-btn:hover {
+  background: #b42318;
+  color: #fff;
 }
 
 .message-card:hover {
