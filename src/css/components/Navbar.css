@@ -182,6 +182,7 @@
 }
 
 .nav-registration:hover .registration-dropdown,
+.nav-verification:hover .registration-dropdown,
 .registration-dropdown.open {
   opacity: 1;
   visibility: visible;

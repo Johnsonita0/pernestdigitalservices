@@ -39,6 +39,20 @@ const APPLICATION_TABLES_BY_TAB = {
   'nin-date': 'nin_date_changes',
 };
 
+const PAYMENT_TABLES_BY_TYPE = {
+  'NGO Registration': 'ngo_applications',
+  'Company Registration': 'company_applications',
+  'Business Registration': 'business_applications',
+  'SCUML Registration': 'scuml_applications',
+};
+
+const PAYMENT_LOCAL_KEYS_BY_TABLE = {
+  ngo_applications: LOCAL_NGO_APPLICATIONS_KEY,
+  company_applications: LOCAL_COMPANY_APPLICATIONS_KEY,
+  business_applications: LOCAL_BUSINESS_APPLICATIONS_KEY,
+  scuml_applications: LOCAL_SCUMl_APPLICATIONS_KEY,
+};
+
 export async function saveRegistrationDocuments(tab, recordId, documents) {
   const table = APPLICATION_TABLES_BY_TAB[tab];
   if (!table) return { error: new Error('Documents are not supported for this record.') };
@@ -78,6 +92,37 @@ export async function lookupApplicationStatus(referenceNumber) {
 
   const { data, error } = await supabase.rpc('lookup_application_status', { lookup_reference: reference });
   return { data: data?.[0] || null, error: error || (data?.length ? null : new Error('No application was found for that reference number.')) };
+}
+
+export async function updatePaymentSlipByReference(referenceNumber, paymentSlip) {
+  const result = await lookupApplicationStatus(referenceNumber);
+  if (result.error || !result.data) return { error: result.error || new Error('No application was found for that reference number.') };
+
+  const table = PAYMENT_TABLES_BY_TYPE[result.data.application_type];
+  if (!table) return { error: new Error('Payment upload is not available for this application type.') };
+  const updatedAt = new Date().toISOString();
+
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const key = PAYMENT_LOCAL_KEYS_BY_TABLE[table];
+      const stored = JSON.parse(window.localStorage.getItem(key) || '[]');
+      const updated = stored.map((application) => String(application.reference_number || '').toUpperCase() === String(referenceNumber).trim().toUpperCase()
+        ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: updatedAt }
+        : application);
+      window.localStorage.setItem(key, JSON.stringify(updated));
+      return { error: null, data: { ...result.data, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: updatedAt } };
+    } catch (error) {
+      return { error: new Error('Unable to save the payment slip on this device.') };
+    }
+  }
+
+  const { data, error } = await supabase
+    .from(table)
+    .update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: updatedAt })
+    .eq('reference_number', String(referenceNumber).trim())
+    .select('reference_number, status, updated_at')
+    .single();
+  return { data, error };
 }
 
 function normalizeEmail(value) {
@@ -231,7 +276,7 @@ export async function updateNGOPaymentSlip(referenceNumber, paymentSlip) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_NGO_APPLICATIONS_KEY) || '[]');
       const updated = stored.map((application) => application.reference_number === referenceNumber
-        ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' }
+        ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }
         : application);
       window.localStorage.setItem(LOCAL_NGO_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
@@ -270,7 +315,7 @@ export async function updateCompanyPaymentSlip(referenceNumber, paymentSlip) {
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_COMPANY_APPLICATIONS_KEY) || '[]');
-      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' } : application);
+      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() } : application);
       window.localStorage.setItem(LOCAL_COMPANY_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -305,7 +350,7 @@ export async function updateBusinessPaymentSlip(referenceNumber, paymentSlip) {
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_BUSINESS_APPLICATIONS_KEY) || '[]');
-      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' } : application);
+      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() } : application);
       window.localStorage.setItem(LOCAL_BUSINESS_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -340,7 +385,7 @@ export async function updateSCUMLPaymentSlip(referenceNumber, paymentSlip) {
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_SCUMl_APPLICATIONS_KEY) || '[]');
-      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted' } : application);
+      const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() } : application);
       window.localStorage.setItem(LOCAL_SCUMl_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {

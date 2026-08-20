@@ -254,6 +254,32 @@
   text-transform: uppercase;
 }
 
+.records-table .records-actions-heading,
+.records-table .records-actions-cell {
+  width: 1%;
+  min-width: 96px;
+  max-width: none;
+  overflow: visible;
+  text-align: right;
+}
+
+.records-actions-heading {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+}
+
+.records-actions-cell {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+
+.records-table tbody tr:hover .records-actions-cell {
+  background: #f7fafb;
+}
+
 .records-table tbody tr:hover {
   background: rgba(0, 58, 112, 0.035);
 }
@@ -866,6 +892,35 @@
   font-size: 0.78rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+.admin-payment-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-payment-preview img {
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  object-fit: cover;
+  background: #fff;
+}
+
+.admin-payment-pdf {
+  display: inline-grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #a43f31;
+  background: #fff4f1;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .document-upload-button input {

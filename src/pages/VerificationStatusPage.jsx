@@ -15,6 +15,7 @@ const steps = [
 const statusLabels = {
   payment_pending: 'Payment pending',
   payment_submitted: 'Payment submitted',
+  payment_confirmed: 'Payment confirmed',
   pending: 'Pending review',
   in_review: 'In review',
   approved: 'Approved',
@@ -25,6 +26,7 @@ const statusLabels = {
 const statusMessages = {
   payment_pending: 'Payment is still required before processing can begin.',
   payment_submitted: 'Payment has been received and is awaiting review.',
+  payment_confirmed: 'Payment has been confirmed by our admin team. Registration processing can continue.',
   pending: 'Your application is waiting for review.',
   in_review: 'Our team is reviewing your application.',
   approved: 'Your application has been approved.',
@@ -36,6 +38,7 @@ function getProgress(status) {
   if (status === 'rejected') return 1;
   if (status === 'payment_pending') return 0;
   if (status === 'payment_submitted' || status === 'pending') return 1;
+  if (status === 'payment_confirmed') return 2;
   if (status === 'in_review') return 2;
   if (status === 'approved' || status === 'completed') return 3;
   return 0;

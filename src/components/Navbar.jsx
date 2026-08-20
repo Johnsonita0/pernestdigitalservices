@@ -8,6 +8,7 @@ function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [verificationOpen, setVerificationOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -56,8 +57,14 @@ function Navbar() {
               <li>
                 <button onClick={() => scrollToSection('about')}>About</button>
               </li>
-              <li>
-                <Link to="/verify" onClick={() => setMenuOpen(false)}>Verify Registration</Link>
+              <li className="nav-verification">
+                <button onClick={() => setVerificationOpen((open) => !open)} aria-expanded={verificationOpen}>
+                  Verification
+                </button>
+                <ul className={`registration-dropdown ${verificationOpen ? 'open' : ''}`}>
+                  <li><Link to="/verify" onClick={() => { setVerificationOpen(false); setMenuOpen(false); }}>Verify Registration</Link></li>
+                  <li><Link to="/upload-payment-slip" onClick={() => { setVerificationOpen(false); setMenuOpen(false); }}>Upload Payment Slip</Link></li>
+                </ul>
               </li>
               <li className="nav-registration">
                 <button onClick={() => setRegistrationOpen((open) => !open)} aria-expanded={registrationOpen}>

@@ -152,7 +152,12 @@ function AdminDashboardPage({ user, onLogout }) {
         .from('ngo_applications')
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
-      if (!error) setNgoApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
+      if (!error) {
+        setNgoApplications((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus, updated_at: new Date().toISOString() } : item));
+        window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: `NGO application marked ${newStatus.replace(/_/g, ' ')}.`, type: 'success', duration: 4000 } }));
+      } else {
+        window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: `Unable to update NGO status: ${error.message}`, type: 'error', duration: 5000 } }));
+      }
     } else if (activeTab === 'company') {
       const { error } = await supabase
         .from('company_applications')
@@ -282,6 +287,7 @@ function AdminDashboardPage({ user, onLogout }) {
       pending: '#f59e0b',
       payment_pending: '#f59e0b',
       payment_submitted: '#168ca3',
+      payment_confirmed: '#08734f',
       approved: '#10b981',
       rejected: '#ef4444',
     };
@@ -514,28 +520,36 @@ function AdminDashboardPage({ user, onLogout }) {
               ) : activeTab === 'ngo' ? (
                 <>
                   <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({ngoApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_pending' ? 'active' : ''}`} onClick={() => setFilter('payment_pending')}>Payment Pending ({ngoApplications.filter((a) => a.status === 'payment_pending').length})</button>
                   <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({ngoApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'payment_confirmed' ? 'active' : ''}`} onClick={() => setFilter('payment_confirmed')}>Payment Confirmed ({ngoApplications.filter((a) => a.status === 'payment_confirmed').length})</button>
                   <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({ngoApplications.filter((a) => a.status === 'approved').length})</button>
                   <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({ngoApplications.filter((a) => a.status === 'rejected').length})</button>
                 </>
               ) : activeTab === 'company' ? (
                 <>
                   <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({companyApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_pending' ? 'active' : ''}`} onClick={() => setFilter('payment_pending')}>Payment Pending ({companyApplications.filter((a) => a.status === 'payment_pending').length})</button>
                   <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({companyApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'payment_confirmed' ? 'active' : ''}`} onClick={() => setFilter('payment_confirmed')}>Payment Confirmed ({companyApplications.filter((a) => a.status === 'payment_confirmed').length})</button>
                   <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({companyApplications.filter((a) => a.status === 'approved').length})</button>
                   <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({companyApplications.filter((a) => a.status === 'rejected').length})</button>
                 </>
               ) : activeTab === 'business' ? (
                 <>
                   <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({businessApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_pending' ? 'active' : ''}`} onClick={() => setFilter('payment_pending')}>Payment Pending ({businessApplications.filter((a) => a.status === 'payment_pending').length})</button>
                   <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({businessApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'payment_confirmed' ? 'active' : ''}`} onClick={() => setFilter('payment_confirmed')}>Payment Confirmed ({businessApplications.filter((a) => a.status === 'payment_confirmed').length})</button>
                   <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({businessApplications.filter((a) => a.status === 'approved').length})</button>
                   <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({businessApplications.filter((a) => a.status === 'rejected').length})</button>
                 </>
               ) : activeTab === 'scuml' ? (
                 <>
                   <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All ({scumlApplications.length})</button>
+                  <button className={`filter-btn ${filter === 'payment_pending' ? 'active' : ''}`} onClick={() => setFilter('payment_pending')}>Payment Pending ({scumlApplications.filter((a) => a.status === 'payment_pending').length})</button>
                   <button className={`filter-btn ${filter === 'payment_submitted' ? 'active' : ''}`} onClick={() => setFilter('payment_submitted')}>Payment Submitted ({scumlApplications.filter((a) => a.status === 'payment_submitted').length})</button>
+                  <button className={`filter-btn ${filter === 'payment_confirmed' ? 'active' : ''}`} onClick={() => setFilter('payment_confirmed')}>Payment Confirmed ({scumlApplications.filter((a) => a.status === 'payment_confirmed').length})</button>
                   <button className={`filter-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved ({scumlApplications.filter((a) => a.status === 'approved').length})</button>
                   <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>Rejected ({scumlApplications.filter((a) => a.status === 'rejected').length})</button>
                 </>
@@ -584,7 +598,7 @@ function AdminDashboardPage({ user, onLogout }) {
                     <tr>
                       <th>Name</th>
                       {getRecordColumns(activeTab, filteredData[0]).map(([label]) => <th key={label}>{label}</th>)}
-                      <th aria-label="Actions" />
+                      <th className="records-actions-heading">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -596,7 +610,7 @@ function AdminDashboardPage({ user, onLogout }) {
                           </button>
                         </td>
                         {getRecordColumns(activeTab, item).map(([label, value]) => <td key={label}>{formatRecordValue(value)}</td>)}
-                        <td><button type="button" className="record-delete-table-btn" onClick={() => handleDelete(item.id)}>Delete</button></td>
+                        <td className="records-actions-cell"><button type="button" className="record-delete-table-btn" onClick={() => handleDelete(item.id)}>Delete</button></td>
                       </tr>
                     ))}
                   </tbody>
@@ -1024,6 +1038,17 @@ function ApplicationDetail({ item, getStatusColor, onStatusChange }) {
   );
 }
 
+function PaymentSlipPreview({ paymentSlip }) {
+  if (!paymentSlip?.dataUrl) return <span>Not uploaded</span>;
+  const isImage = paymentSlip.type?.startsWith('image/') || paymentSlip.dataUrl.startsWith('data:image/');
+  return (
+    <span className="admin-payment-preview">
+      {isImage ? <img src={paymentSlip.dataUrl} alt={`${paymentSlip.name || 'Payment slip'} preview`} /> : <span className="admin-payment-pdf">PDF</span>}
+      <a href={paymentSlip.dataUrl} target="_blank" rel="noreferrer">View {paymentSlip.name || 'payment slip'}</a>
+    </span>
+  );
+}
+
 function NGOApplicationDetail({ item, onStatusChange }) {
   const trustees = Array.isArray(item.trustees) ? item.trustees : [];
   return (
@@ -1037,8 +1062,8 @@ function NGOApplicationDetail({ item, onStatusChange }) {
         <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
         <div className="info-row"><strong>Office:</strong><span>{item.office_address}</span></div>
         <div className="info-row"><strong>Trustees:</strong><span>{item.trustee_count}</span></div>
-        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
-        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div className="info-row"><strong>Payment slip:</strong><PaymentSlipPreview paymentSlip={item.payment_slip} /></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
       </div>
       <div className="application-sections">
         <div className="app-section"><h4>Aims and objectives</h4><p>{item.aims}</p></div>
@@ -1066,8 +1091,8 @@ function CompanyApplicationDetail({ item, onStatusChange }) {
         <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
         <div className="info-row"><strong>Phone:</strong><span>{item.phone}</span></div>
         <div className="info-row"><strong>Address:</strong><span>{item.town}, {item.state}, {item.street_name}</span></div>
-        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
-        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div className="info-row"><strong>Payment slip:</strong><PaymentSlipPreview paymentSlip={item.payment_slip} /></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
       </div>
       <div className="application-sections">
         <div className="app-section"><h4>Object of memorandum</h4><p>{item.objects}</p></div>
@@ -1089,8 +1114,8 @@ function BusinessApplicationDetail({ item, onStatusChange }) {
         <div className="info-row"><strong>Email:</strong><span><a href={`mailto:${item.email}`}>{item.email}</a></span></div>
         <div className="info-row"><strong>Phone:</strong><span>{item.phone}</span></div>
         <div className="info-row"><strong>Address:</strong><span>{item.town}, {item.state}, {item.street_name}</span></div>
-        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
-        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div className="info-row"><strong>Payment slip:</strong><PaymentSlipPreview paymentSlip={item.payment_slip} /></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
       </div>
       <div className="application-sections">
         {(item.proprietors || []).map((person, index) => <div className="app-section" key={index}><h4>Proprietor {index + 1}: {person.firstName} {person.surname}</h4><p>{person.email} · {person.phone} · {person.occupation}</p><p>{person.idDocument?.dataUrl ? <a href={person.idDocument.dataUrl} target="_blank" rel="noreferrer">View ID</a> : 'ID not uploaded'} · {person.signature?.dataUrl ? <a href={person.signature.dataUrl} target="_blank" rel="noreferrer">View signature</a> : 'Signature not uploaded'} · {person.passport?.dataUrl ? <a href={person.passport.dataUrl} target="_blank" rel="noreferrer">View passport</a> : 'Passport not uploaded'}</p></div>)}
@@ -1111,8 +1136,8 @@ function SCUMLApplicationDetail({ item, onStatusChange }) {
         <div className="info-row"><strong>Registration:</strong><span>{item.registration_number}</span></div>
         <div className="info-row"><strong>Tax ID:</strong><span>{item.tax_id}</span></div>
         <div className="info-row"><strong>Address:</strong><span>{item.registered_address}</span></div>
-        <div className="info-row"><strong>Payment slip:</strong><span>{item.payment_slip?.dataUrl ? <a href={item.payment_slip.dataUrl} target="_blank" rel="noreferrer">View {item.payment_slip.name}</a> : 'Not uploaded'}</span></div>
-        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div className="info-row"><strong>Payment slip:</strong><PaymentSlipPreview paymentSlip={item.payment_slip} /></div>
+        <div className="info-row"><strong>Status:</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
       </div>
       <div className="application-sections">
         <div className="app-section"><h4>Account details</h4><p>{item.bank_name} · {item.account_number} · {item.account_name}</p></div>
@@ -1212,7 +1237,7 @@ function NGOApplicationDocument({ item, onStatusChange, onClose, documentUploadB
 
       <div className="ngo-document-meta">
         <div><strong>Reference number</strong><span>{item.reference_number}</span></div>
-        <div><strong>Application status</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+        <div><strong>Application status</strong><select value={item.status} onChange={(event) => onStatusChange(item.id, event.target.value)}><option value="payment_pending">Payment Pending</option><option value="payment_submitted">Payment Submitted</option><option value="payment_confirmed">Payment Confirmed</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
         <div><strong>Date submitted</strong><span>{new Date(item.created_at).toLocaleString()}</span></div>
       </div>
 

@@ -17,6 +17,7 @@ import NINVerificationPage from './pages/NINVerificationPage';
 import NINNameChangePage from './pages/NINNameChangePage';
 import NINDateOfBirthChangePage from './pages/NINDateOfBirthChangePage';
 import ShopComingSoonPage from './pages/ShopComingSoonPage';
+import UploadPaymentSlipPage from './pages/UploadPaymentSlipPage';
 import './css/App.css';
 
 function AppLoader() {
@@ -128,6 +129,7 @@ function App() {
         <Route path="/verify" element={<VerificationPage />} />
         <Route path="/verification-status" element={<VerificationStatusPage />} />
         <Route path="/success" element={<SuccessPage />} />
+        <Route path="/upload-payment-slip" element={<UploadPaymentSlipPage />} />
         <Route path="/more" element={<MorePage />} />
         <Route path="/shop" element={<ShopComingSoonPage />} />
         <Route path="/ngo-register" element={<NGORegistrationPage />} />

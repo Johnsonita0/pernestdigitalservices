@@ -305,6 +305,16 @@ CREATE TABLE IF NOT EXISTS public.scuml_applications (
 CREATE INDEX IF NOT EXISTS scuml_applications_status_idx ON public.scuml_applications (status);
 CREATE INDEX IF NOT EXISTS scuml_applications_entity_idx ON public.scuml_applications (entity_name);
 
+-- Paid registration workflow: clients submit payment evidence, then admins confirm payment.
+ALTER TABLE public.ngo_applications DROP CONSTRAINT IF EXISTS ngo_applications_status_check;
+ALTER TABLE public.ngo_applications ADD CONSTRAINT ngo_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected'));
+ALTER TABLE public.company_applications DROP CONSTRAINT IF EXISTS company_applications_status_check;
+ALTER TABLE public.company_applications ADD CONSTRAINT company_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected'));
+ALTER TABLE public.business_applications DROP CONSTRAINT IF EXISTS business_applications_status_check;
+ALTER TABLE public.business_applications ADD CONSTRAINT business_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected'));
+ALTER TABLE public.scuml_applications DROP CONSTRAINT IF EXISTS scuml_applications_status_check;
+ALTER TABLE public.scuml_applications ADD CONSTRAINT scuml_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected'));
+
 -- NIN verification applications
 CREATE TABLE IF NOT EXISTS public.nin_applications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight, faClipboardCheck, faMagnifyingGlass, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faClipboardCheck, faCloudArrowUp, faMagnifyingGlass, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import { lookupApplicationStatus } from '../lib/supabaseClient';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
@@ -44,7 +44,7 @@ function VerificationPage() {
           </div>
         </section>
         <p className="verification-help">Keep your reference number private and use it whenever you need an update.</p>
-        <Link className="verification-home-link" to="/">Return to website</Link>
+        <div className="verification-page-links"><Link className="verification-home-link" to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload payment slip</Link><Link className="verification-home-link" to="/">Return to website</Link></div>
       </section>
       <Footer />
     </main>
