@@ -234,7 +234,7 @@ function AdminDashboardPage({ user, onLogout }) {
         <div className="header-content">
           <div className="header-title">
             <a href="/" className="header-logo-link" aria-label="Go to home page">
-              <img src="/logo/logo1.jpeg" alt="Logo" className="header-logo" />
+              <img src="/logo/logo2.jpeg" alt="Logo" className="header-logo" />
             </a>
             <div className="header-copy">
               <h1>Welcome Admin</h1>
