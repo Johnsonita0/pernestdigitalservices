@@ -8,8 +8,10 @@ import ClientTestimonial from '../components/ClientTestimonial.jsx';
 import FAQSection from '../components/FAQSection.jsx';
 import ContactSection from '../components/ContactSection.jsx';
 import Footer from '../components/Footer.jsx';
+import InternshipModal from '../components/InternshipModal.jsx';
 
 function HomePage() {
+  const [showRegistrationAds, setShowRegistrationAds] = useState(true);
   const [contactFormVisible, setContactFormVisible] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [whatsappTip, setWhatsappTip] = useState('Need Branded Tees?');
@@ -85,6 +87,7 @@ function HomePage() {
 
   return (
     <main className="page-content">
+      <InternshipModal isOpen={showRegistrationAds} onClose={() => setShowRegistrationAds(false)} />
       <Navbar />
       <div id="hero">
         <HeroSlider onContactClick={handleHeroContact} />
