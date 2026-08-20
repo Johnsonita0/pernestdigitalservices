@@ -10,7 +10,8 @@ VALUES
   ('application-id-documents', 'application-id-documents', false, 10485760, ARRAY['image/*', 'application/pdf']),
   ('application-signatures', 'application-signatures', false, 5242880, ARRAY['image/*', 'application/pdf']),
   ('application-passport-photos', 'application-passport-photos', false, 5242880, ARRAY['image/*']),
-  ('application-payment-slips', 'application-payment-slips', false, 10485760, ARRAY['image/*', 'application/pdf'])
+  ('application-payment-slips', 'application-payment-slips', false, 10485760, ARRAY['image/*', 'application/pdf']),
+  ('application-registration-documents', 'application-registration-documents', false, 20971520, ARRAY['image/*', 'application/pdf'])
 ON CONFLICT (id) DO UPDATE
 SET public = EXCLUDED.public,
     file_size_limit = EXCLUDED.file_size_limit,
@@ -57,7 +58,8 @@ CREATE POLICY "Allow application upload submissions" ON storage.objects
     'application-id-documents',
     'application-signatures',
     'application-passport-photos',
-    'application-payment-slips'
+    'application-payment-slips',
+    'application-registration-documents'
   ));
 
 DROP POLICY IF EXISTS "Allow admins to view application uploads" ON storage.objects;
@@ -68,7 +70,8 @@ CREATE POLICY "Allow admins to view application uploads" ON storage.objects
       'application-id-documents',
       'application-signatures',
       'application-passport-photos',
-      'application-payment-slips'
+      'application-payment-slips',
+      'application-registration-documents'
     )
     AND public.is_admin()
   );
@@ -81,7 +84,8 @@ CREATE POLICY "Allow admins to manage application uploads" ON storage.objects
       'application-id-documents',
       'application-signatures',
       'application-passport-photos',
-      'application-payment-slips'
+      'application-payment-slips',
+      'application-registration-documents'
     )
     AND public.is_admin()
   )
@@ -90,7 +94,8 @@ CREATE POLICY "Allow admins to manage application uploads" ON storage.objects
       'application-id-documents',
       'application-signatures',
       'application-passport-photos',
-      'application-payment-slips'
+      'application-payment-slips',
+      'application-registration-documents'
     )
     AND public.is_admin()
   );
@@ -103,7 +108,8 @@ CREATE POLICY "Allow admins to delete application uploads" ON storage.objects
       'application-id-documents',
       'application-signatures',
       'application-passport-photos',
-      'application-payment-slips'
+      'application-payment-slips',
+      'application-registration-documents'
     )
     AND public.is_admin()
   );
@@ -381,21 +387,32 @@ CREATE INDEX IF NOT EXISTS nin_date_changes_status_idx ON public.nin_date_change
 CREATE INDEX IF NOT EXISTS nin_date_changes_email_idx ON public.nin_date_changes (email);
 
 -- Row-level security
+-- Certificates and official registration documents uploaded by administrators.
+ALTER TABLE public.internship_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.ngo_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.company_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.business_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+
 -- Public status lookup returns only non-sensitive tracking details by reference number.
+DROP FUNCTION IF EXISTS public.lookup_application_status(text);
 CREATE OR REPLACE FUNCTION public.lookup_application_status(lookup_reference text)
-RETURNS TABLE (application_type text, applicant_name text, reference_number text, status text, created_at timestamptz, updated_at timestamptz)
+RETURNS TABLE (application_type text, applicant_name text, reference_number text, status text, created_at timestamptz, updated_at timestamptz, registration_documents jsonb)
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT 'Internship', concat_ws(' ', first_name, last_name), reference_number, status, created_at, updated_at FROM public.internship_applications WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'NGO Registration', proposed_name_1, reference_number, status, created_at, updated_at FROM public.ngo_applications WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'Company Registration', proposed_name_1, reference_number, status, created_at, updated_at FROM public.company_applications WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'Business Registration', proposed_name_1, reference_number, status, created_at, updated_at FROM public.business_applications WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'SCUML Registration', entity_name, reference_number, status, created_at, updated_at FROM public.scuml_applications WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'NIN Verification', concat_ws(' ', first_name, surname), reference_number, status, created_at, updated_at FROM public.nin_applications WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'NIN Name Change', concat_ws(' ', new_first_name, new_surname), reference_number, status, created_at, updated_at FROM public.nin_name_changes WHERE upper(reference_number) = upper(lookup_reference)
-  UNION ALL SELECT 'NIN Date Change', concat_ws(' ', first_name, surname), reference_number, status, created_at, updated_at FROM public.nin_date_changes WHERE upper(reference_number) = upper(lookup_reference)
+  SELECT 'Internship', concat_ws(' ', first_name, last_name), reference_number, status, created_at, updated_at, registration_documents FROM public.internship_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NGO Registration', proposed_name_1, reference_number, status, created_at, updated_at, registration_documents FROM public.ngo_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'Company Registration', proposed_name_1, reference_number, status, created_at, updated_at, registration_documents FROM public.company_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'Business Registration', proposed_name_1, reference_number, status, created_at, updated_at, registration_documents FROM public.business_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'SCUML Registration', entity_name, reference_number, status, created_at, updated_at, registration_documents FROM public.scuml_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NIN Verification', concat_ws(' ', first_name, surname), reference_number, status, created_at, updated_at, registration_documents FROM public.nin_applications WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NIN Name Change', concat_ws(' ', new_first_name, new_surname), reference_number, status, created_at, updated_at, registration_documents FROM public.nin_name_changes WHERE upper(reference_number) = upper(lookup_reference)
+  UNION ALL SELECT 'NIN Date Change', concat_ws(' ', first_name, surname), reference_number, status, created_at, updated_at, registration_documents FROM public.nin_date_changes WHERE upper(reference_number) = upper(lookup_reference)
   LIMIT 1;
 $$;
 

@@ -28,6 +28,37 @@ const APPLICATION_STATUS_SOURCES = [
   ['nin_date_changes', 'NIN Date Change', (item) => `${item.first_name || ''} ${item.surname || ''}`.trim()],
 ];
 
+const APPLICATION_TABLES_BY_TAB = {
+  applications: 'internship_applications',
+  ngo: 'ngo_applications',
+  company: 'company_applications',
+  business: 'business_applications',
+  scuml: 'scuml_applications',
+  nin: 'nin_applications',
+  'nin-name': 'nin_name_changes',
+  'nin-date': 'nin_date_changes',
+};
+
+export async function saveRegistrationDocuments(tab, recordId, documents) {
+  const table = APPLICATION_TABLES_BY_TAB[tab];
+  if (!table) return { error: new Error('Documents are not supported for this record.') };
+
+  if (missingSupabaseConfig || !supabase) {
+    try {
+      const key = table === 'internship_applications' ? LOCAL_REGISTRATIONS_KEY : `pernestdigitalservices_${table}`;
+      const stored = JSON.parse(window.localStorage.getItem(key) || '[]');
+      const updated = stored.map((item) => item.id === recordId ? { ...item, registration_documents: documents, status: 'approved', updated_at: new Date().toISOString() } : item);
+      window.localStorage.setItem(key, JSON.stringify(updated));
+      return { error: null };
+    } catch (error) {
+      return { error: new Error('Unable to save registration documents on this device.') };
+    }
+  }
+
+  const { error } = await supabase.from(table).update({ registration_documents: documents, status: 'approved', updated_at: new Date().toISOString() }).eq('id', recordId);
+  return { error };
+}
+
 export async function lookupApplicationStatus(referenceNumber) {
   const reference = String(referenceNumber || '').trim().toUpperCase();
   if (!reference) return { data: null, error: new Error('Enter your reference number.') };

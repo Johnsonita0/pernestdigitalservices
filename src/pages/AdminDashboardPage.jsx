@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus } from '../lib/supabaseClient';
+import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -55,6 +55,12 @@ function AdminDashboardPage({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [documentUploadBusy, setDocumentUploadBusy] = useState(false);
+  const [pendingDocuments, setPendingDocuments] = useState([]);
+
+  useEffect(() => {
+    setPendingDocuments([]);
+  }, [selectedItem?.id]);
 
   useEffect(() => {
     loadData();
@@ -137,7 +143,7 @@ function AdminDashboardPage({ user, onLogout }) {
       const currentApp = applications.find((app) => app.id === messageId);
       const { error } = await supabase
         .from('internship_applications')
-        .update({ status: newStatus })
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq('id', messageId);
 
       if (!error) {
@@ -229,6 +235,42 @@ function AdminDashboardPage({ user, onLogout }) {
     }
     setRecords((records) => records.filter((record) => record.id !== recordId));
     setSelectedItem(null);
+  };
+
+  const handleDocumentUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length || !selectedItem) return;
+    const documents = await Promise.all(files.map((file) => new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ name: file.name, label: file.name, type: file.type, size: file.size, dataUrl: reader.result });
+      reader.onerror = () => resolve({ name: file.name, label: file.name, type: file.type, size: file.size });
+      reader.readAsDataURL(file);
+    })));
+    setPendingDocuments((items) => [...items, ...documents]);
+    event.target.value = '';
+  };
+
+  const handlePendingDocumentLabelChange = (index, label) => {
+    setPendingDocuments((documents) => documents.map((document, documentIndex) => documentIndex === index ? { ...document, label } : document));
+  };
+
+  const handlePendingDocumentRemove = (index) => {
+    setPendingDocuments((documents) => documents.filter((_, documentIndex) => documentIndex !== index));
+  };
+
+  const handleSaveDocuments = async () => {
+    if (!selectedItem || !pendingDocuments.length) return;
+    setDocumentUploadBusy(true);
+    const existing = Array.isArray(selectedItem.registration_documents) ? selectedItem.registration_documents : [];
+    const nextDocuments = [...existing, ...pendingDocuments];
+    const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments);
+    if (!error) {
+      setSelectedItem((item) => ({ ...item, registration_documents: nextDocuments, status: 'approved', updated_at: new Date().toISOString() }));
+      setPendingDocuments([]);
+      await loadData();
+    }
+    else window.alert(`Unable to save documents: ${error.message}`);
+    setDocumentUploadBusy(false);
   };
 
   const filteredData = activeTab === 'messages'
@@ -770,11 +812,12 @@ function AdminDashboardPage({ user, onLogout }) {
                   <button type="button" className="close-btn" onClick={() => setSelectedItem(null)} aria-label="Close details">×</button>
                 </div>
                 {activeTab === 'ngo' ? (
-                  <NGOApplicationDocument item={selectedItem} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} />
+                  <NGOApplicationDocument item={selectedItem} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />
                 ) : (
                   <>
                     {renderDetail(selectedItem)}
                     <CollectedFields item={selectedItem} />
+                    <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
                     <UploadedImages item={selectedItem} />
                   </>
                 )}
@@ -1162,7 +1205,7 @@ function NINDateChangeDetail({ item, onStatusChange }) {
   );
 }
 
-function NGOApplicationDocument({ item, onStatusChange, onClose }) {
+function NGOApplicationDocument({ item, onStatusChange, onClose, documentUploadBusy, pendingDocuments, onDocumentUpload, onLabelChange, onRemove, onSaveDocuments }) {
   const trustees = Array.isArray(item.trustees) ? item.trustees : [];
   const passport = trustees[0]?.passport?.dataUrl;
   const names = [item.proposed_name_1, item.proposed_name_2, item.proposed_name_3].filter(Boolean);
@@ -1223,6 +1266,7 @@ function NGOApplicationDocument({ item, onStatusChange, onClose }) {
       </DocumentSection>
 
       <NGODocumentUploads item={item} trustees={trustees} />
+      <RegistrationDocuments item={item} isAdmin pendingDocuments={pendingDocuments} onUpload={onDocumentUpload} onLabelChange={onLabelChange} onRemove={onRemove} onSave={onSaveDocuments} uploadBusy={documentUploadBusy} />
 
       <footer className="ngo-document-footer">
         <span>System record ID: {item.id}</span>
@@ -1262,6 +1306,34 @@ function NGODocumentUploads({ item, trustees }) {
 }
 
 export default AdminDashboardPage;
+
+function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], onUpload, onLabelChange, onRemove, onSave, uploadBusy = false }) {
+  const documents = Array.isArray(item.registration_documents) ? item.registration_documents : [];
+  return (
+    <section className="registration-documents-panel">
+      <div className="registration-documents-heading">
+        <div><h3>Admin document upload section</h3><p>Upload approved files and name each document so the correct label appears on the verification page.</p></div>
+        {isAdmin && <div className="document-upload-actions"><label className="document-upload-button">Choose files<input type="file" accept="image/*,.pdf" multiple disabled={uploadBusy} onChange={onUpload} /></label><button type="button" className="document-save-button" disabled={uploadBusy || !pendingDocuments.length} onClick={onSave}>{uploadBusy ? 'Saving...' : 'Save official documents'}</button></div>}
+      </div>
+      {isAdmin && pendingDocuments.length > 0 && <div className="pending-registration-documents">
+        <p className="registration-documents-note">Name each document before saving. Saving will mark this application approved.</p>
+        {pendingDocuments.map((document, index) => <div className="pending-registration-document" key={`${document.name}-${index}`}>
+          <div className="pending-registration-preview">
+            {document.dataUrl && document.type?.startsWith('image/') && <img src={document.dataUrl} alt={`Preview of ${document.name}`} />}
+            {document.dataUrl && document.type === 'application/pdf' && <iframe src={document.dataUrl} title={`Preview of ${document.name}`} />}
+            {!document.dataUrl && <span>Preview unavailable</span>}
+          </div>
+          <div className="pending-registration-document-fields">
+            <input type="text" value={document.label || ''} onChange={(event) => onLabelChange(index, event.target.value)} placeholder="Name this document (e.g. CAC Certificate)" aria-label={`Label for ${document.name}`} />
+            <span title={document.name}>{document.name}</span>
+          </div>
+          <button type="button" onClick={() => onRemove(index)} disabled={uploadBusy} aria-label={`Remove ${document.name}`}>Remove</button>
+        </div>)}
+      </div>}
+      {documents.length ? <div className="registration-document-list">{documents.map((document, index) => <a href={document.dataUrl} download={document.name || `registration-document-${index + 1}`} target="_blank" rel="noreferrer" key={`${document.name}-${index}`}><span>{document.label || document.name || `Registration document ${index + 1}`}</span><FontAwesomeIcon icon={faDownload} /></a>)}</div> : <p className="registration-documents-empty">No approved documents uploaded yet.</p>}
+    </section>
+  );
+}
 
 function humanizeFieldLabel(value) {
   return value

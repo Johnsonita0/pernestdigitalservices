@@ -12,6 +12,26 @@ const steps = [
   ['Completed', 'Your application is complete'],
 ];
 
+const statusLabels = {
+  payment_pending: 'Payment pending',
+  payment_submitted: 'Payment submitted',
+  pending: 'Pending review',
+  in_review: 'In review',
+  approved: 'Approved',
+  completed: 'Completed',
+  rejected: 'Rejected',
+};
+
+const statusMessages = {
+  payment_pending: 'Payment is still required before processing can begin.',
+  payment_submitted: 'Payment has been received and is awaiting review.',
+  pending: 'Your application is waiting for review.',
+  in_review: 'Our team is reviewing your application.',
+  approved: 'Your application has been approved.',
+  completed: 'Your application has been completed.',
+  rejected: 'Please contact our support team for guidance on the next step.',
+};
+
 function getProgress(status) {
   if (status === 'rejected') return 1;
   if (status === 'payment_pending') return 0;
@@ -45,9 +65,11 @@ function VerificationStatusPage() {
 
   const progress = getProgress(application.status);
   const isRejected = application.status === 'rejected';
+  const statusLabel = statusLabels[application.status] || application.status.replace(/_/g, ' ');
+  const statusMessage = statusMessages[application.status] || 'Your application status has been updated.';
   return (
     <main className="verification-status-page">
-      <section className="status-result-card">
+      <section className={`status-result-card ${isRejected ? 'rejected' : ''}`}>
         <div className="status-mark"><FontAwesomeIcon icon={isRejected ? faClock : faCheck} /></div>
         <p className="status-kicker">Application status</p>
         <h1>{application.application_type || 'Registration application'}</h1>
@@ -56,11 +78,25 @@ function VerificationStatusPage() {
         <div className="status-progress" aria-label="Application progress">
           {steps.map(([label], index) => <div className={`status-step ${index < progress ? 'complete' : ''} ${index === progress ? 'current' : ''}`} key={label}>{label}</div>)}
         </div>
-        <div className="status-detail"><strong>{isRejected ? 'Needs attention' : application.status.replace(/_/g, ' ')}</strong><span>{isRejected ? 'Please contact our support team for guidance.' : steps[progress][1]}</span></div>
+        <div className={`status-detail ${isRejected ? 'rejected' : ''}`}><strong>{statusLabel}</strong><span>{statusMessage}</span></div>
         <p className="status-copy">Applicant: {application.applicant_name || 'Applicant'}<br />Last updated: {new Date(application.updated_at || application.created_at).toLocaleString()}</p>
+        <RegistrationDocuments documents={application.registration_documents} />
         <div className="success-slip-actions"><button type="button" className="status-new-search" onClick={() => navigate('/verify')}><FontAwesomeIcon icon={faRotate} /> Check another</button><Link to="/">Return to website</Link></div>
       </section>
     </main>
+  );
+}
+
+function RegistrationDocuments({ documents }) {
+  if (!Array.isArray(documents) || !documents.length) return null;
+  return (
+    <section className="status-documents">
+      <h2>Registration documents</h2>
+      <p>Documents released for download by our registration team.</p>
+      <div className="status-document-list">
+        {documents.map((document, index) => <a className="status-document-link" href={document.dataUrl} download={document.name || `registration-document-${index + 1}`} target="_blank" rel="noreferrer" key={`${document.name}-${index}`}><span>{document.label || document.name || `Registration document ${index + 1}`}</span><strong>Download</strong></a>)}
+      </div>
+    </section>
   );
 }
 

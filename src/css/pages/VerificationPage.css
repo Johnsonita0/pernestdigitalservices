@@ -370,6 +370,64 @@
   font-size: 0.82rem;
 }
 
+.status-detail.rejected {
+  border-color: #e5b6ae;
+  background: #fff4f1;
+}
+
+.status-detail.rejected strong {
+  color: #a43f31;
+}
+
+.status-documents {
+  margin: 22px 0;
+  padding: 16px;
+  border: 1px solid #d9e4eb;
+  border-radius: 10px;
+  background: #f7fafb;
+  text-align: left;
+}
+
+.status-documents h2 {
+  margin-bottom: 4px;
+  color: var(--brand-dark);
+  font-size: 1rem;
+}
+
+.status-documents > p {
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.status-document-list {
+  display: grid;
+  gap: 8px;
+}
+
+.status-document-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d9e4eb;
+  border-radius: 7px;
+  color: var(--brand-dark);
+  background: #fff;
+  font-size: 0.82rem;
+}
+
+.status-document-link span {
+  overflow-wrap: anywhere;
+}
+
+.status-document-link strong {
+  flex: 0 0 auto;
+  color: var(--brand);
+  font-size: 0.76rem;
+}
+
 .success-slip {
   position: relative;
   border-top: 8px solid var(--accent);

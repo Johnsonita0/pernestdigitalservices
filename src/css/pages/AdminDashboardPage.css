@@ -741,6 +741,196 @@
   border-top: 1px solid var(--border);
 }
 
+.registration-documents-panel {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid #eadfca;
+  border-radius: 10px;
+  background: #fffdf8;
+}
+
+.registration-documents-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.registration-documents-heading h3 {
+  margin: 0 0 4px;
+  color: var(--brand-dark);
+  font-size: 1.05rem;
+  text-transform: capitalize;
+}
+
+.registration-documents-heading p,
+.registration-documents-empty,
+.registration-documents-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.pending-registration-documents {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #eadfca;
+  border-radius: 8px;
+  background: #fffaf0;
+}
+
+.pending-registration-document {
+  display: grid;
+  grid-template-columns: 64px minmax(150px, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pending-registration-preview {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #d9cfbd;
+  border-radius: 5px;
+  color: var(--muted);
+  background: #fff;
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.pending-registration-preview img,
+.pending-registration-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+
+.pending-registration-document-fields {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.pending-registration-document input {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid #d9cfbd;
+  border-radius: 5px;
+  color: var(--brand-dark);
+  background: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.pending-registration-document span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pending-registration-document button {
+  padding: 7px 9px;
+  border: 1px solid #d7b7b0;
+  border-radius: 5px;
+  color: #9b3d2f;
+  background: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.pending-registration-document button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.registration-documents-note {
+  margin-top: 10px;
+  color: #9a5b08;
+}
+
+.document-upload-button {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  color: var(--brand-dark);
+  background: var(--accent-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.document-upload-button input {
+  display: none;
+}
+
+.document-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.document-save-button {
+  padding: 9px 12px;
+  border: 1px solid var(--brand);
+  border-radius: 7px;
+  color: #fff;
+  background: var(--brand);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.document-save-button:hover:not(:disabled) {
+  background: var(--brand-dark);
+}
+
+.document-save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.registration-documents-empty {
+  margin-top: 12px;
+}
+
+.registration-document-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.registration-document-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--brand-dark);
+  background: #fbfdff;
+  font-size: 0.82rem;
+}
+
+.registration-document-list a span {
+  overflow-wrap: anywhere;
+}
+
+.registration-document-list a svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
 .uploaded-images h3 {
   margin: 0 0 12px;
   color: var(--brand-dark);
@@ -1179,6 +1369,33 @@
     max-height: 94vh;
     padding: 18px;
     border-radius: 12px 12px 0 0;
+  }
+
+  .registration-documents-heading {
+    flex-direction: column;
+  }
+
+  .document-upload-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .document-upload-button {
+    flex: 1;
+    text-align: center;
+  }
+
+  .document-save-button {
+    flex: 1;
+  }
+
+  .pending-registration-document {
+    grid-template-columns: 56px 1fr auto;
+  }
+
+  .pending-registration-preview {
+    width: 56px;
+    height: 56px;
   }
 
   .ngo-modal {
