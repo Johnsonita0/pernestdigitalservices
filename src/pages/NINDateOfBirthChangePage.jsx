@@ -4,6 +4,7 @@ import { submitNINDateChange } from '../lib/supabaseClient';
 import { GENDERS, MARITAL_STATUSES } from '../data/nigeriaLocations';
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 import '../css/pages/NINVerificationPage.css';
 
 const initialForm = {
@@ -12,7 +13,7 @@ const initialForm = {
 
 function NINDateOfBirthChangePage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState(initialForm);
+  const { form, setForm, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_nin_date_change', initialForm);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState('');
   const { states, lgasByState } = useLocationData();
@@ -30,7 +31,7 @@ function NINDateOfBirthChangePage() {
     if (required.some((field) => !String(form[field] || '').trim())) { setError('Please complete all required fields.'); return; }
     const reference = `NIN-DOB-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const { error: submitError } = await submitNINDateChange({ reference_number: reference, ...form, status: 'pending', created_at: new Date().toISOString() });
-    if (submitError) setError(submitError.message); else setSubmitted(reference);
+    if (submitError) setError(submitError.message); else { setSubmitted(reference); clearDraft(); }
   };
   if (submitted) return <main className="nin-page"><section className="nin-card nin-success"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><p className="nin-kicker">Request received</p><h1>Date of birth change request submitted</h1><p>Your reference number is <strong>{submitted}</strong>. Our team will contact you using the details provided.</p><button className="nin-primary" type="button" onClick={() => navigate('/')}>Return to website</button></section></main>;
   return <main className="nin-page"><section className="nin-card"><header className="nin-header"><a href="/" aria-label="Go to home page"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /></a><p>PERNEST DIGITAL ENTERPRISE</p><h1>NIN Change of Date of Birth</h1><span>Complete the applicant, additional, and parent information accurately.</span></header><form onSubmit={submit}><Section title="Particulars of applicant"><div className="nin-grid">{fields([['nin','NIN Number'],['surname','Surname'],['firstName','First Name'],['middleName','Middle Name','text',false],['gender','Gender','text',true,GENDERS],['oldDateOfBirth','Old Date of Birth','date'],['newDateOfBirth','New Date of Birth','date'],['maritalStatus','Marital Status','text',true,MARITAL_STATUSES],['stateOfOrigin','State of Origin','text',true,NIGERIAN_STATES],['lgaOfOrigin','LGA of Origin','text',true,COMMON_LGAS],['townOfOrigin','Town / Village of Origin'],['phone','Phone Number']])}</div></Section><Section title="Additional information"><div className="nin-grid">{fields([['stateOfBirth','State of Birth','text',true,NIGERIAN_STATES],['lgaOfBirth','LGA of Birth','text',true,COMMON_LGAS],['stateOfResidence','State of Residence','text',true,NIGERIAN_STATES],['lgaOfResidence','LGA of Residence','text',true,COMMON_LGAS],['residentialAddress','Residential Address'],['education','Highest Level of Education'],['occupation','Occupation'],['workAddress','Address of Place of Work']])}</div></Section><Section title="Parent's information"><div className="nin-grid">{fields([['fatherSurname',"Father's Surname"],['fatherFirstName',"Father's First Name"],['fatherState',"Father's State of Origin",'text',true,NIGERIAN_STATES],['fatherLga',"Father's LGA of Origin",'text',true,COMMON_LGAS],['fatherTown',"Father's Village/Town"],['motherSurname',"Mother's Surname"],['motherFirstName',"Mother's First Name"],['motherMaidenName',"Mother's Maiden Name"],['motherState',"Mother's State of Origin",'text',true,NIGERIAN_STATES],['motherLga',"Mother's LGA of Origin",'text',true,COMMON_LGAS],['motherTown',"Mother's Village/Town"]])}</div></Section>{error && <p className="nin-error">{error}</p>}<div className="nin-actions"><button className="nin-primary" type="submit">Submit date change request</button></div></form></section></main>;

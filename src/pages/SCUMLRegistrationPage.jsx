@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitSCUMLApplication, updateSCUMLPaymentSlip } from '../lib/supabaseClient';
 import '../css/pages/SCUMLRegistrationPage.css';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 
 const emptyPerson = { name: '', dateOfBirth: '', phone: '', email: '', bvn: '', nin: '', address: '' };
 
 function SCUMLRegistrationPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ entityName: '', registrationNumber: '', registeredAddress: '', taxId: '', persons: [{ ...emptyPerson }], bankName: '', accountNumber: '', accountName: '' });
+  const initialForm = { entityName: '', registrationNumber: '', registeredAddress: '', taxId: '', persons: [{ ...emptyPerson }], bankName: '', accountNumber: '', accountName: '' };
+  const { form, setForm, step, setStep, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_scuml', initialForm);
   const [errors, setErrors] = useState({});
   const [reference, setReference] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -31,7 +32,7 @@ function SCUMLRegistrationPage() {
   const next = () => { if (validate()) setStep((current) => Math.min(4, current + 1)); };
   const back = () => { setErrors({}); setStep((current) => Math.max(1, current - 1)); };
   const makeReference = () => `SCUML-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const submit = async (event) => { event.preventDefault(); if (!validate()) return; const applicationReference = makeReference(); const { error } = await submitSCUMLApplication({ reference_number: applicationReference, entity_name: form.entityName, registration_number: form.registrationNumber, registered_address: form.registeredAddress, tax_id: form.taxId, persons: form.persons, bank_name: form.bankName, account_number: form.accountNumber, account_name: form.accountName, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); } };
+  const submit = async (event) => { event.preventDefault(); if (!validate()) return; const applicationReference = makeReference(); const { error } = await submitSCUMLApplication({ reference_number: applicationReference, entity_name: form.entityName, registration_number: form.registrationNumber, registered_address: form.registeredAddress, tax_id: form.taxId, persons: form.persons, bank_name: form.bankName, account_number: form.accountNumber, account_name: form.accountName, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); clearDraft(); } };
   const submitPayment = async () => { if (!paymentSlip) return; const { error } = await updateSCUMLPaymentSlip(reference, paymentSlip); if (!error) setPaymentSubmitted(true); };
 
   if (submitted) return <main className="scuml-page"><section className="scuml-card scuml-payment"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><p className="scuml-kicker">Application received</p><h1>Complete SCUML Registration Payment</h1><p>Reference: <strong>{reference}</strong></p><div className="scuml-account"><strong>Pay the agreed service charge</strong><span>Account: 8130801666</span><span>Bank: Opay</span><span>Account name: ERNEST EMMANUEL OSUNG</span></div><p>Part payment is accepted, but complete payment is required before documents are issued.</p><label className="scuml-file">Upload bank transfer slip<input type="file" accept="image/*,.pdf" onChange={async (event) => setPaymentSlip(await readFile(event.target.files[0]))} />{paymentSlip && <small>{paymentSlip.name}</small>}</label><button className="scuml-primary" type="button" onClick={submitPayment} disabled={!paymentSlip || paymentSubmitted}>{paymentSubmitted ? 'Slip submitted for review' : 'Submit payment slip'}</button>{paymentSubmitted && <button className="scuml-secondary" type="button" onClick={() => navigate('/')}>Return to website</button>}</section></main>;

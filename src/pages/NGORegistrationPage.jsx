@@ -4,6 +4,7 @@ import { submitNGOApplication, updateNGOPaymentSlip } from '../lib/supabaseClien
 import { COMMON_LGAS, GENDERS, NIGERIAN_STATES } from '../data/nigeriaLocations';
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 import '../css/pages/NGORegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -20,8 +21,7 @@ const initialForm = {
 
 function NGORegistrationPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState(initialForm);
+  const { form, setForm, step, setStep, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_ngo', initialForm);
   const [errors, setErrors] = useState({});
   const [referenceNumber, setReferenceNumber] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -118,6 +118,7 @@ function NGORegistrationPage() {
     }
     setReferenceNumber(reference);
     setSubmitted(true);
+    clearDraft();
     setStep(7);
     setIsSubmitting(false);
   };

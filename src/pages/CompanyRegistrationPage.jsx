@@ -4,6 +4,7 @@ import { submitCompanyApplication, updateCompanyPaymentSlip } from '../lib/supab
 import { COMMON_LGAS, GENDERS, NIGERIAN_STATES } from '../data/nigeriaLocations';
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 import '../css/pages/CompanyRegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -17,8 +18,7 @@ const initialForm = {
 
 function CompanyRegistrationPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState(initialForm);
+  const { form, setForm, step, setStep, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_company', initialForm);
   const [errors, setErrors] = useState({});
   const [reference, setReference] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -89,7 +89,7 @@ function CompanyRegistrationPage() {
     };
     const { error } = await submitCompanyApplication(payload);
     if (error) setErrors({ submit: error.message });
-    else { setReference(applicationReference); setSubmitted(true); }
+    else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
     setBusy(false);
   };
 

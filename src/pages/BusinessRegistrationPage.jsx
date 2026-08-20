@@ -4,14 +4,15 @@ import { submitBusinessApplication, updateBusinessPaymentSlip } from '../lib/sup
 import { COMMON_LGAS, NIGERIAN_STATES } from '../data/nigeriaLocations';
 import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 import '../css/pages/BusinessRegistrationPage.css';
 
 const emptyProprietor = { surname: '', firstName: '', otherName: '', phone: '', email: '', dateOfBirth: '', occupation: '', state: '', lga: '', town: '', houseNumber: '', streetName: '', idDocument: null, signature: null, passport: null };
 
 function BusinessRegistrationPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ proposedName1: '', proposedName2: '', email: '', phone: '', state: '', lga: '', town: '', houseNumber: '', streetName: '', proprietors: [{ ...emptyProprietor }] });
+  const initialForm = { proposedName1: '', proposedName2: '', email: '', phone: '', state: '', lga: '', town: '', houseNumber: '', streetName: '', proprietors: [{ ...emptyProprietor }] };
+  const { form, setForm, step, setStep, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_business', initialForm);
   const [errors, setErrors] = useState({});
   const [reference, setReference] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -40,7 +41,7 @@ function BusinessRegistrationPage() {
   const next = () => { if (validate()) setStep((current) => Math.min(4, current + 1)); };
   const back = () => { setErrors({}); setStep((current) => Math.max(1, current - 1)); };
   const makeReference = () => `BUS-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const submit = async (event) => { event.preventDefault(); if (!validate()) return; const applicationReference = makeReference(); const { error } = await submitBusinessApplication({ reference_number: applicationReference, proposed_name_1: form.proposedName1, proposed_name_2: form.proposedName2, email: form.email, phone: form.phone, state: form.state, lga: form.lga, town: form.town, house_number: form.houseNumber, street_name: form.streetName, proprietors: form.proprietors, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); } };
+  const submit = async (event) => { event.preventDefault(); if (!validate()) return; const applicationReference = makeReference(); const { error } = await submitBusinessApplication({ reference_number: applicationReference, proposed_name_1: form.proposedName1, proposed_name_2: form.proposedName2, email: form.email, phone: form.phone, state: form.state, lga: form.lga, town: form.town, house_number: form.houseNumber, street_name: form.streetName, proprietors: form.proprietors, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); clearDraft(); } };
   const submitPayment = async () => { if (!paymentSlip) return; const { error } = await updateBusinessPaymentSlip(reference, paymentSlip); if (!error) setPaymentSubmitted(true); };
 
   if (submitted) return <main className="business-page"><section className="business-card business-payment"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><p className="business-kicker">Application received</p><h1>Complete Business Registration Payment</h1><p>Reference: <strong>{reference}</strong></p><div className="business-account"><strong>Pay the agreed service charge</strong><span>Account: 8130801666</span><span>Bank: Opay</span><span>Account name: ERNEST EMMANUEL OSUNG</span></div><p>Part payment is accepted, but complete payment is required before certificate issuance.</p><label className="business-file">Upload bank transfer slip<input type="file" accept="image/*,.pdf" onChange={async (event) => setPaymentSlip(await readFile(event.target.files[0]))} /><FilePreview value={paymentSlip} /></label><button className="business-primary" type="button" onClick={submitPayment} disabled={!paymentSlip || paymentSubmitted}>{paymentSubmitted ? 'Slip submitted for review' : 'Submit payment slip'}</button>{paymentSubmitted && <button className="business-secondary" type="button" onClick={() => navigate('/')}>Return to website</button>}</section></main>;

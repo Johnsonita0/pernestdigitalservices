@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitNINNameChange } from '../lib/supabaseClient';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 import '../css/pages/NINVerificationPage.css';
 
 function NINNameChangePage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nin: '', newSurname: '', newFirstName: '', newMiddleName: '', newPhoneNumber: '', email: '' });
+  const initialForm = { nin: '', newSurname: '', newFirstName: '', newMiddleName: '', newPhoneNumber: '', email: '' };
+  const { form, setForm, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_nin_name_change', initialForm);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState('');
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
@@ -18,7 +20,7 @@ function NINNameChangePage() {
     const reference = `NIN-NAME-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const { error: submitError } = await submitNINNameChange({ reference_number: reference, nin: form.nin, new_surname: form.newSurname, new_first_name: form.newFirstName, new_middle_name: form.newMiddleName, new_phone_number: form.newPhoneNumber, email: form.email, status: 'pending', created_at: new Date().toISOString() });
     if (submitError) setError(submitError.message);
-    else setSubmitted(reference);
+    else { setSubmitted(reference); clearDraft(); }
   };
 
   if (submitted) return <main className="nin-page"><section className="nin-card nin-success"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><p className="nin-kicker">Request received</p><h1>NIN name change request submitted</h1><p>Your reference number is <strong>{submitted}</strong>. Our team will contact you using your email address.</p><button className="nin-primary" type="button" onClick={() => navigate('/')}>Return to website</button></section></main>;

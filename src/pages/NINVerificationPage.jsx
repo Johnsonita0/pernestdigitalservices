@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { submitNINApplication } from '../lib/supabaseClient';
+import { usePersistentDraft } from '../lib/usePersistentDraft';
 import '../css/pages/NINVerificationPage.css';
 
 function NINVerificationPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ nin: '', phone: '', surname: '', firstName: '', dateOfBirth: '', email: '', address: '' });
+  const initialForm = { nin: '', phone: '', surname: '', firstName: '', dateOfBirth: '', email: '', address: '' };
+  const { form, setForm, step, setStep, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_nin_verification', initialForm);
   const [errors, setErrors] = useState({});
   const [reference, setReference] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -28,7 +29,7 @@ function NINVerificationPage() {
     const applicationReference = `NIN-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const { error } = await submitNINApplication({ reference_number: applicationReference, nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address, status: 'pending', created_at: new Date().toISOString() });
     if (error) setErrors({ submit: error.message });
-    else { setReference(applicationReference); setSubmitted(true); }
+    else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
   };
 
   if (submitted) return <main className="nin-page"><section className="nin-card nin-success"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><p className="nin-kicker">Request received</p><h1>NIN verification request submitted</h1><p>Your reference number is <strong>{reference}</strong>. Our team will review your request and contact you using the details provided.</p><button className="nin-primary" type="button" onClick={() => navigate('/')}>Return to website</button></section></main>;
