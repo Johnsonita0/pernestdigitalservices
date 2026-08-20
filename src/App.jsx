@@ -17,6 +17,7 @@ import SCUMLRegistrationPage from './pages/SCUMLRegistrationPage';
 import NINVerificationPage from './pages/NINVerificationPage';
 import NINNameChangePage from './pages/NINNameChangePage';
 import NINDateOfBirthChangePage from './pages/NINDateOfBirthChangePage';
+import ShopComingSoonPage from './pages/ShopComingSoonPage';
 import './css/App.css';
 
 function AppLoader() {
@@ -98,6 +99,7 @@ function App() {
         <Route path="/verification-status" element={<VerificationStatusPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/more" element={<MorePage />} />
+        <Route path="/shop" element={<ShopComingSoonPage />} />
         <Route path="/ngo-register" element={<NGORegistrationPage />} />
         <Route path="/company-register" element={<CompanyRegistrationPage />} />
         <Route path="/business-register" element={<BusinessRegistrationPage />} />

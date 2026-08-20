@@ -28,11 +28,6 @@ function Navbar() {
     }
   };
 
-  const handleShopClick = () => {
-    setMenuOpen(false);
-    window.location.href = '#shop';
-  };
-
   return (
     <nav className={`navbar ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="navbar-container">
@@ -104,10 +99,10 @@ function Navbar() {
           </li>
           <li className="nav-divider"></li>
           <li className="nav-shop">
-            <button onClick={handleShopClick} className="shop-link">
+            <Link to="/shop" onClick={() => setMenuOpen(false)} className="shop-link">
               <FontAwesomeIcon icon={faBagShopping} aria-hidden="true" />
               <span>Shop Now</span>
-            </button>
+            </Link>
           </li>
         </ul>
       </div>
