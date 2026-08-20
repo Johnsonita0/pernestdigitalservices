@@ -11,7 +11,7 @@ function AboutSection() {
         </div>
 
         <div className="about-content">
-          <div className="about-text">
+          <div className="about-story">
             <h3>Our Story</h3>
             <p>
               Pernest Digital Services is a professional digital and business support service provider committed to making registration and documentation processes simple, reliable, and accessible. We assist individuals, entrepreneurs, and businesses with services such as <strong>CAC registration</strong>, <strong>SCUML registration</strong>, <strong>Trademark registration</strong>, <strong>NIN services</strong>, and other digital government-related services.
@@ -22,7 +22,10 @@ function AboutSection() {
               Our team of skilled professionals is dedicated to transforming your ideas into reality. From concept to completion, we ensure every piece meets our rigorous quality standards.
             </p>
 
-            <h3 style={{ marginTop: '30px' }}>Our Values</h3>
+          </div>
+
+          <div className="about-values">
+            <h3>Our Core Values</h3>
             <div className="values-grid">
               <div className="value-item">
                 <h4>Integrity</h4>
