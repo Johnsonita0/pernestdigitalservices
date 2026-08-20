@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faClock, faRotate } from '@fortawesome/free-solid-svg-icons';
+import { lookupApplicationStatus } from '../lib/supabaseClient';
 import '../css/pages/VerificationPage.css';
 
 const steps = [
@@ -23,7 +24,23 @@ function getProgress(status) {
 function VerificationStatusPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const application = state?.application;
+  const [application, setApplication] = useState(state?.application || null);
+  const [loading, setLoading] = useState(!state?.application);
+
+  useEffect(() => {
+    if (application) return;
+    const reference = new URLSearchParams(window.location.search).get('reference');
+    if (!reference) {
+      setLoading(false);
+      return;
+    }
+    lookupApplicationStatus(reference).then((result) => {
+      setApplication(result.data || null);
+      setLoading(false);
+    });
+  }, [application]);
+
+  if (loading) return <main className="verification-status-page"><section className="status-result-card"><p className="status-kicker">Application support</p><h1>Loading status</h1><p className="status-copy">Checking the latest application update...</p></section></main>;
   if (!application) return <main className="verification-status-page"><section className="status-result-card"><p className="status-kicker">Application support</p><h1>Check your status</h1><p className="status-copy">Use your reference number to view the latest update.</p><Link className="status-new-search" to="/verify">Check a reference number</Link></section></main>;
 
   const progress = getProgress(application.status);

@@ -468,7 +468,9 @@
   width: 92px;
   height: 112px;
   border: 1px solid #9aabb7;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: #edf2f5;
 }
 
 .ngo-document-passport-frame {

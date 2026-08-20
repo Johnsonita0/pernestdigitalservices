@@ -20,7 +20,7 @@ function VerificationPage() {
     const result = await lookupApplicationStatus(reference);
     setBusy(false);
     if (result.error) setError(result.error.message);
-    else navigate('/verification-status', { state: { application: result.data } });
+    else navigate(`/verification-status?reference=${encodeURIComponent(result.data.reference_number)}`, { state: { application: result.data } });
   };
 
   return (

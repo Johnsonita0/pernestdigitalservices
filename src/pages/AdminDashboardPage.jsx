@@ -203,6 +203,7 @@ function AdminDashboardPage({ user, onLogout }) {
         .eq('id', messageId);
       if (!error) setNINDateChanges((items) => items.map((item) => item.id === messageId ? { ...item, status: newStatus } : item));
     }
+    setSelectedItem((item) => item?.id === messageId ? { ...item, status: newStatus, updated_at: new Date().toISOString() } : item);
   };
 
   const handleDelete = async (recordId) => {
