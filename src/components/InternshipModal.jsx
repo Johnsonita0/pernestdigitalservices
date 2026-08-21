@@ -107,7 +107,7 @@ function InternshipModal({ isOpen, onClose }) {
           <img src={ads[currentSlide].image} alt="" aria-hidden="true" />
           <span className="modal-slide-count">{String(currentSlide + 1).padStart(2, '0')} / {String(ads.length).padStart(2, '0')}</span>
           <div className="modal-ad-shade" />
-          <span className="modal-brand-mark">PERNEST <strong>DIGITAL</strong></span>
+          <span className="modal-brand-mark">PERNEST <strong>DIGITAL</strong> SERVICES</span>
         </div>
 
         <div className="modal-content">

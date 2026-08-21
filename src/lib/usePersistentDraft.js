@@ -17,11 +17,15 @@ export function usePersistentDraft(key, initialForm, initialStep = 1) {
   const [step, setStep] = useState(() => draft?.step || initialStep);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify({ form, step }));
-    } catch (error) {
-      // Large file previews can exceed localStorage limits; keep the form usable.
-    }
+    const persistTimer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(key, JSON.stringify({ form, step }));
+      } catch (error) {
+        // Large file previews can exceed localStorage limits; keep the form usable.
+      }
+    }, 350);
+
+    return () => window.clearTimeout(persistTimer);
   }, [form, key, step]);
 
   const clearDraft = () => {

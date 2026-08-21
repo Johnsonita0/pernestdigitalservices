@@ -44,6 +44,9 @@ const PAYMENT_TABLES_BY_TYPE = {
   'Company Registration': 'company_applications',
   'Business Registration': 'business_applications',
   'SCUML Registration': 'scuml_applications',
+  'NIN Verification': 'nin_applications',
+  'NIN Name Change': 'nin_name_changes',
+  'NIN Date Change': 'nin_date_changes',
 };
 
 const PAYMENT_LOCAL_KEYS_BY_TABLE = {
@@ -51,6 +54,9 @@ const PAYMENT_LOCAL_KEYS_BY_TABLE = {
   company_applications: LOCAL_COMPANY_APPLICATIONS_KEY,
   business_applications: LOCAL_BUSINESS_APPLICATIONS_KEY,
   scuml_applications: LOCAL_SCUMl_APPLICATIONS_KEY,
+  nin_applications: LOCAL_NIN_APPLICATIONS_KEY,
+  nin_name_changes: LOCAL_NIN_NAME_CHANGES_KEY,
+  nin_date_changes: LOCAL_NIN_DATE_CHANGES_KEY,
 };
 
 export async function saveRegistrationDocuments(tab, recordId, documents) {

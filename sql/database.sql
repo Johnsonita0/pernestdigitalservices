@@ -314,6 +314,12 @@ ALTER TABLE public.business_applications DROP CONSTRAINT IF EXISTS business_appl
 ALTER TABLE public.business_applications ADD CONSTRAINT business_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected'));
 ALTER TABLE public.scuml_applications DROP CONSTRAINT IF EXISTS scuml_applications_status_check;
 ALTER TABLE public.scuml_applications ADD CONSTRAINT scuml_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'approved', 'rejected'));
+ALTER TABLE public.nin_applications DROP CONSTRAINT IF EXISTS nin_applications_status_check;
+ALTER TABLE public.nin_applications ADD CONSTRAINT nin_applications_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'pending', 'in_review', 'completed', 'rejected'));
+ALTER TABLE public.nin_name_changes DROP CONSTRAINT IF EXISTS nin_name_changes_status_check;
+ALTER TABLE public.nin_name_changes ADD CONSTRAINT nin_name_changes_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'pending', 'in_review', 'completed', 'rejected'));
+ALTER TABLE public.nin_date_changes DROP CONSTRAINT IF EXISTS nin_date_changes_status_check;
+ALTER TABLE public.nin_date_changes ADD CONSTRAINT nin_date_changes_status_check CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'pending', 'in_review', 'completed', 'rejected'));
 
 -- NIN verification applications
 CREATE TABLE IF NOT EXISTS public.nin_applications (
@@ -326,7 +332,8 @@ CREATE TABLE IF NOT EXISTS public.nin_applications (
   date_of_birth date,
   email text NOT NULL,
   address text,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_review', 'completed', 'rejected')),
+  payment_slip jsonb,
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'pending', 'in_review', 'completed', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -344,7 +351,8 @@ CREATE TABLE IF NOT EXISTS public.nin_name_changes (
   new_middle_name text,
   new_phone_number text NOT NULL,
   email text NOT NULL,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_review', 'completed', 'rejected')),
+  payment_slip jsonb,
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'pending', 'in_review', 'completed', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -388,7 +396,8 @@ CREATE TABLE IF NOT EXISTS public.nin_date_changes (
   mother_lga text NOT NULL,
   mother_town text NOT NULL,
   email text NOT NULL,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_review', 'completed', 'rejected')),
+  payment_slip jsonb,
+  status text NOT NULL DEFAULT 'payment_pending' CHECK (status IN ('payment_pending', 'payment_submitted', 'payment_confirmed', 'pending', 'in_review', 'completed', 'rejected')),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
