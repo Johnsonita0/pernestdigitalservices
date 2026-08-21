@@ -13,6 +13,7 @@ function NINVerificationPage() {
   const [errors, setErrors] = useState({});
   const [reference, setReference] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const validate = () => {
@@ -28,11 +29,18 @@ function NINVerificationPage() {
   const next = () => { if (validate()) setStep(2); };
   const submit = async (event) => {
     event.preventDefault();
-    if (!validate()) return;
-    const applicationReference = `NIN-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const { error } = await submitNINApplication({ reference_number: applicationReference, nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address, status: 'payment_pending', created_at: new Date().toISOString() });
-    if (error) setErrors({ submit: error.message });
-    else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
+    if (busy || !validate()) return;
+    setBusy(true);
+    try {
+      const applicationReference = `NIN-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      const { error } = await submitNINApplication({ reference_number: applicationReference, nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address, status: 'payment_pending', created_at: new Date().toISOString() });
+      if (error) setErrors({ submit: error.message });
+      else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
+    } catch (error) {
+      setErrors({ submit: error.message || 'Unable to submit the NIN request. Please try again.' });
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (submitted) return <PaymentSubmissionCard title="NIN verification request submitted" reference={reference} />;

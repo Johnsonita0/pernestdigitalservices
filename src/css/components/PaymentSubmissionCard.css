@@ -30,6 +30,7 @@
 .payment-submission-home { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 12px 18px; border: 1px solid #bfd3e1; border-radius: 9px; color: var(--brand-dark); background: #f4f9fc; font-size: .86rem; font-weight: 800; text-decoration: none; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
 .payment-submission-home:hover { border-color: #8db3cc; background: #e7f3fa; transform: translateY(-2px); }
 .payment-submission-button:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+.payment-submission-error { max-width: 460px; margin: 10px auto 0; color: #b42318; font-size: .82rem; font-weight: 700; line-height: 1.4; }
 .payment-submission-fireworks { position: absolute; top: 8px; left: 50%; width: 180px; height: 92px; transform: translateX(-50%); pointer-events: none; }
 .payment-submission-fireworks span { position: absolute; top: 18px; left: 50%; width: 2px; height: 34px; transform: translateX(-50%) rotate(var(--ray)); transform-origin: 50% 100%; background: linear-gradient(#e4a52d, transparent); opacity: .7; animation: paymentRayBurst 1.4s ease-in-out infinite alternate; }
 @keyframes paymentRayBurst { from { height: 22px; opacity: .35; } to { height: 42px; opacity: .9; } }

@@ -284,6 +284,7 @@ export async function updateNGOPaymentSlip(referenceNumber, paymentSlip) {
       const updated = stored.map((application) => application.reference_number === referenceNumber
         ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }
         : application);
+      if (!stored.some((application) => application.reference_number === referenceNumber)) return { error: new Error('No application was found for this reference number.') };
       window.localStorage.setItem(LOCAL_NGO_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -291,11 +292,15 @@ export async function updateNGOPaymentSlip(referenceNumber, paymentSlip) {
     }
   }
 
-  const { error } = await supabase
-    .from('ngo_applications')
-    .update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() })
-    .eq('reference_number', referenceNumber);
-  return { error };
+  try {
+    const { error } = await supabase
+      .from('ngo_applications')
+      .update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() })
+      .eq('reference_number', referenceNumber);
+    return { error };
+  } catch (error) {
+    return { error: new Error('Unable to upload the payment slip. Please check your connection and try again.') };
+  }
 }
 
 export async function submitCompanyApplication(application) {
@@ -322,6 +327,7 @@ export async function updateCompanyPaymentSlip(referenceNumber, paymentSlip) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_COMPANY_APPLICATIONS_KEY) || '[]');
       const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() } : application);
+      if (!stored.some((application) => application.reference_number === referenceNumber)) return { error: new Error('No application was found for this reference number.') };
       window.localStorage.setItem(LOCAL_COMPANY_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -329,8 +335,12 @@ export async function updateCompanyPaymentSlip(referenceNumber, paymentSlip) {
     }
   }
 
-  const { error } = await supabase.from('company_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
-  return { error };
+  try {
+    const { error } = await supabase.from('company_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
+    return { error };
+  } catch (error) {
+    return { error: new Error('Unable to upload the payment slip. Please check your connection and try again.') };
+  }
 }
 
 export async function submitBusinessApplication(application) {
@@ -357,6 +367,7 @@ export async function updateBusinessPaymentSlip(referenceNumber, paymentSlip) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_BUSINESS_APPLICATIONS_KEY) || '[]');
       const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() } : application);
+      if (!stored.some((application) => application.reference_number === referenceNumber)) return { error: new Error('No application was found for this reference number.') };
       window.localStorage.setItem(LOCAL_BUSINESS_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -364,8 +375,12 @@ export async function updateBusinessPaymentSlip(referenceNumber, paymentSlip) {
     }
   }
 
-  const { error } = await supabase.from('business_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
-  return { error };
+  try {
+    const { error } = await supabase.from('business_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
+    return { error };
+  } catch (error) {
+    return { error: new Error('Unable to upload the payment slip. Please check your connection and try again.') };
+  }
 }
 
 export async function submitSCUMLApplication(application) {
@@ -392,6 +407,7 @@ export async function updateSCUMLPaymentSlip(referenceNumber, paymentSlip) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_SCUMl_APPLICATIONS_KEY) || '[]');
       const updated = stored.map((application) => application.reference_number === referenceNumber ? { ...application, payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() } : application);
+      if (!stored.some((application) => application.reference_number === referenceNumber)) return { error: new Error('No application was found for this reference number.') };
       window.localStorage.setItem(LOCAL_SCUMl_APPLICATIONS_KEY, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -399,8 +415,12 @@ export async function updateSCUMLPaymentSlip(referenceNumber, paymentSlip) {
     }
   }
 
-  const { error } = await supabase.from('scuml_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
-  return { error };
+  try {
+    const { error } = await supabase.from('scuml_applications').update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: new Date().toISOString() }).eq('reference_number', referenceNumber);
+    return { error };
+  } catch (error) {
+    return { error: new Error('Unable to upload the payment slip. Please check your connection and try again.') };
+  }
 }
 
 export async function submitNINApplication(application) {

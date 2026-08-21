@@ -20,6 +20,7 @@ function BusinessRegistrationPage() {
   const [submitted, setSubmitted] = useState(false);
   const [paymentSlip, setPaymentSlip] = useState(null);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value, ...(field === 'state' ? { lga: '' } : {}) }));
   const updateProprietor = (index, field, value) => setForm((current) => current.proprietors.length > 1 && field === '__remove' ? { ...current, proprietors: current.proprietors.filter((_, personIndex) => personIndex !== index) } : ({ ...current, proprietors: current.proprietors.map((person, personIndex) => personIndex === index ? { ...person, [field]: value, ...(field === 'state' ? { lga: '' } : {}) } : person) }));
@@ -44,8 +45,8 @@ function BusinessRegistrationPage() {
   const next = () => { if (validate()) setStep((current) => Math.min(4, current + 1)); };
   const back = () => { setErrors({}); setStep((current) => Math.max(1, current - 1)); };
   const makeReference = () => `BUS-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const submit = async (event) => { event.preventDefault(); if (!validate()) return; const applicationReference = makeReference(); const { error } = await submitBusinessApplication({ reference_number: applicationReference, proposed_name_1: form.proposedName1, proposed_name_2: form.proposedName2, email: form.email, phone: form.phone, state: form.state, lga: form.lga, town: form.town, house_number: form.houseNumber, street_name: form.streetName, proprietors: form.proprietors, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); clearDraft(); } };
-  const submitPayment = async () => { if (!paymentSlip) return; const { error } = await updateBusinessPaymentSlip(reference, paymentSlip); if (!error) setPaymentSubmitted(true); };
+  const submit = async (event) => { event.preventDefault(); if (busy || !validate()) return; setBusy(true); try { const applicationReference = makeReference(); const { error } = await submitBusinessApplication({ reference_number: applicationReference, proposed_name_1: form.proposedName1, proposed_name_2: form.proposedName2, email: form.email, phone: form.phone, state: form.state, lga: form.lga, town: form.town, house_number: form.houseNumber, street_name: form.streetName, proprietors: form.proprietors, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); clearDraft(); } } catch (error) { setErrors({ submit: error.message || 'Unable to submit the business application. Please try again.' }); } finally { setBusy(false); } };
+  const submitPayment = async () => { if (!paymentSlip) return; const { error } = await updateBusinessPaymentSlip(reference, paymentSlip); if (error) throw error; setPaymentSubmitted(true); };
 
   if (submitted) return <PaymentSubmissionCard title="Complete Business Registration Payment" reference={reference} file={paymentSlip} onFileChange={async (file) => setPaymentSlip(await readFile(file))} onSubmit={submitPayment} paymentSubmitted={paymentSubmitted} onComplete={() => navigate('/')} />;
 

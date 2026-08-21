@@ -20,7 +20,21 @@ function PaymentSubmissionCard({
   className = '',
 }) {
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
+  const [paymentBusy, setPaymentBusy] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
   const hasInlineUpload = Boolean(onFileChange && onSubmit);
+  const handlePaymentSubmit = async () => {
+    if (!file || paymentBusy || paymentSubmitted) return;
+    setPaymentBusy(true);
+    setPaymentError('');
+    try {
+      await onSubmit();
+    } catch (error) {
+      setPaymentError(error.message || 'Unable to upload the payment slip. Please try again.');
+    } finally {
+      setPaymentBusy(false);
+    }
+  };
 
   return (
     <main className={`payment-submission-page ${className}`}>
@@ -52,7 +66,8 @@ function PaymentSubmissionCard({
               <input type="file" accept="image/*,.pdf" onChange={(event) => onFileChange(event.target.files[0])} />
               {file?.name && <small>{file.name}</small>}
             </label>
-            <button className="payment-submission-button" type="button" onClick={onSubmit} disabled={!file || paymentSubmitted}>{paymentSubmitted ? 'Slip submitted for review' : 'Upload bank transfer slip'}</button>
+            <button className="payment-submission-button" type="button" onClick={handlePaymentSubmit} disabled={!file || paymentBusy || paymentSubmitted}>{paymentSubmitted ? 'Slip submitted for review' : paymentBusy ? 'Uploading...' : 'Upload bank transfer slip'}</button>
+            {paymentError && <p className="payment-submission-error" role="alert">{paymentError}</p>}
             </>
           ) : (
             <Link className="payment-submission-button" to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload bank transfer slip</Link>

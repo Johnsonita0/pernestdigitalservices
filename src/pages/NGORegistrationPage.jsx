@@ -98,6 +98,7 @@ function NGORegistrationPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateStep()) return;
+    if (isSubmitting) return;
     setIsSubmitting(true);
     const reference = makeReference();
     const payload = {
@@ -120,17 +121,21 @@ function NGORegistrationPage() {
       status: 'payment_pending',
       created_at: new Date().toISOString(),
     };
-    const { error } = await submitNGOApplication(payload);
-    if (error) {
-      setErrors({ submit: error.message });
+    try {
+      const { error } = await submitNGOApplication(payload);
+      if (error) {
+        setErrors({ submit: error.message });
+        return;
+      }
+      setReferenceNumber(reference);
+      setSubmitted(true);
+      clearDraft();
+      setStep(7);
+    } catch (error) {
+      setErrors({ submit: error.message || 'Unable to submit the NGO application. Please try again.' });
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-    setReferenceNumber(reference);
-    setSubmitted(true);
-    clearDraft();
-    setStep(7);
-    setIsSubmitting(false);
   };
 
   const readFile = (file) => new Promise((resolve) => {
@@ -150,6 +155,7 @@ function NGORegistrationPage() {
       showToast('NGO payment slip submitted successfully.');
     } else {
       showToast(`Unable to submit payment slip: ${error.message}`, 'error');
+      throw error;
     }
   };
 

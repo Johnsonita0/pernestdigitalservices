@@ -17,6 +17,7 @@ function SCUMLRegistrationPage() {
   const [submitted, setSubmitted] = useState(false);
   const [paymentSlip, setPaymentSlip] = useState(null);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const updatePerson = (index, field, value) => setForm((current) => current.persons.length > 1 && field === '__remove' ? { ...current, persons: current.persons.filter((_, personIndex) => personIndex !== index) } : ({ ...current, persons: current.persons.map((person, personIndex) => personIndex === index ? { ...person, [field]: value } : person) }));
@@ -35,8 +36,8 @@ function SCUMLRegistrationPage() {
   const next = () => { if (validate()) setStep((current) => Math.min(4, current + 1)); };
   const back = () => { setErrors({}); setStep((current) => Math.max(1, current - 1)); };
   const makeReference = () => `SCUML-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const submit = async (event) => { event.preventDefault(); if (!validate()) return; const applicationReference = makeReference(); const { error } = await submitSCUMLApplication({ reference_number: applicationReference, entity_name: form.entityName, registration_number: form.registrationNumber, registered_address: form.registeredAddress, tax_id: form.taxId, persons: form.persons, bank_name: form.bankName, account_number: form.accountNumber, account_name: form.accountName, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); clearDraft(); } };
-  const submitPayment = async () => { if (!paymentSlip) return; const { error } = await updateSCUMLPaymentSlip(reference, paymentSlip); if (!error) setPaymentSubmitted(true); };
+  const submit = async (event) => { event.preventDefault(); if (busy || !validate()) return; setBusy(true); try { const applicationReference = makeReference(); const { error } = await submitSCUMLApplication({ reference_number: applicationReference, entity_name: form.entityName, registration_number: form.registrationNumber, registered_address: form.registeredAddress, tax_id: form.taxId, persons: form.persons, bank_name: form.bankName, account_number: form.accountNumber, account_name: form.accountName, status: 'payment_pending', created_at: new Date().toISOString() }); if (error) setErrors({ submit: error.message }); else { setReference(applicationReference); setSubmitted(true); clearDraft(); } } catch (error) { setErrors({ submit: error.message || 'Unable to submit the SCUML application. Please try again.' }); } finally { setBusy(false); } };
+  const submitPayment = async () => { if (!paymentSlip) return; const { error } = await updateSCUMLPaymentSlip(reference, paymentSlip); if (error) throw error; setPaymentSubmitted(true); };
 
   if (submitted) return <PaymentSubmissionCard title="Complete SCUML Registration Payment" reference={reference} file={paymentSlip} onFileChange={async (file) => setPaymentSlip(await readFile(file))} onSubmit={submitPayment} paymentSubmitted={paymentSubmitted} onComplete={() => navigate('/')} />;
 

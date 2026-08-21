@@ -111,7 +111,8 @@ function CompanyRegistrationPage() {
   const submitPayment = async () => {
     if (!paymentSlip) return;
     const { error } = await updateCompanyPaymentSlip(reference, paymentSlip);
-    if (!error) setPaymentSubmitted(true);
+    if (error) throw error;
+    setPaymentSubmitted(true);
   };
 
   if (submitted) return <PaymentView reference={reference} paymentSlip={paymentSlip} setPaymentSlip={async (file) => setPaymentSlip(await readFile(file))} submitPayment={submitPayment} paymentSubmitted={paymentSubmitted} navigate={navigate} />;

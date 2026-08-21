@@ -12,19 +12,28 @@ function NINNameChangePage() {
   const { form, setForm, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_nin_name_change', initialForm);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState('');
+  const [busy, setBusy] = useState(false);
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const submit = async (event) => {
     event.preventDefault();
-    if (!form.nin || !form.newSurname || !form.newFirstName || !form.newPhoneNumber || !form.email) {
+    if (busy) return;
+    if (![form.nin, form.newSurname, form.newFirstName, form.newPhoneNumber, form.email].every((value) => String(value || '').trim())) {
       const message = 'NIN, new surname, new first name, new phone number, and email are required.';
       setError(message);
       reportValidationErrors({ required: message });
       return;
     }
-    const reference = `NIN-NAME-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const { error: submitError } = await submitNINNameChange({ reference_number: reference, nin: form.nin, new_surname: form.newSurname, new_first_name: form.newFirstName, new_middle_name: form.newMiddleName, new_phone_number: form.newPhoneNumber, email: form.email, status: 'payment_pending', created_at: new Date().toISOString() });
-    if (submitError) setError(submitError.message);
-    else { setSubmitted(reference); clearDraft(); }
+    setBusy(true);
+    try {
+      const reference = `NIN-NAME-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      const { error: submitError } = await submitNINNameChange({ reference_number: reference, nin: form.nin, new_surname: form.newSurname, new_first_name: form.newFirstName, new_middle_name: form.newMiddleName, new_phone_number: form.newPhoneNumber, email: form.email, status: 'payment_pending', created_at: new Date().toISOString() });
+      if (submitError) setError(submitError.message);
+      else { setSubmitted(reference); clearDraft(); }
+    } catch (submitError) {
+      setError(submitError.message || 'Unable to submit your request. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (submitted) return <PaymentSubmissionCard title="NIN name change request submitted" reference={submitted} />;

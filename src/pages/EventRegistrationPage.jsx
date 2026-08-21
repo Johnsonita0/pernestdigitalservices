@@ -10,21 +10,27 @@ function EventRegistrationPage() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (status === 'submitting') return;
     setStatus('submitting');
-    const { error } = await saveContactMessage({
+    try {
+      const { error } = await saveContactMessage({
       name: form.name,
       email: form.email,
       phone: form.phone || null,
       subject: `Event registration: ${form.eventName}`,
       message: `Event date: ${form.eventDate || 'To be confirmed'}\nExpected attendees: ${form.attendees || 'Not provided'}\nNotes: ${form.notes || 'None'}`,
       status: 'new',
-    });
-    if (error) {
+      });
+      if (error) {
+        setStatus('error');
+        window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: error.message || 'Unable to submit your event request. Please try again.', type: 'error' } }));
+        return;
+      }
+      setStatus('success');
+    } catch (error) {
       setStatus('error');
-      window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: 'Unable to submit your event request. Please try again.', type: 'error' } }));
-      return;
+      window.dispatchEvent(new CustomEvent('app:toast', { detail: { message: error.message || 'Unable to submit your event request. Please try again.', type: 'error' } }));
     }
-    setStatus('success');
   };
 
   if (status === 'success') {
