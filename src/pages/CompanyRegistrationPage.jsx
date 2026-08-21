@@ -29,12 +29,15 @@ function CompanyRegistrationPage() {
   const [busy, setBusy] = useState(false);
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value, ...(field === 'state' ? { lga: '' } : {}) }));
-  const updatePerson = (group, index, field, value) => setForm((current) => ({
-    ...current,
-    [group]: Array.isArray(current[group])
-      ? current[group].map((person, personIndex) => personIndex === index ? { ...person, [field]: value } : person)
-      : { ...current[group], [field]: value, ...(field === 'state' ? { lga: '' } : {}) },
-  }));
+  const updatePerson = (group, index, field, value) => setForm((current) => {
+    const stateKey = group === 'director' ? 'directors' : group === 'shareholder' ? 'shareholders' : group;
+    return {
+      ...current,
+      [stateKey]: Array.isArray(current[stateKey])
+        ? current[stateKey].map((person, personIndex) => personIndex === index ? { ...person, [field]: value, ...(field === 'state' ? { lga: '' } : {}) } : person)
+        : { ...current[stateKey], [field]: value, ...(field === 'state' ? { lga: '' } : {}) },
+    };
+  });
   const addPerson = (group) => setForm((current) => ({ ...current, [group]: [...current[group], { ...emptyPerson }] }));
 
   const readFile = (file) => new Promise((resolve) => {
@@ -126,8 +129,8 @@ function CompanyRegistrationPage() {
 }
 
 function Step({ title, children }) { return <section className="company-step-content"><h2>{title}</h2>{children}</section>; }
-function Field({ label, value, onChange, error, type = 'text', required = false, options, stateValue }) { const { states, lgasByState } = useLocationData(); const fieldOptions = label === 'State' ? states : label === 'LGA' ? lgasByState[stateValue] || [] : options; return <label className="company-field">{label}{required && ' *'}{fieldOptions ? (label === 'State' || label === 'LGA' ? <SearchableLocationField label={label} value={value} options={fieldOptions} onChange={onChange} /> : <select value={value || ''} onChange={(event) => onChange(event.target.value)}><option value="">Select {label}</option>{fieldOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select>) : <input type={type} value={value || ''} onInput={(event) => onChange(event.currentTarget.value)} />}{error && <small className="company-error">{error}</small>}</label>; }
-function TextArea({ label, value, onChange, error, required = false }) { return <label className="company-field company-full-field">{label}{required && ' *'}<textarea rows="9" value={value} onInput={(event) => onChange(event.currentTarget.value)} />{error && <small className="company-error">{error}</small>}</label>; }
+function Field({ label, value, onChange, error, type = 'text', required = false, options, stateValue }) { const { states, lgasByState } = useLocationData(); const fieldOptions = label === 'State' ? states : label === 'LGA' ? lgasByState[stateValue] || [] : options; return <label className="company-field">{label}{required && ' *'}{fieldOptions ? (label === 'State' || label === 'LGA' ? <SearchableLocationField label={label} value={value} options={fieldOptions} onChange={onChange} /> : <select value={value || ''} onChange={(event) => onChange(event.target.value)}><option value="">Select {label}</option>{fieldOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select>) : <input type={type} value={value || ''} onChange={(event) => onChange(event.target.value)} />}{error && <small className="company-error">{error}</small>}</label>; }
+function TextArea({ label, value, onChange, error, required = false }) { return <label className="company-field company-full-field">{label}{required && ' *'}<textarea rows="9" value={value} onChange={(event) => onChange(event.target.value)} />{error && <small className="company-error">{error}</small>}</label>; }
 function PersonFields({ group, index, person, errors, updatePerson, setPersonFile, includeShare = false, showId = true }) { const fields = [['surname', 'Surname'], ['firstName', 'First name'], ['otherName', 'Other name'], ['phone', 'Phone number'], ['email', 'Email', 'email'], ['dateOfBirth', 'Date of birth', 'date'], ['nationality', 'Nationality'], ['gender', 'Gender'], ['occupation', 'Occupation'], ['state', 'State'], ['lga', 'LGA'], ['town', 'Town / city / village'], ['houseNumber', 'House number'], ['streetName', 'Street name']]; return <div className="company-person"><h3>{group === 'witness' ? 'Witness' : `${group.charAt(0).toUpperCase()}${group.slice(1)} ${index + 1}`}</h3><div className="company-grid">{fields.map(([field, label, type]) => <Field key={field} label={label} type={type || 'text'} options={field === 'gender' ? GENDERS : field === 'state' ? NIGERIAN_STATES : field === 'lga' ? COMMON_LGAS : undefined} stateValue={person.state} value={person[field]} error={errors[`${group}-${index}-${field}`]} onChange={(value) => updatePerson(group, index, field, value)} required={!['otherName', 'nationality', 'gender', 'houseNumber'].includes(field)} />)}{includeShare && <Field label="Share amount" value={person.shareAmount} error={errors[`${group}-${index}-shareAmount`]} onChange={(value) => updatePerson(group, index, 'shareAmount', value)} required />}</div><div className="company-files">{showId && <FileField label="Means of ID" value={person.idDocument} onChange={(file) => setPersonFile(group, index, 'idDocument', file)} error={errors[`${group}-${index}-idDocument`]} />}<FileField label="Signature" value={person.signature} onChange={(file) => setPersonFile(group, index, 'signature', file)} error={errors[`${group}-${index}-signature`]} /></div></div>; }
 function FileField({ label, value, onChange, error }) { return <label className="company-file">{label}<input type="file" accept="image/*,.pdf" onChange={(event) => onChange(event.target.files[0])} /><FilePreview value={value} />{error && <small className="company-error">{error}</small>}</label>; }
 function FilePreview({ value }) { if (!value) return null; const isImage = value.type?.startsWith('image/') || value.dataUrl?.startsWith('data:image/'); return <span className="upload-preview">{isImage ? <img src={value.dataUrl} alt={`${value.name} preview`} /> : <span className="upload-file-icon">PDF</span>}<small>{value.name}</small></span>; }
