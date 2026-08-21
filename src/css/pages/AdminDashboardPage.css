@@ -86,8 +86,11 @@
 }
 
 /* Tab Navigation */
+.tab-navigation-shell { grid-column: 1 / -1; display: grid; grid-template-columns: 38px minmax(0, 1fr) 38px; align-items: stretch; gap: 8px; width: 100%; }
+.tab-scroll-arrow { display: grid; place-items: center; align-self: center; width: 38px; height: 42px; border: 1px solid var(--border); border-radius: 9px; color: var(--brand-dark); background: var(--surface); box-shadow: var(--shadow-sm); font-size: 1.8rem; line-height: 1; cursor: pointer; transition: background .2s ease, color .2s ease, opacity .2s ease, transform .2s ease; }
+.tab-scroll-arrow:hover:not(:disabled) { color: #fff; background: var(--brand); transform: translateY(-1px); }
+.tab-scroll-arrow:disabled { cursor: default; opacity: .32; box-shadow: none; }
 .tab-navigation {
-  grid-column: 1 / -1;
   display: flex;
   gap: 10px;
   padding: 0 0 2px;
@@ -96,6 +99,8 @@
   box-sizing: border-box;
   border-bottom: 2px solid var(--border);
   overflow-x: auto;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
 }
 
@@ -1636,10 +1641,12 @@
   }
 
   .tab-navigation {
-    grid-column: 1;
     padding: 0 12px;
     gap: 8px;
   }
+
+  .tab-navigation-shell { grid-column: 1; grid-template-columns: minmax(0, 1fr); }
+  .tab-scroll-arrow { display: none; }
 
   .tab-btn {
     font-size: 0.82rem;

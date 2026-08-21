@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
@@ -21,6 +21,19 @@ const statusLabels = {
   approved: 'Approved',
   completed: 'Completed',
   rejected: 'Rejected',
+};
+
+const formTabLabels = {
+  messages: 'Contact Message',
+  testimonials: 'Client Testimonial',
+  applications: 'Internship Registration',
+  ngo: 'NGO Registration',
+  company: 'Company Registration',
+  business: 'Business Registration',
+  scuml: 'SCUML Registration',
+  nin: 'NIN Verification',
+  'nin-name': 'NIN Name Change',
+  'nin-date': 'NIN Date of Birth Change',
 };
 
 function StatusBadge({ status }) {
@@ -77,6 +90,33 @@ function AdminDashboardPage({ user, onLogout }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [documentUploadBusy, setDocumentUploadBusy] = useState(false);
   const [pendingDocuments, setPendingDocuments] = useState([]);
+  const tabNavigationRef = useRef(null);
+  const [tabScrollState, setTabScrollState] = useState({ left: false, right: false });
+
+  const updateTabScrollState = () => {
+    const tabs = tabNavigationRef.current;
+    if (!tabs) return;
+    setTabScrollState({
+      left: tabs.scrollLeft > 2,
+      right: tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 2,
+    });
+  };
+
+  const scrollTabs = (direction) => {
+    tabNavigationRef.current?.scrollBy({ left: direction * 300, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const tabs = tabNavigationRef.current;
+    if (!tabs) return undefined;
+    updateTabScrollState();
+    tabs.addEventListener('scroll', updateTabScrollState, { passive: true });
+    window.addEventListener('resize', updateTabScrollState);
+    return () => {
+      tabs.removeEventListener('scroll', updateTabScrollState);
+      window.removeEventListener('resize', updateTabScrollState);
+    };
+  }, []);
 
   useEffect(() => {
     setPendingDocuments([]);
@@ -364,7 +404,9 @@ function AdminDashboardPage({ user, onLogout }) {
 
       <div className="dashboard-container">
         {/* Tab Navigation */}
-        <div className="tab-navigation">
+        <div className="tab-navigation-shell">
+          <button type="button" className="tab-scroll-arrow tab-scroll-arrow-left" onClick={() => scrollTabs(-1)} disabled={!tabScrollState.left} aria-label="Scroll tabs left" title="Scroll tabs left">‹</button>
+          <div className="tab-navigation" ref={tabNavigationRef}>
           <button
             className={`tab-btn ${activeTab === 'messages' ? 'active' : ''}`}
             onClick={() => {
@@ -465,6 +507,8 @@ function AdminDashboardPage({ user, onLogout }) {
           >
             📅 NIN Date Changes ({ninDateChanges.length})
           </button>
+          </div>
+          <button type="button" className="tab-scroll-arrow tab-scroll-arrow-right" onClick={() => scrollTabs(1)} disabled={!tabScrollState.right} aria-label="Scroll tabs right" title="Scroll tabs right">›</button>
         </div>
 
         {/* Sidebar */}
@@ -839,17 +883,17 @@ function AdminDashboardPage({ user, onLogout }) {
                   <NGOApplicationDocument item={selectedItem} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />
                 ) : (
                   <div className="generic-document-shell">
-                    <div className="generic-document-toolbar"><span>{activeTab.replace('-', ' ')} application</span><div><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
+                    <div className="generic-document-toolbar"><span>{formTabLabels[activeTab] || 'Application'} form</span><div><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
                     <header className="generic-document-heading">
-                      <div className="generic-document-brand"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><div><p className="generic-document-eyebrow">PERNEST DIGITAL ENTERPRISES</p><h2>{activeTab.replace('-', ' ')} application</h2><p>Official administrative review copy</p></div></div>
+                      <div className="generic-document-brand"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><div><p className="generic-document-eyebrow">PERNEST DIGITAL ENTERPRISES</p><h2>{formTabLabels[activeTab] || 'Application'}</h2><p>Official administrative review copy</p></div></div>
                       <ModalPaymentPreview paymentSlip={selectedItem.payment_slip} />
                     </header>
                     <div className="generic-document-meta"><div><strong>Reference number</strong><span>{selectedItem.reference_number || 'Not available'}</span></div><div className={`generic-status-cell status-cell-${String(selectedItem.status || 'unknown').toLowerCase()}`}><strong>Application status</strong><StatusBadge status={selectedItem.status} /></div><div><strong>Date submitted</strong><span>{selectedItem.created_at ? new Date(selectedItem.created_at).toLocaleString() : 'Not available'}</span></div></div>
                     {renderDetail(selectedItem)}
                     <div className="record-modal-section-stack">
                       <CollectedFields item={selectedItem} />
-                      <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
                       <UploadedImages item={selectedItem} />
+                      <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
                     </div>
                   </div>
                 )}
@@ -1315,13 +1359,13 @@ function NGOApplicationDocument({ item, onStatusChange, onClose, documentUploadB
       </DocumentSection>
 
       <NGODocumentUploads item={item} trustees={trustees} />
-      <RegistrationDocuments item={item} isAdmin pendingDocuments={pendingDocuments} onUpload={onDocumentUpload} onLabelChange={onLabelChange} onRemove={onRemove} onSave={onSaveDocuments} uploadBusy={documentUploadBusy} />
 
       <footer className="ngo-document-footer">
         <span>System record ID: {item.id}</span>
         <span>Created: {item.created_at ? new Date(item.created_at).toISOString() : 'Not available'}</span>
         <span>Generated: {new Date().toISOString()}</span>
       </footer>
+      <RegistrationDocuments item={item} isAdmin pendingDocuments={pendingDocuments} onUpload={onDocumentUpload} onLabelChange={onLabelChange} onRemove={onRemove} onSave={onSaveDocuments} uploadBusy={documentUploadBusy} />
     </div>
   );
 }
@@ -1358,7 +1402,6 @@ export default AdminDashboardPage;
 
 function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], onUpload, onLabelChange, onRemove, onSave, uploadBusy = false }) {
   const documents = Array.isArray(item.registration_documents) ? item.registration_documents : [];
-  if (!documents.length && !pendingDocuments.length) return null;
   return (
     <section className="registration-documents-panel">
       <div className="registration-documents-heading">
