@@ -17,6 +17,7 @@ function SuccessPage() {
         <p>Your registration has been submitted successfully. Save or print this slip. Your reference number is required for status checks and payment-slip uploads.</p>
         <div className="success-reference"><span>Reference number</span><strong>{reference}</strong></div>
         <div className="success-account-details"><strong>Payment account</strong><span>Bank: Opay</span><span>Account number: 8130801666</span><span>Account name: ERNEST EMMANUEL OSUNG</span></div>
+        <div className="success-contact-note"><strong>Before making payment</strong><span>Call <a href="tel:+2348130801666">+234 813 080 1666</a> to negotiate and confirm the service charge.</span></div>
         <p className="success-slip-note">Use <strong>Confirm Registration Status</strong> to follow this application. Use <strong>Upload payment slip</strong> to submit your bank transfer evidence with this reference.</p>
         <div className="success-slip-actions"><button type="button" onClick={() => window.print()}><FontAwesomeIcon icon={faPrint} /> Print slip</button><Link to="/verify">Check status</Link><Link to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload payment slip</Link></div>
       </section>

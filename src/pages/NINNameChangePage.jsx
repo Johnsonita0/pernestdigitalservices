@@ -4,7 +4,7 @@ import { submitNINNameChange } from '../lib/supabaseClient';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
 import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NINVerificationPage.css';
-import PaidSubmissionSuccess from '../components/PaidSubmissionSuccess';
+import PaymentSubmissionCard from '../components/PaymentSubmissionCard';
 
 function NINNameChangePage() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ function NINNameChangePage() {
     else { setSubmitted(reference); clearDraft(); }
   };
 
-  if (submitted) return <PaidSubmissionSuccess title="NIN name change request submitted" reference={submitted} description="Your request was submitted successfully. Upload your bank transfer slip so our team can begin processing." />;
+  if (submitted) return <PaymentSubmissionCard title="NIN name change request submitted" reference={submitted} />;
   return <main className="nin-page"><section className="nin-card"><header className="nin-header"><a href="/" aria-label="Go to home page"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /></a><p>PERNEST DIGITAL ENTERPRISE</p><h1>NIN Change of Name</h1><span>Submit the details required for your NIN name update.</span></header><form onSubmit={submit}><section className="nin-section"><h2>Change details</h2><div className="nin-grid"><Field label="NIN" value={form.nin} onChange={(value) => update('nin', value)} required /><Field label="New surname" value={form.newSurname} onChange={(value) => update('newSurname', value)} required /><Field label="New first name" value={form.newFirstName} onChange={(value) => update('newFirstName', value)} required /><Field label="New middle name" value={form.newMiddleName} onChange={(value) => update('newMiddleName', value)} /><Field label="New phone number" value={form.newPhoneNumber} onChange={(value) => update('newPhoneNumber', value)} required /><Field label="Email address" type="email" value={form.email} onChange={(value) => update('email', value)} required /></div>{error && <p className="nin-error">{error}</p>}</section><div className="nin-actions"><button className="nin-primary" type="submit">Submit name change request</button></div></form></section></main>;
 }
 

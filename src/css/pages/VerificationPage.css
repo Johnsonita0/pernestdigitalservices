@@ -536,6 +536,9 @@
   font-size: 0.82rem;
 }
 
+.success-contact-note { display: grid; gap: 4px; margin: 0 auto 16px; padding: 14px 16px; border: 1px solid rgba(0, 87, 184, .2); border-radius: 10px; color: var(--brand-dark); background: var(--brand-soft); text-align: left; }
+.success-contact-note a { color: var(--brand); font-weight: 900; }
+
 .success-account-details strong {
   margin-bottom: 4px;
   color: var(--brand);

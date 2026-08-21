@@ -4,7 +4,7 @@ import { submitNINApplication } from '../lib/supabaseClient';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
 import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NINVerificationPage.css';
-import PaidSubmissionSuccess from '../components/PaidSubmissionSuccess';
+import PaymentSubmissionCard from '../components/PaymentSubmissionCard';
 
 function NINVerificationPage() {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ function NINVerificationPage() {
     else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
   };
 
-  if (submitted) return <PaidSubmissionSuccess title="NIN verification request submitted" reference={reference} description="Your request was submitted successfully. Upload your bank transfer slip so our team can begin processing." />;
+  if (submitted) return <PaymentSubmissionCard title="NIN verification request submitted" reference={reference} />;
 
   return <main className="nin-page"><section className="nin-card"><header className="nin-header"><a href="/" aria-label="Go to home page"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /></a><p>PERNEST DIGITAL ENTERPRISE</p><h1>NIN Verification Form</h1><span>Provide any one of the accepted verification options.</span></header><div className="nin-progress"><span style={{ width: `${step * 50}%` }} /></div><p className="nin-step">Step {step} of 2</p><form onSubmit={submit}>{step === 1 && <section className="nin-section"><h2>Verification details</h2><p className="nin-help">Provide either your NIN, your phone number, or all three identity details: surname, first name, and date of birth.</p><div className="nin-grid"><Field label="NIN" value={form.nin} onChange={(value) => update('nin', value)} /><Field label="Phone number" value={form.phone} onChange={(value) => update('phone', value)} /><Field label="Surname" value={form.surname} onChange={(value) => update('surname', value)} /><Field label="First name" value={form.firstName} onChange={(value) => update('firstName', value)} /><Field label="Date of birth" type="date" value={form.dateOfBirth} onChange={(value) => update('dateOfBirth', value)} /></div>{errors.lookup && <p className="nin-error">{errors.lookup}</p>}</section>}{step === 2 && <section className="nin-section"><h2>Contact and review</h2><div className="nin-grid"><Field label="Email address" type="email" value={form.email} error={errors.email} onChange={(value) => update('email', value)} required /><Field label="Address" value={form.address} onChange={(value) => update('address', value)} /></div><div className="nin-review"><p><strong>Search method:</strong> {form.nin ? 'NIN' : form.phone ? 'Phone number' : 'Name and date of birth'}</p><p><strong>Name:</strong> {form.firstName} {form.surname}</p><p><strong>NIN:</strong> {form.nin || 'Not provided'}</p><p><strong>Phone:</strong> {form.phone || 'Not provided'}</p></div>{errors.submit && <p className="nin-error">{errors.submit}</p>}</section>}<div className="nin-actions">{step === 2 && <button type="button" className="nin-secondary" onClick={() => { setErrors({}); setStep(1); }}>Back</button>}{step === 1 ? <button type="button" className="nin-primary" onClick={next}>Next</button> : <button type="submit" className="nin-primary">Submit verification request</button>}</div></form></section></main>;
 }

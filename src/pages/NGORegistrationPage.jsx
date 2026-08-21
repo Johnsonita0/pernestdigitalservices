@@ -6,7 +6,7 @@ import { useLocationData } from '../lib/locationData';
 import SearchableLocationField from '../components/SearchableLocationField';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
 import { reportValidationErrors } from '../lib/reportValidationErrors';
-import PaymentSuccessModal from '../components/PaymentSuccessModal';
+import PaymentSubmissionCard from '../components/PaymentSubmissionCard';
 import '../css/pages/NGORegistrationPage.css';
 
 const TOTAL_STEPS = 7;
@@ -154,35 +154,7 @@ function NGORegistrationPage() {
     }
   };
 
-  if (submitted) {
-    const finishPayment = () => navigate('/');
-    return (
-      <main className="ngo-page">
-        <PaymentSuccessModal isOpen={paymentSubmitted} reference={referenceNumber} onComplete={finishPayment} />
-        <section className="ngo-card payment-card">
-          <img src="/logo/logo2.jpeg" alt="Pernest Digital Services" className="ngo-logo" />
-          <p className="ngo-kicker">Application received</p>
-          <h1>Complete Your NGO Registration Payment</h1>
-          <p>Your application reference is <strong>{referenceNumber}</strong>. Upload your payment slip below so our admin team can confirm it.</p>
-          <p className="registration-status-note">After submitting, use <a href="/verify">Confirm Registration Status</a> with this reference number to follow your application.</p>
-          <div className="payment-account">
-            <strong>Registration fee: N150,000</strong>
-            <span>Account: 8130801666</span>
-            <span>Bank: Opay</span>
-            <span>Account name: ERNEST EMMANUEL OSUNG</span>
-          </div>
-          <p className="payment-note">Part payment is accepted, but complete payment is required before registration documents are issued. Corrections after registration may attract a fee.</p>
-          <label className="file-upload">Upload bank transfer slip
-            <input type="file" accept="image/*,.pdf" onChange={(event) => handleFile('paymentSlip', event.target.files[0])} />
-            <FilePreview value={form.paymentSlip} />
-          </label>
-          {form.paymentSlip && <p className="file-name">Selected: {form.paymentSlip.name}</p>}
-          <button className="primary-btn" type="button" onClick={handlePaymentSlipSubmit} disabled={!form.paymentSlip || paymentSubmitted}>{paymentSubmitted ? 'Slip submitted for review' : 'Submit payment slip'}</button>
-          {paymentSubmitted && <button className="secondary-btn" type="button" onClick={() => navigate('/')}>Return to website</button>}
-        </section>
-      </main>
-    );
-  }
+  if (submitted) return <PaymentSubmissionCard title="Complete Your NGO Registration Payment" reference={referenceNumber} description="Your NGO application was received. Complete payment, then upload your bank transfer slip so our admin team can confirm it." file={form.paymentSlip} onFileChange={(file) => handleFile('paymentSlip', file)} onSubmit={handlePaymentSlipSubmit} paymentSubmitted={paymentSubmitted} onComplete={() => navigate('/')} />;
 
   return (
     <main className="ngo-page">
