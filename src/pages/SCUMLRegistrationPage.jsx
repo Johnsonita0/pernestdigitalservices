@@ -19,7 +19,7 @@ function SCUMLRegistrationPage() {
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
-  const updatePerson = (index, field, value) => setForm((current) => ({ ...current, persons: current.persons.map((person, personIndex) => personIndex === index ? { ...person, [field]: value } : person) }));
+  const updatePerson = (index, field, value) => setForm((current) => current.persons.length > 1 && field === '__remove' ? { ...current, persons: current.persons.filter((_, personIndex) => personIndex !== index) } : ({ ...current, persons: current.persons.map((person, personIndex) => personIndex === index ? { ...person, [field]: value } : person) }));
   const addPerson = () => setForm((current) => ({ ...current, persons: [...current.persons, { ...emptyPerson }] }));
   const readFile = (file) => new Promise((resolve) => { if (!file) return resolve(null); const reader = new FileReader(); reader.onload = () => resolve({ name: file.name, type: file.type, size: file.size, dataUrl: reader.result }); reader.onerror = () => resolve({ name: file.name, type: file.type, size: file.size }); reader.readAsDataURL(file); });
 
@@ -44,5 +44,5 @@ function SCUMLRegistrationPage() {
 }
 
 function Field({ label, value, onChange, error, type = 'text', required = false }) { return <label className="scuml-field">{label}{required && ' *'}<input type={type} value={value || ''} onChange={(event) => onChange(event.target.value)} />{error && <small className="scuml-error">{error}</small>}</label>; }
-function Person({ index, person, errors, update }) { const fields = [['name', 'Full name'], ['dateOfBirth', 'Date of birth', 'date'], ['phone', 'Phone number'], ['email', 'Email', 'email'], ['bvn', 'BVN'], ['nin', 'NIN'], ['address', 'Address']]; return <div className="scuml-person"><h3>Person {index + 1}</h3><div className="scuml-grid">{fields.map(([field, label, type]) => <Field key={field} label={label} type={type || 'text'} value={person[field]} error={errors[`person-${index}-${field}`]} onChange={(value) => update(index, field, value)} required />)}</div></div>; }
+function Person({ index, person, errors, update }) { const fields = [['name', 'Full name'], ['dateOfBirth', 'Date of birth', 'date'], ['phone', 'Phone number'], ['email', 'Email', 'email'], ['bvn', 'BVN'], ['nin', 'NIN'], ['address', 'Address']]; return <div className="scuml-person"><div className="person-heading"><h3>Person {index + 1}</h3>{index > 0 && <button type="button" className="remove-person" onClick={() => update(index, '__remove', true)}>Remove person</button>}</div><div className="scuml-grid">{fields.map(([field, label, type]) => <Field key={field} label={label} type={type || 'text'} value={person[field]} error={errors[`person-${index}-${field}`]} onChange={(value) => update(index, field, value)} required />)}</div></div>; }
 export default SCUMLRegistrationPage;

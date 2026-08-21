@@ -29,6 +29,11 @@
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
 }
 
+.person-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.remove-person { padding: 7px 10px; border: 1px solid #d66; border-radius: 6px; color: #a21d1d; background: #fff5f5; font-size: .75rem; font-weight: 800; cursor: pointer; }
+.remove-person:hover { color: #fff; background: #b42318; }
+@media (max-width: 560px) { .person-heading { align-items: flex-start; flex-direction: column; } }
+
 .skeleton-line {
   background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0.12) 75%);
   background-size: 200% 100%;
