@@ -1,0 +1,30 @@
+.print-slip-modal-backdrop { position: fixed; inset: 0; z-index: 2600; display: grid; place-items: center; padding: 18px; overflow-y: auto; background: rgba(8, 24, 43, .72); backdrop-filter: blur(8px); }
+.print-slip-modal { width: min(720px, 100%); overflow: hidden; border: 1px solid rgba(255,255,255,.2); border-radius: 16px; background: #f3f8fc; box-shadow: 0 26px 80px rgba(0, 20, 45, .34); }
+.print-slip-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px 12px 18px; color: #fff; background: #003b7a; font-size: .82rem; font-weight: 800; }
+.print-slip-toolbar-actions { display: flex; align-items: center; gap: 8px; }
+.print-slip-action, .print-slip-close { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border-radius: 7px; font: inherit; font-size: .76rem; font-weight: 800; cursor: pointer; }
+.print-slip-action { padding: 8px 12px; color: #12304a; background: #f3c34f; }
+.print-slip-close { width: 36px; color: #fff; background: rgba(255,255,255,.12); }
+.print-slip-action:hover { background: #ffd978; }
+.print-slip-close:hover { background: rgba(255,255,255,.24); }
+.print-slip-document { position: relative; width: min(620px, calc(100% - 32px)); margin: 16px auto; padding: 42px 38px 34px; overflow: hidden; border-top: 6px solid #e3a928; background: #fff; box-shadow: 0 10px 26px rgba(0, 59, 122, .12); text-align: center; }
+.print-slip-logo { position: relative; width: 140px; height: 58px; margin: 0 auto 13px; object-fit: contain; }
+.print-slip-kicker { position: relative; margin-bottom: 8px; color: #bd7810; font-size: .7rem; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
+.print-slip-document h1 { position: relative; margin: 0 auto 12px; color: #003b7a; font-size: clamp(1.5rem, 4vw, 2.2rem); line-height: 1.15; }
+.print-slip-description { position: relative; max-width: 500px; margin: 0 auto 18px; color: #52677d; font-size: .88rem; line-height: 1.55; }
+.print-slip-reference { margin-bottom: 14px; padding: 13px 16px; border: 1px solid #cbdce7; border-radius: 10px; background: #f7fbfd; }
+.print-slip-reference span, .print-slip-reference strong { display: block; }
+.print-slip-reference span { margin-bottom: 4px; color: #52677d; font-size: .66rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.print-slip-reference strong { color: #003b7a; font-family: monospace; font-size: 1.08rem; letter-spacing: .08em; }
+.print-slip-account, .print-slip-contact { display: grid; gap: 6px; padding: 16px; border-radius: 10px; text-align: left; }
+.print-slip-account { margin-bottom: 11px; border: 1px solid rgba(213,157,32,.55); color: #5e6d79; background: #fff5d9; }
+.print-slip-account strong { color: #684600; }
+.print-slip-contact { margin-bottom: 14px; border-left: 4px solid #0057b8; color: #003b7a; background: #eaf7ff; }
+.print-slip-contact span, .print-slip-footer { color: #52677d; font-size: .82rem; line-height: 1.5; }
+.print-slip-contact b { color: #0057b8; }
+.print-slip-footer { margin: 0; }
+.print-slip-fireworks { position: absolute; top: 6px; left: 50%; width: 170px; height: 78px; transform: translateX(-50%); pointer-events: none; }
+.print-slip-fireworks span { position: absolute; top: 17px; left: 50%; width: 2px; height: 30px; transform: translateX(-50%) rotate(var(--ray)); transform-origin: 50% 100%; background: linear-gradient(#e4a52d, transparent); opacity: .7; animation: printSlipRayBurst 1.4s ease-in-out infinite alternate; }
+@keyframes printSlipRayBurst { from { height: 20px; opacity: .35; } to { height: 38px; opacity: .9; } }
+@media print { body * { visibility: hidden !important; } .print-slip-modal-backdrop, .print-slip-modal, .print-slip-document, .print-slip-document * { visibility: visible !important; } .print-slip-modal-backdrop { position: absolute; inset: 0; display: block; padding: 0; background: #fff; } .print-slip-modal { width: 100%; border: 0; border-radius: 0; box-shadow: none; background: #fff; } .print-slip-toolbar { display: none; } .print-slip-document { width: 100%; margin: 0; box-shadow: none; } }
+@media (max-width: 560px) { .print-slip-modal-backdrop { align-items: start; padding: 10px; } .print-slip-toolbar { padding-left: 13px; } .print-slip-action { padding: 8px 9px; } .print-slip-action svg { margin: 0; } .print-slip-action { font-size: 0; } .print-slip-action svg { font-size: .85rem; } .print-slip-close { width: 34px; } .print-slip-document { width: 100%; margin: 10px auto; padding: 34px 18px 26px; } }

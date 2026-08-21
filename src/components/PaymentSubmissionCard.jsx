@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCloudArrowUp, faPhone } from '@fortawesome/free-solid-svg-icons';
+import { faCloudArrowUp, faHouse, faPhone, faPrint } from '@fortawesome/free-solid-svg-icons';
 import PaymentSuccessModal from './PaymentSuccessModal';
+import PrintSlipPreviewModal from './PrintSlipPreviewModal';
 import '../css/components/PaymentSubmissionCard.css';
 
 const CONTACT_NUMBER = '+234 813 080 1666';
@@ -18,6 +19,7 @@ function PaymentSubmissionCard({
   onComplete,
   className = '',
 }) {
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
   const hasInlineUpload = Boolean(onFileChange && onSubmit);
 
   return (
@@ -42,17 +44,22 @@ function PaymentSubmissionCard({
           <span>Call <a href="tel:+2348130801666"><FontAwesomeIcon icon={faPhone} /> {CONTACT_NUMBER}</a> to negotiate and confirm the service charge.</span>
         </div>
         <p className="payment-submission-instruction">After payment, upload your bank transfer slip below so our team can confirm it.</p>
-        {hasInlineUpload ? (
+        <div className="payment-submission-actions">
+          <button className="payment-submission-button payment-submission-print" type="button" onClick={() => setPrintPreviewOpen(true)}><FontAwesomeIcon icon={faPrint} /> Print slip</button>
+          {hasInlineUpload ? (
           <>
             <label className="payment-submission-file">Upload bank transfer slip
               <input type="file" accept="image/*,.pdf" onChange={(event) => onFileChange(event.target.files[0])} />
               {file?.name && <small>{file.name}</small>}
             </label>
             <button className="payment-submission-button" type="button" onClick={onSubmit} disabled={!file || paymentSubmitted}>{paymentSubmitted ? 'Slip submitted for review' : 'Upload bank transfer slip'}</button>
-          </>
-        ) : (
-          <Link className="payment-submission-button" to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload bank transfer slip</Link>
-        )}
+            </>
+          ) : (
+            <Link className="payment-submission-button" to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload bank transfer slip</Link>
+          )}
+          <Link className="payment-submission-home" to="/"><FontAwesomeIcon icon={faHouse} /> Back to home</Link>
+        </div>
+        <PrintSlipPreviewModal isOpen={printPreviewOpen} title={title} reference={reference} description={description} onClose={() => setPrintPreviewOpen(false)} />
         <PaymentSuccessModal isOpen={paymentSubmitted} reference={reference} onComplete={onComplete} />
       </section>
     </main>
