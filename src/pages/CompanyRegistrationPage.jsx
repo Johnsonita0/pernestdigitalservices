@@ -88,16 +88,24 @@ function CompanyRegistrationPage() {
     event.preventDefault();
     if (!validate()) return;
     setBusy(true);
-    const applicationReference = makeReference();
-    const payload = {
-      reference_number: applicationReference, proposed_name_1: form.proposedName1, proposed_name_2: form.proposedName2, email: form.email, phone: form.phone,
-      state: form.state, lga: form.lga, town: form.town, house_number: form.houseNumber, street_name: form.streetName, objects: form.objects,
-      witness: form.witness, directors: form.directors, shareholders: form.shareholders, status: 'payment_pending', created_at: new Date().toISOString(),
-    };
-    const { error } = await submitCompanyApplication(payload);
-    if (error) setErrors({ submit: error.message });
-    else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
-    setBusy(false);
+    try {
+      const applicationReference = makeReference();
+      const payload = {
+        reference_number: applicationReference, proposed_name_1: form.proposedName1, proposed_name_2: form.proposedName2, email: form.email, phone: form.phone,
+        state: form.state, lga: form.lga, town: form.town, house_number: form.houseNumber, street_name: form.streetName, objects: form.objects,
+        witness: form.witness, directors: form.directors, shareholders: form.shareholders, status: 'payment_pending', created_at: new Date().toISOString(),
+      };
+      const result = await Promise.race([
+        submitCompanyApplication(payload),
+        new Promise((resolve) => window.setTimeout(() => resolve({ error: new Error('Submission timed out. Check your connection and try again.') }), 15000)),
+      ]);
+      if (result.error) setErrors({ submit: result.error.message });
+      else { setReference(applicationReference); setSubmitted(true); clearDraft(); }
+    } catch (error) {
+      setErrors({ submit: error.message || 'Unable to submit the company application. Please try again.' });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitPayment = async () => {
