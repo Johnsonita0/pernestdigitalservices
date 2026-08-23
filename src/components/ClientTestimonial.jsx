@@ -7,34 +7,34 @@ function ClientTestimonial() {
   const [testimonials, setTestimonials] = useState([
     {
       id: 1,
-      name: 'Chioma Okafor',
-      company: 'Fashion Hub Lagos',
+      name: 'Iniobong Udo',
+      company: 'Uyo Creative Hub',
       rating: 5,
       message: 'Working with Pernest Digital Services has been an incredible experience. Their quality and professionalism are unmatched. Highly recommended!',
       image: '👩‍💼'
     },
     {
       id: 2,
-      name: 'Tunde Adeyemi',
-      company: 'AdeyemiCorp Events',
+      name: 'Uduakobong Ekong',
+      company: 'Ibom Events Network',
       rating: 5,
-      message: 'The custom designs exceeded our expectations. The internship program trained their team to perfection. Truly outstanding service!',
+      message: 'Pernest Digital Services handled our business documentation with care and professionalism. Their support made every step clear and easy.',
       image: '👨‍💼'
     },
     {
       id: 3,
-      name: 'Amara Nwankwo',
-      company: 'Style Collective',
+      name: 'Aniekan Essien',
+      company: 'Akwa Ibom Enterprise Hub',
       rating: 5,
-      message: 'Best T-shirt vendor in Nigeria! Their attention to detail and customer service is exceptional. We order from them regularly.',
+      message: 'Pernest Digital Services made our business registration process simple and stress-free. Their guidance and customer service are exceptional.',
       image: '👩‍💼'
     },
     {
       id: 4,
-      name: 'Chidi Eze',
-      company: 'Events & Co',
+      name: 'Mfon Bassey',
+      company: 'Calabar Business Circle',
       rating: 5,
-      message: 'From design to delivery, everything was seamless. The quality is premium and pricing is fair. Five stars definitely!',
+      message: 'Pernest Digital Services delivered excellent guidance from start to finish. Their digital services are reliable, responsive, and worth recommending.',
       image: '👨‍💼'
     }
   ]);
