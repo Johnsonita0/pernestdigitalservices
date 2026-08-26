@@ -62,12 +62,13 @@ const PAYMENT_LOCAL_KEYS_BY_TABLE = {
 export async function saveRegistrationDocuments(tab, recordId, documents) {
   const table = APPLICATION_TABLES_BY_TAB[tab];
   if (!table) return { error: new Error('Documents are not supported for this record.') };
+  const approvedStatus = table.startsWith('nin_') ? 'completed' : 'approved';
 
   if (missingSupabaseConfig || !supabase) {
     try {
       const key = table === 'internship_applications' ? LOCAL_REGISTRATIONS_KEY : `pernestdigitalservices_${table}`;
       const stored = JSON.parse(window.localStorage.getItem(key) || '[]');
-      const updated = stored.map((item) => item.id === recordId ? { ...item, registration_documents: documents, status: 'approved', updated_at: new Date().toISOString() } : item);
+      const updated = stored.map((item) => item.id === recordId ? { ...item, registration_documents: documents, status: approvedStatus, updated_at: new Date().toISOString() } : item);
       window.localStorage.setItem(key, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -75,7 +76,7 @@ export async function saveRegistrationDocuments(tab, recordId, documents) {
     }
   }
 
-  const { error } = await supabase.from(table).update({ registration_documents: documents, status: 'approved', updated_at: new Date().toISOString() }).eq('id', recordId);
+  const { error } = await supabase.from(table).update({ registration_documents: documents, status: approvedStatus, updated_at: new Date().toISOString() }).eq('id', recordId);
   return { error };
 }
 

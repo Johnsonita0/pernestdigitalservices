@@ -327,7 +327,8 @@ function AdminDashboardPage({ user, onLogout }) {
     const nextDocuments = [...existing, ...pendingDocuments];
     const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments);
     if (!error) {
-      setSelectedItem((item) => ({ ...item, registration_documents: nextDocuments, status: 'approved', updated_at: new Date().toISOString() }));
+      const completedStatus = activeTab.startsWith('nin-') || activeTab === 'nin' ? 'completed' : 'approved';
+      setSelectedItem((item) => ({ ...item, registration_documents: nextDocuments, status: completedStatus, updated_at: new Date().toISOString() }));
       setPendingDocuments([]);
       await loadAllData();
     }
