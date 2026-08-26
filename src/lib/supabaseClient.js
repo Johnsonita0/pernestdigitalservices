@@ -59,7 +59,7 @@ const PAYMENT_LOCAL_KEYS_BY_TABLE = {
   nin_date_changes: LOCAL_NIN_DATE_CHANGES_KEY,
 };
 
-export async function saveRegistrationDocuments(tab, recordId, documents) {
+export async function saveRegistrationDocuments(tab, recordId, documents, editHistory = null) {
   const table = APPLICATION_TABLES_BY_TAB[tab];
   if (!table) return { error: new Error('Documents are not supported for this record.') };
   const approvedStatus = table.startsWith('nin_') ? 'completed' : 'approved';
@@ -68,7 +68,7 @@ export async function saveRegistrationDocuments(tab, recordId, documents) {
     try {
       const key = table === 'internship_applications' ? LOCAL_REGISTRATIONS_KEY : `pernestdigitalservices_${table}`;
       const stored = JSON.parse(window.localStorage.getItem(key) || '[]');
-      const updated = stored.map((item) => item.id === recordId ? { ...item, registration_documents: documents, status: approvedStatus, updated_at: new Date().toISOString() } : item);
+      const updated = stored.map((item) => item.id === recordId ? { ...item, registration_documents: documents, status: approvedStatus, edit_history: editHistory || item.edit_history || [], updated_at: new Date().toISOString() } : item);
       window.localStorage.setItem(key, JSON.stringify(updated));
       return { error: null };
     } catch (error) {
@@ -76,7 +76,7 @@ export async function saveRegistrationDocuments(tab, recordId, documents) {
     }
   }
 
-  const { error } = await supabase.from(table).update({ registration_documents: documents, status: approvedStatus, updated_at: new Date().toISOString() }).eq('id', recordId);
+  const { error } = await supabase.from(table).update({ registration_documents: documents, status: approvedStatus, ...(editHistory ? { edit_history: editHistory } : {}), updated_at: new Date().toISOString() }).eq('id', recordId);
   return { error };
 }
 
@@ -101,6 +101,31 @@ export async function lookupApplicationStatus(referenceNumber) {
   return { data: data?.[0] || null, error: error || (data?.length ? null : new Error('No application was found for that reference number.')) };
 }
 
+export async function getApplicationForEdit(referenceNumber, identifier) {
+  if (missingSupabaseConfig || !supabase) {
+    return { data: null, error: new Error('Online editing is unavailable while Supabase is not configured.') };
+  }
+
+  const { data, error } = await supabase.rpc('get_application_for_edit', {
+    p_reference: String(referenceNumber || '').trim(),
+    p_email: identifier ? String(identifier).trim() : null,
+  });
+  return { data: data?.[0] || null, error: error || (data?.length ? null : new Error('No editable application matched those details.')) };
+}
+
+export async function updateApplicationForEdit(referenceNumber, identifier, changes) {
+  if (missingSupabaseConfig || !supabase) {
+    return { error: new Error('Online editing is unavailable while Supabase is not configured.') };
+  }
+
+  const { data, error } = await supabase.rpc('update_application_for_edit', {
+    p_reference: String(referenceNumber || '').trim(),
+    p_email: String(identifier || '').trim(),
+    p_changes: changes,
+  });
+  return { data: data?.[0] || null, error };
+}
+
 export async function updatePaymentSlipByReference(referenceNumber, paymentSlip) {
   const result = await lookupApplicationStatus(referenceNumber);
   if (result.error || !result.data) return { error: result.error || new Error('No application was found for that reference number.') };
@@ -123,12 +148,10 @@ export async function updatePaymentSlipByReference(referenceNumber, paymentSlip)
     }
   }
 
-  const { data, error } = await supabase
-    .from(table)
-    .update({ payment_slip: paymentSlip, status: 'payment_submitted', updated_at: updatedAt })
-    .eq('reference_number', String(referenceNumber).trim())
-    .select('reference_number, status, updated_at')
-    .single();
+  const { data, error } = await supabase.rpc('update_payment_slip', {
+    p_reference: String(referenceNumber).trim(),
+    p_payment_slip: paymentSlip,
+  });
   return { data, error };
 }
 

@@ -1,0 +1,27 @@
+.application-edit-form { display: grid; gap: 18px; padding: 22px; background: #fff; }
+.edit-submission-card { overflow: hidden; }
+.edit-submission-form { max-width: 560px; margin: 28px auto 0; }
+.edit-submission-form > input { width: 100%; box-sizing: border-box; margin-bottom: 15px; padding: 13px 14px; border: 1px solid #c8d9e6; border-radius: 9px; color: var(--text); background: #fff; outline: none; font: inherit; }
+.edit-submission-form > input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(227, 169, 40, 0.16); }
+.edit-submission-form label span { display: block; margin-top: 3px; color: var(--muted); font-size: .7rem; font-weight: 500; }
+.edit-submission-form > button { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 13px 17px; border: 0; border-radius: 9px; color: #fff; background: var(--brand); font: inherit; font-weight: 800; cursor: pointer; }
+.edit-submission-form > button:hover:not(:disabled) { background: var(--brand-dark); }
+.edit-submission-form > button:disabled { cursor: not-allowed; opacity: .55; }
+.application-edit-heading { display: flex; justify-content: space-between; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.application-edit-heading h2 { margin: 2px 0 4px; color: var(--brand-dark); }
+.application-edit-heading p { margin: 0; color: var(--muted); font-size: .82rem; }
+.application-edit-kicker { color: var(--accent) !important; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.application-edit-close { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); background: #fff; cursor: pointer; }
+.application-edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; max-height: 55vh; overflow: auto; padding-right: 4px; }
+.application-edit-field { display: grid; gap: 5px; min-width: 0; }
+.application-edit-field-wide { grid-column: 1 / -1; }
+.application-edit-field span { color: var(--brand-dark); font-size: .75rem; font-weight: 800; }
+.application-edit-field input, .application-edit-field textarea { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid var(--border); border-radius: 5px; color: var(--text); background: #fff; font: inherit; font-size: .82rem; }
+.application-edit-field textarea { resize: vertical; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .75rem; }
+.application-edit-error { margin: 0; color: #a43f31; font-size: .82rem; }
+.application-edit-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.application-edit-actions button { display: inline-flex; align-items: center; gap: 7px; padding: 9px 13px; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: .8rem; font-weight: 800; cursor: pointer; }
+.application-edit-cancel { color: var(--muted); background: #fff; }
+.application-edit-save { color: #fff; background: var(--brand); border-color: var(--brand) !important; }
+.application-edit-save:disabled { cursor: wait; opacity: .6; }
+@media (max-width: 640px) { .application-edit-form { padding: 16px; } .application-edit-grid { grid-template-columns: 1fr; max-height: 58vh; } .application-edit-field-wide { grid-column: auto; } .application-edit-actions { flex-direction: column-reverse; } .application-edit-actions button { justify-content: center; } }

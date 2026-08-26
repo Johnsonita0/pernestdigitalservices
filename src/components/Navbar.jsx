@@ -63,6 +63,7 @@ function Navbar() {
                 </button>
                 <ul className={`registration-dropdown ${verificationOpen ? 'open' : ''}`}>
                   <li><Link to="/verify" onClick={() => { setVerificationOpen(false); setMenuOpen(false); }}>Verify Registration</Link></li>
+                  <li><Link to="/edit" onClick={() => { setVerificationOpen(false); setMenuOpen(false); }}>Edit Submission</Link></li>
                   <li><Link to="/upload-payment-slip" onClick={() => { setVerificationOpen(false); setMenuOpen(false); }}>Upload Payment Slip</Link></li>
                 </ul>
               </li>

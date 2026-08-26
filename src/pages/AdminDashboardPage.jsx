@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments } from '../lib/supabaseClient';
+import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments, updateApplicationForEdit } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faDownload, faPen, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import ApplicationEditForm from '../components/ApplicationEditForm.jsx';
 import '../css/pages/AdminDashboardPage.css';
 
 const formatRecordValue = (value) => {
@@ -88,6 +89,8 @@ function AdminDashboardPage({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [adminEditing, setAdminEditing] = useState(false);
+  const [modalTab, setModalTab] = useState('details');
   const [documentUploadBusy, setDocumentUploadBusy] = useState(false);
   const [pendingDocuments, setPendingDocuments] = useState([]);
   const tabNavigationRef = useRef(null);
@@ -120,6 +123,8 @@ function AdminDashboardPage({ user, onLogout }) {
 
   useEffect(() => {
     setPendingDocuments([]);
+    setAdminEditing(false);
+    setModalTab('details');
   }, [selectedItem?.id]);
 
   useEffect(() => {
@@ -334,15 +339,44 @@ function AdminDashboardPage({ user, onLogout }) {
     setters[activeTab]?.((records) => records.map((record) => record.id === recordId ? { ...record, ...changes } : record));
   };
 
+  const saveAdminEdit = (updated) => {
+    const changes = { ...updated, updated_at: new Date().toISOString() };
+    updateActiveTabRecord(selectedItem.id, changes);
+    setSelectedItem((item) => ({ ...item, ...changes }));
+    setAdminEditing(false);
+    showStatusToast('Application updated successfully.', 'success');
+  };
+
+  const applicationActivity = Array.isArray(selectedItem?.edit_history) ? selectedItem.edit_history : [];
+  const canEditApplication = activeTab !== 'messages' && activeTab !== 'testimonials';
+
+  const renderModalTabs = () => (
+    <div className="application-modal-tabs" role="tablist" aria-label="Application modal views">
+      <button type="button" className={modalTab === 'details' ? 'active' : ''} onClick={() => { setModalTab('details'); setAdminEditing(false); }}>Details</button>
+      {canEditApplication && <button type="button" className={modalTab === 'edit' ? 'active' : ''} onClick={() => { setModalTab('edit'); setAdminEditing(true); }}>Edit</button>}
+      <button type="button" className={modalTab === 'activity' ? 'active' : ''} onClick={() => { setModalTab('activity'); setAdminEditing(false); }}>Activity ({applicationActivity.length})</button>
+    </div>
+  );
+
+  const renderActivity = () => (
+    <section className="application-activity-panel">
+      <div className="application-activity-heading"><p className="application-edit-kicker">Application history</p><h2>Activity log</h2><p>Every client and administrator edit is recorded here.</p></div>
+      {applicationActivity.length ? <ol className="application-activity-list">{[...applicationActivity].reverse().map((activity, index) => <li key={`${activity.timestamp || 'activity'}-${index}`}><time dateTime={activity.timestamp}>{new Date(activity.timestamp).toLocaleString()}</time><strong>{activity.activity || 'Application updated'}</strong><span>{activity.actor || 'Client'}</span>{activity.fields?.length > 0 && <small>Updated: {activity.fields.join(', ')}</small>}</li>)}</ol> : <p className="registration-documents-empty">No edits have been recorded for this application.</p>}
+    </section>
+  );
+
   const handleSaveDocuments = async (documentsOverride = null) => {
     if (!selectedItem || (!pendingDocuments.length && !documentsOverride)) return;
     setDocumentUploadBusy(true);
     const existing = Array.isArray(selectedItem.registration_documents) ? selectedItem.registration_documents : [];
     const nextDocuments = documentsOverride || [...existing, ...pendingDocuments];
-    const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments);
+    const updatedAt = new Date().toISOString();
+    const activity = { timestamp: updatedAt, actor: 'Administrator', activity: documentsOverride ? 'Official documents changed' : 'Official documents uploaded', fields: ['registration_documents'] };
+    const nextHistory = [...(Array.isArray(selectedItem.edit_history) ? selectedItem.edit_history : []), activity];
+    const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments, nextHistory);
     if (!error) {
       const completedStatus = activeTab.startsWith('nin-') || activeTab === 'nin' ? 'completed' : 'approved';
-      const changes = { registration_documents: nextDocuments, status: completedStatus, updated_at: new Date().toISOString() };
+      const changes = { registration_documents: nextDocuments, status: completedStatus, updated_at: updatedAt, edit_history: nextHistory };
       updateActiveTabRecord(selectedItem.id, changes);
       setSelectedItem((item) => ({ ...item, ...changes }));
       setPendingDocuments([]);
@@ -898,10 +932,10 @@ function AdminDashboardPage({ user, onLogout }) {
             <div className="record-modal-backdrop" role="presentation" onMouseDown={() => setSelectedItem(null)}>
               <div className={`record-modal-card ${activeTab === 'ngo' ? 'ngo-modal' : ''}`} role="dialog" aria-modal="true" aria-label="Record details" onMouseDown={(event) => event.stopPropagation()}>
                 {activeTab === 'ngo' ? (
-                  <NGOApplicationDocument item={selectedItem} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />
+                  <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <NGOApplicationDocument item={selectedItem} onEdit={() => setModalTab('edit')} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />}</>
                 ) : (
-                  <div className="generic-document-shell">
-                    <div className="generic-document-toolbar"><span>{formTabLabels[activeTab] || 'Application'} form</span><div><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
+                  <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' && canEditApplication ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <div className="generic-document-shell">
+                    <div className="generic-document-toolbar"><span>{formTabLabels[activeTab] || 'Application'} form</span><div><button type="button" className="print-document-btn" onClick={() => setModalTab('edit')}>Edit application</button><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
                     <header className="generic-document-heading">
                       <div className="generic-document-brand"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><div><p className="generic-document-eyebrow">PERNEST DIGITAL ENTERPRISES</p><h2>{formTabLabels[activeTab] || 'Application'}</h2><p>Official administrative review copy</p></div></div>
                       <ModalPaymentPreview paymentSlip={selectedItem.payment_slip} />
@@ -913,7 +947,7 @@ function AdminDashboardPage({ user, onLogout }) {
                       <UploadedImages item={selectedItem} />
                       <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
                     </div>
-                  </div>
+                  </div>}</>
                 )}
               </div>
             </div>
@@ -1316,7 +1350,7 @@ function NINDateChangeDetail({ item, onStatusChange }) {
   );
 }
 
-function NGOApplicationDocument({ item, onStatusChange, onClose, documentUploadBusy, pendingDocuments, onDocumentUpload, onLabelChange, onRemove, onSaveDocuments }) {
+function NGOApplicationDocument({ item, onEdit, onStatusChange, onClose, documentUploadBusy, pendingDocuments, onDocumentUpload, onLabelChange, onRemove, onSaveDocuments }) {
   const trustees = Array.isArray(item.trustees) ? item.trustees : [];
   const passport = trustees[0]?.passport?.dataUrl;
   const names = [item.proposed_name_1, item.proposed_name_2, item.proposed_name_3].filter(Boolean);
@@ -1325,7 +1359,7 @@ function NGOApplicationDocument({ item, onStatusChange, onClose, documentUploadB
     <div className="ngo-document">
       <div className="ngo-document-toolbar">
         <span>NGO registration application</span>
-        <div><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={onClose} aria-label="Close document">×</button></div>
+        <div><button type="button" className="print-document-btn" onClick={onEdit}>Edit application</button><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={onClose} aria-label="Close document">×</button></div>
       </div>
 
       <header className="ngo-document-heading">

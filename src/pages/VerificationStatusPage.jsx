@@ -84,7 +84,7 @@ function VerificationStatusPage() {
         <div className={`status-detail status-cell-${String(application.status || 'unknown').toLowerCase()} ${isRejected ? 'rejected' : ''}`}><strong>{statusLabel}</strong><span>{statusMessage}</span></div>
         <p className="status-copy">Applicant: {application.applicant_name || 'Applicant'}<br />Last updated: {new Date(application.updated_at || application.created_at).toLocaleString()}</p>
         <RegistrationDocuments documents={application.registration_documents} />
-        <div className="success-slip-actions"><button type="button" className="status-new-search" onClick={() => navigate('/verify')}><FontAwesomeIcon icon={faRotate} /> Check another</button><Link to="/">Return to website</Link></div>
+        <div className="success-slip-actions"><button type="button" className="status-new-search" onClick={() => navigate('/verify')}><FontAwesomeIcon icon={faRotate} /> Check another</button><Link to={`/edit?reference=${encodeURIComponent(application.reference_number)}`}>Edit this submission</Link><Link to="/">Return to website</Link></div>
       </section>
     </main>
   );

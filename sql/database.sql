@@ -1,9 +1,148 @@
--- Pernest Digital Services database setup
--- Run this complete file in the Supabase SQL editor.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Supabase Storage buckets for registration uploads.
+
+-- Secure client/admin application editing. Clients must provide the reference and
+-- matching email; authenticated administrators may edit by reference from the dashboard.
+DROP FUNCTION IF EXISTS public.get_application_for_edit(text, text);
+CREATE OR REPLACE FUNCTION public.get_application_for_edit(p_reference text, p_email text)
+RETURNS TABLE (application_type text, application jsonb)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  table_name text;
+  type_name text;
+  candidate jsonb;
+BEGIN
+  IF nullif(trim(p_reference), '') IS NULL AND nullif(trim(p_email), '') IS NULL THEN
+    RETURN;
+  END IF;
+
+  FOREACH table_name IN ARRAY ARRAY['internship_applications', 'ngo_applications', 'company_applications', 'business_applications', 'scuml_applications', 'nin_applications', 'nin_name_changes', 'nin_date_changes'] LOOP
+    EXECUTE format('SELECT to_jsonb(row_data) FROM public.%I AS row_data WHERE upper(row_data.reference_number) = upper($1) OR lower(to_jsonb(row_data)->>''email'') = lower($2) OR (nullif(trim($2), '''') IS NOT NULL AND regexp_replace(coalesce(to_jsonb(row_data)->>''phone'', ''''), ''[^0-9]'', '''', ''g'') = regexp_replace($2, ''[^0-9]'', '''', ''g'')) LIMIT 1', table_name)
+      INTO candidate USING p_reference, p_email;
+    IF candidate IS NOT NULL THEN
+      type_name := CASE table_name
+        WHEN 'internship_applications' THEN 'Internship Registration'
+        WHEN 'ngo_applications' THEN 'NGO Registration'
+        WHEN 'company_applications' THEN 'Company Registration'
+        WHEN 'business_applications' THEN 'Business Registration'
+        WHEN 'scuml_applications' THEN 'SCUML Registration'
+        WHEN 'nin_applications' THEN 'NIN Verification'
+        WHEN 'nin_name_changes' THEN 'NIN Name Change'
+        ELSE 'NIN Date Change'
+      END;
+      application_type := type_name;
+      application := candidate;
+      RETURN NEXT;
+      RETURN;
+    END IF;
+  END LOOP;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb);
+CREATE OR REPLACE FUNCTION public.update_application_for_edit(p_reference text, p_email text, p_changes jsonb)
+RETURNS TABLE (application_type text, application jsonb)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  table_name text;
+  type_name text;
+  record_id uuid;
+  is_admin_user boolean := public.is_admin();
+  allowed_columns text[];
+  requested_column text;
+  set_clause text := '';
+  candidate jsonb;
+BEGIN
+  IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' THEN
+    RAISE EXCEPTION 'Invalid application changes';
+  END IF;
+
+  FOREACH table_name IN ARRAY ARRAY['internship_applications', 'ngo_applications', 'company_applications', 'business_applications', 'scuml_applications', 'nin_applications', 'nin_name_changes', 'nin_date_changes'] LOOP
+    EXECUTE format('SELECT row_data.id FROM public.%I AS row_data WHERE ($2 AND upper(row_data.reference_number) = upper($1)) OR (NOT $2 AND upper(row_data.reference_number) = upper($1)) OR (NOT $2 AND lower(to_jsonb(row_data)->>''email'') = lower($3)) OR (NOT $2 AND nullif(trim($3), '''') IS NOT NULL AND regexp_replace(coalesce(to_jsonb(row_data)->>''phone'', ''''), ''[^0-9]'', '''', ''g'') = regexp_replace($3, ''[^0-9]'', '''', ''g'')) LIMIT 1', table_name)
+      INTO record_id USING p_reference, is_admin_user, p_email;
+    IF record_id IS NOT NULL THEN EXIT; END IF;
+  END LOOP;
+
+  IF record_id IS NULL THEN
+    RAISE EXCEPTION 'No editable application matched those details';
+  END IF;
+
+  allowed_columns := CASE table_name
+    WHEN 'internship_applications' THEN ARRAY['first_name','last_name','email','phone','date_of_birth','address','city','state','institution','course_field','education_level','year_of_study','previous_experience','why_interested','goals','skills_interested']
+    WHEN 'ngo_applications' THEN ARRAY['proposed_name_1','proposed_name_2','proposed_name_3','email','office_address','state','lga','town','house_number','street_name','trustee_count','trustee_tenure','aims','source_of_income','trustees']
+    WHEN 'company_applications' THEN ARRAY['proposed_name_1','proposed_name_2','email','phone','state','lga','town','house_number','street_name','objects','witness','directors','shareholders']
+    WHEN 'business_applications' THEN ARRAY['proposed_name_1','proposed_name_2','email','phone','state','lga','town','house_number','street_name','proprietors']
+    WHEN 'scuml_applications' THEN ARRAY['entity_name','registration_number','registered_address','tax_id','persons','bank_name','account_number','account_name']
+    WHEN 'nin_applications' THEN ARRAY['nin','phone','surname','first_name','date_of_birth','email','address']
+    WHEN 'nin_name_changes' THEN ARRAY['nin','new_surname','new_first_name','new_middle_name','new_phone_number','email']
+    ELSE ARRAY['nin','surname','first_name','middle_name','gender','old_date_of_birth','new_date_of_birth','marital_status','state_of_origin','lga_of_origin','town_of_origin','phone','state_of_birth','lga_of_birth','state_of_residence','lga_of_residence','residential_address','education','occupation','work_address','father_surname','father_first_name','father_state','father_lga','father_town','mother_surname','mother_first_name','mother_maiden_name','mother_state','mother_lga','mother_town','email']
+  END;
+
+  FOR requested_column IN SELECT jsonb_object_keys(p_changes) LOOP
+    IF NOT requested_column = ANY(allowed_columns) THEN
+      RAISE EXCEPTION 'Field % cannot be edited', requested_column;
+    END IF;
+    set_clause := set_clause || CASE WHEN set_clause = '' THEN '' ELSE ', ' END || format('%I = (jsonb_populate_record(NULL::public.%I, $1)).%I', requested_column, table_name, requested_column);
+  END LOOP;
+  set_clause := set_clause || CASE WHEN set_clause = '' THEN '' ELSE ', ' END || 'updated_at = now()';
+  set_clause := set_clause || ', edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $3, ''activity'', $4, ''fields'', (SELECT coalesce(jsonb_agg(value), ''[]''::jsonb) FROM jsonb_object_keys($1) AS changed(value))))';
+  IF NOT is_admin_user THEN
+    set_clause := set_clause || ', status = ' || CASE
+      WHEN table_name = 'internship_applications' THEN '''pending'''
+      WHEN table_name LIKE 'nin_%' THEN '''pending'''
+      ELSE 'CASE WHEN payment_slip IS NOT NULL THEN ''payment_submitted'' ELSE ''payment_pending'' END'
+    END;
+  END IF;
+
+  EXECUTE format('UPDATE public.%I SET %s WHERE id = $2', table_name, set_clause) USING p_changes, record_id, CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END, CASE WHEN is_admin_user THEN 'Application edited by administrator' ELSE 'Application edited and resubmitted' END;
+  EXECUTE format('UPDATE public.%I SET edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $1, ''activity'', $2, ''fields'', (SELECT coalesce(jsonb_agg(value), ''[]''::jsonb) FROM jsonb_object_keys($3) AS changed(value)))) WHERE id = $4', table_name)
+    USING CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END,
+      CASE WHEN is_admin_user THEN 'Application edited by administrator' ELSE 'Application edited and resubmitted' END,
+      p_changes, record_id;
+  EXECUTE format('SELECT to_jsonb(row_data) FROM public.%I row_data WHERE id = $1', table_name) INTO candidate USING record_id;
+  type_name := CASE table_name WHEN 'internship_applications' THEN 'Internship Registration' WHEN 'ngo_applications' THEN 'NGO Registration' WHEN 'company_applications' THEN 'Company Registration' WHEN 'business_applications' THEN 'Business Registration' WHEN 'scuml_applications' THEN 'SCUML Registration' WHEN 'nin_applications' THEN 'NIN Verification' WHEN 'nin_name_changes' THEN 'NIN Name Change' ELSE 'NIN Date Change' END;
+  application_type := type_name;
+  application := candidate;
+  RETURN NEXT;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_application_for_edit(text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_application_for_edit(text, text) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.update_application_for_edit(text, text, jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.update_application_for_edit(text, text, jsonb) TO anon, authenticated;
+
+DROP FUNCTION IF EXISTS public.update_payment_slip(text, jsonb);
+CREATE OR REPLACE FUNCTION public.update_payment_slip(p_reference text, p_payment_slip jsonb)
+RETURNS TABLE (reference_number text, status text, updated_at timestamptz)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY['ngo_applications', 'company_applications', 'business_applications', 'scuml_applications', 'nin_applications', 'nin_name_changes', 'nin_date_changes'] LOOP
+    EXECUTE format('UPDATE public.%I SET payment_slip = $1, status = ''payment_submitted'', updated_at = now() WHERE upper(reference_number) = upper($2) RETURNING reference_number, status, updated_at', table_name)
+      INTO reference_number, status, updated_at USING p_payment_slip, p_reference;
+    IF reference_number IS NOT NULL THEN
+      RETURN NEXT;
+      RETURN;
+    END IF;
+  END LOOP;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.update_payment_slip(text, jsonb) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.update_payment_slip(text, jsonb) TO anon, authenticated;
 -- Keep these buckets private because they contain identity and payment documents.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES
@@ -50,6 +189,7 @@ $$;
 
 REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon;
 
 DROP POLICY IF EXISTS "Allow application upload submissions" ON storage.objects;
 CREATE POLICY "Allow application upload submissions" ON storage.objects
@@ -417,6 +557,22 @@ ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS registration_docu
 ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.internship_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.ngo_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.company_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.business_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.internship_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.ngo_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.company_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.business_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
 
 DO $$
 DECLARE
@@ -429,7 +585,11 @@ BEGIN
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_registration_documents_check');
     EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(registration_documents) = ''array'')', table_name, table_name || '_registration_documents_check');
-    EXECUTE format('GRANT UPDATE (registration_documents, status, updated_at) ON public.%I TO authenticated', table_name);
+    EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_edit_history_check');
+    EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(edit_history) = ''array'')', table_name, table_name || '_edit_history_check');
+    EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_edit_history_check');
+    EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(edit_history) = ''array'')', table_name, table_name || '_edit_history_check');
+    EXECUTE format('GRANT UPDATE (registration_documents, edit_history, status, updated_at) ON public.%I TO authenticated', table_name);
   END LOOP;
 END $$;
 
@@ -497,8 +657,6 @@ CREATE POLICY "Allow admins to delete contact messages" ON public.contact_messag
 
 DROP POLICY IF EXISTS "Allow public NGO submissions" ON public.ngo_applications;
 CREATE POLICY "Allow public NGO submissions" ON public.ngo_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public payment updates" ON public.ngo_applications;
-CREATE POLICY "Allow public payment updates" ON public.ngo_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated NGO review" ON public.ngo_applications;
 CREATE POLICY "Allow authenticated NGO review" ON public.ngo_applications FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated NGO status updates" ON public.ngo_applications;
@@ -508,8 +666,6 @@ CREATE POLICY "Allow admins to delete NGO applications" ON public.ngo_applicatio
 
 DROP POLICY IF EXISTS "Allow public company submissions" ON public.company_applications;
 CREATE POLICY "Allow public company submissions" ON public.company_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public company payment updates" ON public.company_applications;
-CREATE POLICY "Allow public company payment updates" ON public.company_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated company review" ON public.company_applications;
 CREATE POLICY "Allow authenticated company review" ON public.company_applications FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated company status updates" ON public.company_applications;
@@ -519,8 +675,6 @@ CREATE POLICY "Allow admins to delete company applications" ON public.company_ap
 
 DROP POLICY IF EXISTS "Allow public business submissions" ON public.business_applications;
 CREATE POLICY "Allow public business submissions" ON public.business_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public business payment updates" ON public.business_applications;
-CREATE POLICY "Allow public business payment updates" ON public.business_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated business review" ON public.business_applications;
 CREATE POLICY "Allow authenticated business review" ON public.business_applications FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated business status updates" ON public.business_applications;
@@ -530,8 +684,6 @@ CREATE POLICY "Allow admins to delete business applications" ON public.business_
 
 DROP POLICY IF EXISTS "Allow public SCUML submissions" ON public.scuml_applications;
 CREATE POLICY "Allow public SCUML submissions" ON public.scuml_applications FOR INSERT TO anon, authenticated WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public SCUML payment updates" ON public.scuml_applications;
-CREATE POLICY "Allow public SCUML payment updates" ON public.scuml_applications FOR UPDATE USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Allow authenticated SCUML review" ON public.scuml_applications;
 CREATE POLICY "Allow authenticated SCUML review" ON public.scuml_applications FOR SELECT TO authenticated USING (public.is_admin());
 DROP POLICY IF EXISTS "Allow authenticated SCUML status updates" ON public.scuml_applications;

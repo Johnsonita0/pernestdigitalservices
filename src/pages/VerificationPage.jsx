@@ -44,7 +44,7 @@ function VerificationPage() {
           </div>
         </section>
         <p className="verification-help">Keep your reference number private and use it whenever you need an update.</p>
-        <div className="verification-page-links"><Link className="verification-home-link" to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload payment slip</Link><Link className="verification-home-link" to="/">Return to website</Link></div>
+        <div className="verification-page-links"><Link className="verification-home-link" to="/upload-payment-slip"><FontAwesomeIcon icon={faCloudArrowUp} /> Upload payment slip</Link><Link className="verification-home-link" to="/edit">Edit submission</Link><Link className="verification-home-link" to="/">Return to website</Link></div>
       </section>
       <Footer />
     </main>

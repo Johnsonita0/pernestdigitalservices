@@ -383,6 +383,83 @@
   background: #fff;
 }
 
+.application-modal-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 18px 0;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+.application-modal-tabs button {
+  padding: 9px 13px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.application-modal-tabs button.active,
+.application-modal-tabs button:hover {
+  border-bottom-color: var(--accent);
+  color: var(--brand);
+}
+
+.application-activity-panel {
+  min-height: 360px;
+  padding: 28px;
+  background: #fff;
+}
+
+.application-activity-heading h2 {
+  margin: 2px 0 4px;
+  color: var(--brand-dark);
+}
+
+.application-activity-heading p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.application-activity-list {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.application-activity-list li {
+  display: grid;
+  gap: 3px;
+  padding: 13px 15px;
+  border-left: 3px solid var(--accent);
+  background: #f7fbff;
+}
+
+.application-activity-list time,
+.application-activity-list span,
+.application-activity-list small {
+  color: var(--muted);
+  font-size: .75rem;
+}
+
+.application-activity-list strong {
+  color: var(--brand-dark);
+  font-size: .86rem;
+}
+
+@media (max-width: 768px) {
+  .application-modal-tabs { padding-left: 12px; padding-right: 12px; overflow-x: auto; }
+  .application-modal-tabs button { flex: 0 0 auto; padding: 9px 10px; }
+  .application-activity-panel { min-height: 320px; padding: 20px 16px; }
+}
+
 .generic-document-toolbar {
   display: flex;
   align-items: center;

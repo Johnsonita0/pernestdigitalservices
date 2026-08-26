@@ -21,6 +21,7 @@ import NINNameChangePage from './pages/NINNameChangePage';
 import NINDateOfBirthChangePage from './pages/NINDateOfBirthChangePage';
 import ShopComingSoonPage from './pages/ShopComingSoonPage';
 import UploadPaymentSlipPage from './pages/UploadPaymentSlipPage';
+import EditSubmissionPage from './pages/EditSubmissionPage';
 import './css/App.css';
 
 function AppLoader() {
@@ -168,6 +169,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/event-register" element={<EventRegistrationPage />} />
         <Route path="/verify" element={<VerificationPage />} />
+        <Route path="/edit" element={<EditSubmissionPage />} />
         <Route path="/verification-status" element={<VerificationStatusPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/upload-payment-slip" element={<UploadPaymentSlipPage />} />
