@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments, updateApplicationForEdit } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faDownload, faPen, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faDownload, faPen, faPrint, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import ApplicationEditForm from '../components/ApplicationEditForm.jsx';
 import '../css/pages/AdminDashboardPage.css';
 
@@ -935,7 +935,7 @@ function AdminDashboardPage({ user, onLogout }) {
                   <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <NGOApplicationDocument item={selectedItem} onEdit={() => setModalTab('edit')} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />}</>
                 ) : (
                   <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' && canEditApplication ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <div className="generic-document-shell">
-                    <div className="generic-document-toolbar"><span>{formTabLabels[activeTab] || 'Application'} form</span><div><button type="button" className="print-document-btn" onClick={() => setModalTab('edit')}>Edit application</button><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
+                    <div className="generic-document-toolbar"><span>{formTabLabels[activeTab] || 'Application'} form</span><div><button type="button" className="print-document-btn modal-action-btn" onClick={() => setModalTab('edit')} aria-label="Edit application" title="Edit application"><FontAwesomeIcon icon={faPen} /><span>Edit application</span></button><button type="button" className="print-document-btn modal-action-btn" onClick={() => window.print()} aria-label="Print document" title="Print document"><FontAwesomeIcon icon={faPrint} /><span>Print document</span></button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
                     <header className="generic-document-heading">
                       <div className="generic-document-brand"><img src="/logo/logo2.jpeg" alt="Pernest Digital Services" /><div><p className="generic-document-eyebrow">PERNEST DIGITAL ENTERPRISES</p><h2>{formTabLabels[activeTab] || 'Application'}</h2><p>Official administrative review copy</p></div></div>
                       <ModalPaymentPreview paymentSlip={selectedItem.payment_slip} />
@@ -1359,7 +1359,7 @@ function NGOApplicationDocument({ item, onEdit, onStatusChange, onClose, documen
     <div className="ngo-document">
       <div className="ngo-document-toolbar">
         <span>NGO registration application</span>
-        <div><button type="button" className="print-document-btn" onClick={onEdit}>Edit application</button><button type="button" className="print-document-btn" onClick={() => window.print()}>Print document</button><button type="button" className="ngo-document-close" onClick={onClose} aria-label="Close document">×</button></div>
+        <div><button type="button" className="print-document-btn modal-action-btn" onClick={onEdit} aria-label="Edit application" title="Edit application"><FontAwesomeIcon icon={faPen} /><span>Edit application</span></button><button type="button" className="print-document-btn modal-action-btn" onClick={() => window.print()} aria-label="Print document" title="Print document"><FontAwesomeIcon icon={faPrint} /><span>Print document</span></button><button type="button" className="ngo-document-close" onClick={onClose} aria-label="Close document">×</button></div>
       </div>
 
       <header className="ngo-document-heading">
