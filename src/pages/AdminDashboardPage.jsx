@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments, updateApplicationForEdit } from '../lib/supabaseClient';
+import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments, updateApplicationForEdit, deleteApplicationActivity, getDeviceType } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faDownload, faPen, faPrint, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -89,12 +89,21 @@ function AdminDashboardPage({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [confirmation, setConfirmation] = useState(null);
   const [adminEditing, setAdminEditing] = useState(false);
   const [modalTab, setModalTab] = useState('details');
   const [documentUploadBusy, setDocumentUploadBusy] = useState(false);
   const [pendingDocuments, setPendingDocuments] = useState([]);
   const tabNavigationRef = useRef(null);
   const [tabScrollState, setTabScrollState] = useState({ left: false, right: false });
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const updateDevice = (event) => setIsMobile(event.matches);
+    mediaQuery.addEventListener?.('change', updateDevice);
+    return () => mediaQuery.removeEventListener?.('change', updateDevice);
+  }, []);
 
   const updateTabScrollState = () => {
     const tabs = tabNavigationRef.current;
@@ -278,7 +287,7 @@ function AdminDashboardPage({ user, onLogout }) {
     }
     if (!statusUpdateError) {
       const updatedAt = new Date().toISOString();
-      const activity = { timestamp: updatedAt, actor: 'Administrator', activity: `Status changed to ${newStatus.replace(/_/g, ' ')}`, fields: ['status'] };
+      const activity = { timestamp: updatedAt, actor: 'Administrator', device: getDeviceType(), activity: `Status changed to ${newStatus.replace(/_/g, ' ')}`, fields: ['status'] };
       const changes = { status: newStatus, updated_at: updatedAt, edit_history: [...(Array.isArray(selectedItem?.edit_history) ? selectedItem.edit_history : []), activity] };
       updateActiveTabRecord(messageId, changes);
       setSelectedItem((item) => item?.id === messageId ? { ...item, ...changes } : item);
@@ -286,7 +295,10 @@ function AdminDashboardPage({ user, onLogout }) {
   };
 
   const handleDelete = async (recordId) => {
-    if (!window.confirm('Delete this record permanently?')) return;
+    setConfirmation({ type: 'record', recordId, title: 'Delete this record?', message: 'This record will be permanently deleted.' });
+  };
+
+  const deleteRecord = async (recordId) => {
     const tableSetters = {
       messages: ['contact_messages', setMessages],
       testimonials: ['testimonials', setTestimonials],
@@ -353,6 +365,34 @@ function AdminDashboardPage({ user, onLogout }) {
     showStatusToast('Application updated successfully.', 'success');
   };
 
+  const handleDeleteActivity = async (activityIndex) => {
+    if (!selectedItem) return;
+    setConfirmation({ type: 'activity', activityIndex, title: 'Delete this activity?', message: 'This activity log entry will be permanently deleted.' });
+  };
+
+  const deleteActivity = async (activityIndex) => {
+    if (!selectedItem) return;
+    const tableByTab = { applications: 'internship_applications', ngo: 'ngo_applications', company: 'company_applications', business: 'business_applications', scuml: 'scuml_applications', nin: 'nin_applications', 'nin-name': 'nin_name_changes', 'nin-date': 'nin_date_changes' };
+    const table = tableByTab[activeTab];
+    if (!table) return;
+    const { error } = await deleteApplicationActivity(table, selectedItem.id, activityIndex);
+    if (error) return showStatusToast(`Unable to delete activity: ${error.message}`, 'error');
+    const nextHistory = applicationActivity.filter((_, index) => index !== activityIndex);
+    const changes = { edit_history: nextHistory };
+    updateActiveTabRecord(selectedItem.id, changes);
+    setSelectedItem((item) => ({ ...item, ...changes }));
+    showStatusToast('Activity log entry deleted.', 'success');
+  };
+
+  const confirmDeletion = async () => {
+    const action = confirmation;
+    setConfirmation(null);
+    if (!action) return;
+    if (action.type === 'record') await deleteRecord(action.recordId);
+    if (action.type === 'activity') await deleteActivity(action.activityIndex);
+    if (action.type === 'document') await handleSaveDocuments(action.documents.filter((_, index) => index !== action.documentIndex));
+  };
+
   const applicationActivity = Array.isArray(selectedItem?.edit_history) ? selectedItem.edit_history : [];
   const canEditApplication = activeTab !== 'messages' && activeTab !== 'testimonials';
 
@@ -367,7 +407,7 @@ function AdminDashboardPage({ user, onLogout }) {
   const renderActivity = () => (
     <section className="application-activity-panel">
       <div className="application-activity-heading"><p className="application-edit-kicker">Application history</p><h2>Activity log</h2><p>Every client and administrator edit is recorded here.</p></div>
-      {applicationActivity.length ? <ol className="application-activity-list">{[...applicationActivity].reverse().map((activity, index) => <li key={`${activity.timestamp || 'activity'}-${index}`}><time dateTime={activity.timestamp}>{new Date(activity.timestamp).toLocaleString()}</time><strong>{activity.activity || 'Application updated'}</strong><span>{activity.actor || 'Client'}</span>{activity.fields?.length > 0 && <small>Updated: {activity.fields.join(', ')}</small>}</li>)}</ol> : <p className="registration-documents-empty">No edits have been recorded for this application.</p>}
+      {applicationActivity.length ? <ol className="application-activity-list">{[...applicationActivity].reverse().map((activity, index) => { const historyIndex = applicationActivity.length - index - 1; return <li key={`${activity.timestamp || 'activity'}-${index}`}><time dateTime={activity.timestamp}>{new Date(activity.timestamp).toLocaleString()}</time><strong>{activity.activity || 'Application updated'}</strong><span>Initiated by: {activity.actor || 'Client'} · Device: {activity.device || 'Unknown'}</span>{activity.fields?.length > 0 && <small>Updated: {activity.fields.join(', ')}</small>}<button type="button" className="activity-delete-button" onClick={() => handleDeleteActivity(historyIndex)} aria-label="Delete activity log entry" title="Delete activity log entry"><FontAwesomeIcon icon={faTrash} /></button></li>; })}</ol> : <p className="registration-documents-empty">No edits have been recorded for this application.</p>}
     </section>
   );
 
@@ -377,7 +417,7 @@ function AdminDashboardPage({ user, onLogout }) {
     const existing = Array.isArray(selectedItem.registration_documents) ? selectedItem.registration_documents : [];
     const nextDocuments = documentsOverride || [...existing, ...pendingDocuments];
     const updatedAt = new Date().toISOString();
-    const activity = { timestamp: updatedAt, actor: 'Administrator', activity: documentsOverride ? 'Official documents changed' : 'Official documents uploaded', fields: ['registration_documents'] };
+    const activity = { timestamp: updatedAt, actor: 'Administrator', device: getDeviceType(), activity: documentsOverride ? 'Official documents changed' : 'Official documents uploaded', fields: ['registration_documents'] };
     const nextHistory = [...(Array.isArray(selectedItem.edit_history) ? selectedItem.edit_history : []), activity];
     const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments, nextHistory);
     if (!error) {
@@ -455,7 +495,8 @@ function AdminDashboardPage({ user, onLogout }) {
             </div>
           </div>
           <div className="header-actions">
-            <button className="logout-btn" onClick={onLogout}>Logout</button>
+            <span className="dashboard-device-status" aria-label={`Dashboard is viewed on ${isMobile ? 'mobile' : 'desktop'}`}>{isMobile ? 'Mobile view' : 'Desktop view'}</span>
+            <button type="button" className="logout-btn" onClick={onLogout}>Logout</button>
           </div>
         </div>
       </div>
@@ -938,7 +979,7 @@ function AdminDashboardPage({ user, onLogout }) {
             <div className="record-modal-backdrop" role="presentation" onMouseDown={() => setSelectedItem(null)}>
               <div className={`record-modal-card ${activeTab === 'ngo' ? 'ngo-modal' : ''}`} role="dialog" aria-modal="true" aria-label="Record details" onMouseDown={(event) => event.stopPropagation()}>
                 {activeTab === 'ngo' ? (
-                  <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <NGOApplicationDocument item={selectedItem} onEdit={() => setModalTab('edit')} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} />}</>
+                  <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <NGOApplicationDocument item={selectedItem} onEdit={() => setModalTab('edit')} onStatusChange={handleStatusChange} onClose={() => setSelectedItem(null)} documentUploadBusy={documentUploadBusy} pendingDocuments={pendingDocuments} onDocumentUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSaveDocuments={handleSaveDocuments} onRequestDelete={(index, documents) => setConfirmation({ type: 'document', documentIndex: index, documents, title: 'Delete this document?', message: 'This document will be removed from the application.' })} />}</>
                 ) : (
                   <>{renderModalTabs()}{modalTab === 'activity' ? renderActivity() : modalTab === 'edit' && canEditApplication ? <ApplicationEditForm application={selectedItem} applicationType={formTabLabels[activeTab]} isAdmin onCancel={() => setModalTab('details')} onSaved={saveAdminEdit} /> : <div className="generic-document-shell">
                     <div className="generic-document-toolbar"><span>{formTabLabels[activeTab] || 'Application'} form</span><div><button type="button" className="print-document-btn modal-action-btn" onClick={() => setModalTab('edit')} aria-label="Edit application" title="Edit application"><FontAwesomeIcon icon={faPen} /><span>Edit application</span></button><button type="button" className="print-document-btn modal-action-btn" onClick={() => window.print()} aria-label="Print document" title="Print document"><FontAwesomeIcon icon={faPrint} /><span>Print document</span></button><button type="button" className="ngo-document-close" onClick={() => setSelectedItem(null)} aria-label="Close document">×</button></div></div>
@@ -951,7 +992,7 @@ function AdminDashboardPage({ user, onLogout }) {
                     <div className="record-modal-section-stack">
                       <CollectedFields item={selectedItem} />
                       <UploadedImages item={selectedItem} />
-                      <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} uploadBusy={documentUploadBusy} />
+                      <RegistrationDocuments item={selectedItem} isAdmin={activeTab !== 'messages' && activeTab !== 'testimonials'} pendingDocuments={pendingDocuments} onUpload={handleDocumentUpload} onLabelChange={handlePendingDocumentLabelChange} onRemove={handlePendingDocumentRemove} onSave={handleSaveDocuments} onRequestDelete={(index, documents) => setConfirmation({ type: 'document', documentIndex: index, documents, title: 'Delete this document?', message: 'This document will be removed from the application.' })} uploadBusy={documentUploadBusy} />
                     </div>
                   </div>}</>
                 )}
@@ -960,6 +1001,7 @@ function AdminDashboardPage({ user, onLogout }) {
           )}
         </div>
       </div>
+      {confirmation && <ConfirmationModal title={confirmation.title} message={confirmation.message} onCancel={() => setConfirmation(null)} onConfirm={confirmDeletion} />}
     </div>
   );
 }
@@ -1356,7 +1398,7 @@ function NINDateChangeDetail({ item, onStatusChange }) {
   );
 }
 
-function NGOApplicationDocument({ item, onEdit, onStatusChange, onClose, documentUploadBusy, pendingDocuments, onDocumentUpload, onLabelChange, onRemove, onSaveDocuments }) {
+function NGOApplicationDocument({ item, onEdit, onStatusChange, onClose, documentUploadBusy, pendingDocuments, onDocumentUpload, onLabelChange, onRemove, onSaveDocuments, onRequestDelete }) {
   const trustees = Array.isArray(item.trustees) ? item.trustees : [];
   const passport = trustees[0]?.passport?.dataUrl;
   const names = [item.proposed_name_1, item.proposed_name_2, item.proposed_name_3].filter(Boolean);
@@ -1423,7 +1465,7 @@ function NGOApplicationDocument({ item, onEdit, onStatusChange, onClose, documen
         <span>Created: {item.created_at ? new Date(item.created_at).toISOString() : 'Not available'}</span>
         <span>Generated: {new Date().toISOString()}</span>
       </footer>
-      <RegistrationDocuments item={item} isAdmin pendingDocuments={pendingDocuments} onUpload={onDocumentUpload} onLabelChange={onLabelChange} onRemove={onRemove} onSave={onSaveDocuments} uploadBusy={documentUploadBusy} />
+      <RegistrationDocuments item={item} isAdmin pendingDocuments={pendingDocuments} onUpload={onDocumentUpload} onLabelChange={onLabelChange} onRemove={onRemove} onSave={onSaveDocuments} onRequestDelete={onRequestDelete} uploadBusy={documentUploadBusy} />
     </div>
   );
 }
@@ -1458,7 +1500,18 @@ function NGODocumentUploads({ item, trustees }) {
 
 export default AdminDashboardPage;
 
-function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], onUpload, onLabelChange, onRemove, onSave, uploadBusy = false }) {
+function ConfirmationModal({ title, message, onCancel, onConfirm }) {
+  return <div className="confirmation-modal-backdrop" role="presentation" onMouseDown={onCancel}>
+    <section className="confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="confirmation-title" onMouseDown={(event) => event.stopPropagation()}>
+      <p className="confirmation-kicker">Are you sure?</p>
+      <h2 id="confirmation-title">{title}</h2>
+      <p>{message}</p>
+      <div className="confirmation-actions"><button type="button" className="confirmation-cancel" onClick={onCancel}>Cancel</button><button type="button" className="confirmation-delete" onClick={onConfirm}>Delete</button></div>
+    </section>
+  </div>;
+}
+
+function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], onUpload, onLabelChange, onRemove, onSave, onRequestDelete, uploadBusy = false }) {
   const documents = Array.isArray(item.registration_documents) ? item.registration_documents : [];
   const [editingIndex, setEditingIndex] = useState(null);
   const [editedLabel, setEditedLabel] = useState('');
@@ -1481,9 +1534,8 @@ function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], o
     onSave(nextDocuments);
   };
 
-  const deleteDocument = (index, document) => {
-    if (!window.confirm(`Delete ${document.label || document.name || 'this document'}?`)) return;
-    onSave(documents.filter((_, documentIndex) => documentIndex !== index));
+  const deleteDocument = (index) => {
+    onRequestDelete?.(index, documents);
   };
 
   return (

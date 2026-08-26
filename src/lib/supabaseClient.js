@@ -8,6 +8,13 @@ export const supabase = missingSupabaseConfig
   ? null
   : createClient(supabaseUrl, supabaseAnonKey);
 
+export function getDeviceType() {
+  const userAgent = navigator.userAgent.toLowerCase();
+  if (/ipad|tablet|android(?!.*mobile)/i.test(userAgent)) return 'Tablet';
+  if (/mobi|android|iphone|ipod/i.test(userAgent)) return 'Mobile';
+  return 'Desktop';
+}
+
 const LOCAL_REGISTRATIONS_KEY = 'pernestdigitalservices_internship_registrations';
 const LOCAL_NGO_APPLICATIONS_KEY = 'pernestdigitalservices_ngo_applications';
 const LOCAL_COMPANY_APPLICATIONS_KEY = 'pernestdigitalservices_company_applications';
@@ -74,7 +81,7 @@ async function submitEditedApplication(table, application) {
     if (!session?.application?.reference_number || (session.applicationType && session.applicationType !== typeByTable[table])) return null;
     const changes = camelToSnake({ ...application });
     delete changes.id; delete changes.reference_number; delete changes.status; delete changes.created_at; delete changes.updated_at; delete changes.payment_slip; delete changes.registration_documents; delete changes.edit_history;
-    const result = await updateApplicationForEdit(session.application.reference_number, session.application.email, changes, session.application.id);
+    const result = await updateApplicationForEdit(session.application.reference_number, session.application.email, changes, session.application.id, 'Client');
     if (!result.error) window.sessionStorage.removeItem('pernestdigitalservices_application_edit');
     return result;
   } catch (error) {
@@ -136,7 +143,7 @@ export async function getApplicationForEdit(referenceNumber, identifier) {
   return { data: data?.[0] || null, error: error || (data?.length ? null : new Error('No editable application matched those details.')) };
 }
 
-export async function updateApplicationForEdit(referenceNumber, identifier, changes, recordId = null) {
+export async function updateApplicationForEdit(referenceNumber, identifier, changes, recordId = null, actor = null, deviceType = getDeviceType()) {
   if (missingSupabaseConfig || !supabase) {
     return { error: new Error('Online editing is unavailable while Supabase is not configured.') };
   }
@@ -146,6 +153,18 @@ export async function updateApplicationForEdit(referenceNumber, identifier, chan
     p_email: String(identifier || '').trim(),
     p_changes: changes,
     p_id: recordId,
+    p_actor: actor,
+    p_device_type: deviceType,
+  });
+  return { data: data?.[0] || null, error };
+}
+
+export async function deleteApplicationActivity(table, recordId, activityIndex) {
+  if (missingSupabaseConfig || !supabase) return { error: new Error('Activity log deletion is unavailable while Supabase is not configured.') };
+  const { data, error } = await supabase.rpc('delete_application_activity', {
+    p_table: table,
+    p_id: recordId,
+    p_activity_index: activityIndex,
   });
   return { data: data?.[0] || null, error };
 }

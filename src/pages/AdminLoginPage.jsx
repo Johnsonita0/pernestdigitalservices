@@ -59,7 +59,7 @@ function AdminLoginPage({ onLoginSuccess }) {
             </div>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
+          <form className="login-form" onSubmit={handleSubmit} onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}>
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <input

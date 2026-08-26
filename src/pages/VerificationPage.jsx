@@ -31,7 +31,7 @@ function VerificationPage() {
         <p className="verification-kicker">Application support</p>
         <h1>Confirm registration status</h1>
         <p className="verification-intro">Enter the reference number on your registration slip to see the latest progress of your application.</p>
-        <form className="verification-form" onSubmit={submit}>
+        <form className="verification-form" onSubmit={submit} onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}>
           <label htmlFor="reference-number">Reference number</label>
           <div className="verification-input-wrap"><input id="reference-number" value={reference} onChange={(event) => setReference(event.target.value.toUpperCase())} placeholder="e.g. NGO-2026-HTE2VL" autoComplete="off" required /><button type="submit" disabled={busy}>{busy ? 'Checking...' : <><span>Check status</span><FontAwesomeIcon icon={faArrowRight} /></>}</button></div>
           {error && <p className="verification-error" role="alert">{error}</p>}

@@ -62,11 +62,11 @@ function UploadPaymentSlipPage() {
         <p className="verification-kicker">Payment support</p>
         <h1>Upload payment slip</h1>
         <p className="verification-intro">Use the reference number on your registration slip to attach your bank transfer evidence.</p>
-        <form className="verification-form" onSubmit={findApplication}>
+        <form className="verification-form" onSubmit={findApplication} onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}>
           <label htmlFor="payment-reference">Reference number</label>
           <div className="verification-input-wrap"><input id="payment-reference" value={reference} onChange={(event) => setReference(event.target.value.toUpperCase())} placeholder="NGO-2026-ABC123" required /><button type="submit">Find application</button></div>
         </form>
-        {application && <form className="payment-upload-form" onSubmit={submitSlip}>
+        {application && <form className="payment-upload-form" onSubmit={submitSlip} onKeyDown={(event) => { if (event.key === 'Enter') event.preventDefault(); }}>
           <div className="payment-upload-summary"><span>{application.application_type}</span><strong>{application.reference_number}</strong><small>Status: {String(application.status).replace(/_/g, ' ')}</small></div>
           <label className="payment-upload-file">Choose bank transfer slip<input type="file" accept="image/*,.pdf" onChange={async (event) => setPaymentSlip(await readFile(event.target.files[0]))} required />{paymentSlip && <small>Selected: {paymentSlip.name}</small>}</label>
           {paymentSlip?.dataUrl && paymentSlip.type?.startsWith('image/') && <img className="payment-upload-preview" src={paymentSlip.dataUrl} alt="Payment slip preview" />}

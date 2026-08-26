@@ -142,19 +142,20 @@ function ClientTestimonial() {
             </div>
 
             <div className="slider-controls">
-              <button className="slider-btn prev" onClick={handlePrevious}>
+              <button type="button" className="slider-btn prev" onClick={handlePrevious}>
                 ❮
               </button>
               <div className="slider-dots">
                 {testimonials.map((_, index) => (
                   <button
                     key={index}
+                    type="button"
                     className={`dot ${index === currentIndex ? 'active' : ''}`}
                     onClick={() => setCurrentIndex(index)}
                   />
                 ))}
               </div>
-              <button className="slider-btn next" onClick={handleNext}>
+              <button type="button" className="slider-btn next" onClick={handleNext}>
                 ❯
               </button>
             </div>
@@ -165,7 +166,7 @@ function ClientTestimonial() {
               <div className="form-prompt">
                 <h3>Share Your Experience</h3>
                 <p>Help others learn about our amazing service</p>
-                <button className="btn-add-testimonial" onClick={() => setShowForm(true)}>
+                <button type="button" className="btn-add-testimonial" onClick={() => setShowForm(true)}>
                   ✍️ Write a Testimonial
                 </button>
               </div>

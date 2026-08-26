@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFloppyDisk, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { updateApplicationForEdit } from '../lib/supabaseClient';
+import { getDeviceType, updateApplicationForEdit } from '../lib/supabaseClient';
 import '../css/components/ApplicationEditForm.css';
 
 const blockedFields = new Set(['id', 'reference_number', 'application_type', 'application', 'created_at', 'updated_at', 'status', 'payment_slip', 'registration_documents', 'edit_history']);
@@ -32,7 +32,7 @@ function ApplicationEditForm({ application, applicationType, identifier = '', is
       }
       return [key, value];
     }));
-    const result = await updateApplicationForEdit(record.reference_number, identifier, changes, record.id);
+    const result = await updateApplicationForEdit(record.reference_number, identifier, changes, record.id, isAdmin ? 'Administrator' : 'Client', getDeviceType());
     setBusy(false);
     if (result.error) {
       setError(result.error.message);
@@ -41,7 +41,7 @@ function ApplicationEditForm({ application, applicationType, identifier = '', is
     onSaved?.(result.data?.application || result.data);
   };
 
-  return <form className="application-edit-form" onSubmit={submit}>
+  return <form className="application-edit-form" onSubmit={submit} onKeyDown={(event) => { if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') event.preventDefault(); }}>
     <div className="application-edit-heading"><div><p className="application-edit-kicker">{isAdmin ? 'Administrator edit' : 'Correct your submission'}</p><h2>Edit {applicationType}</h2><p>Update the information below and resubmit the existing application.</p></div><button type="button" className="application-edit-close" onClick={onCancel} aria-label="Cancel editing" title="Cancel"><FontAwesomeIcon icon={faXmark} /></button></div>
     <div className="application-edit-grid">
       {Object.entries(values).map(([key, value]) => {

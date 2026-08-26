@@ -106,7 +106,7 @@ function ContactSection() {
             </div>
           </div>
 
-          <form className="contact-form" onSubmit={handleSubmit}>
+          <form className="contact-form" onSubmit={handleSubmit} onKeyDown={(event) => { if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') event.preventDefault(); }}>
             <h3>Send us a Message</h3>
 
             <div className="form-group">

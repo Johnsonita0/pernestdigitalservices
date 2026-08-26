@@ -44,9 +44,11 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb, uuid, text);
+DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb, uuid, text, text);
 DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb, uuid);
 DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb);
-CREATE OR REPLACE FUNCTION public.update_application_for_edit(p_reference text, p_email text, p_changes jsonb, p_id uuid DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.update_application_for_edit(p_reference text, p_email text, p_changes jsonb, p_id uuid DEFAULT NULL, p_actor text DEFAULT NULL, p_device_type text DEFAULT NULL)
 RETURNS TABLE (application_type text, application jsonb)
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -61,6 +63,9 @@ DECLARE
   requested_column text;
   set_clause text := '';
   candidate jsonb;
+  audit_actor text;
+  audit_activity text;
+  audit_device text;
 BEGIN
   IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' THEN
     RAISE EXCEPTION 'Invalid application changes';
@@ -81,6 +86,10 @@ BEGIN
     RAISE EXCEPTION 'No editable application matched those details';
   END IF;
 
+  audit_actor := CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END;
+  audit_activity := CASE WHEN is_admin_user THEN 'Application updated by administrator' ELSE 'Application edited and resubmitted' END;
+  audit_device := CASE WHEN p_device_type IN ('Mobile', 'Tablet', 'Desktop') THEN p_device_type ELSE 'Unknown' END;
+
   allowed_columns := CASE table_name
     WHEN 'internship_applications' THEN ARRAY['first_name','last_name','email','phone','date_of_birth','address','city','state','institution','course_field','education_level','year_of_study','previous_experience','why_interested','goals','skills_interested']
     WHEN 'ngo_applications' THEN ARRAY['proposed_name_1','proposed_name_2','proposed_name_3','email','office_address','state','lga','town','house_number','street_name','trustee_count','trustee_tenure','aims','source_of_income','trustees']
@@ -99,7 +108,7 @@ BEGIN
     set_clause := set_clause || CASE WHEN set_clause = '' THEN '' ELSE ', ' END || format('%I = (jsonb_populate_record(NULL::public.%I, $1)).%I', requested_column, table_name, requested_column);
   END LOOP;
   set_clause := set_clause || CASE WHEN set_clause = '' THEN '' ELSE ', ' END || 'updated_at = now()';
-  set_clause := set_clause || ', edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $3, ''activity'', $4, ''fields'', (SELECT coalesce(jsonb_agg(changed_key), ''[]''::jsonb) FROM jsonb_object_keys($1) AS changed(changed_key))))';
+  set_clause := set_clause || ', edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $3, ''device'', $5, ''activity'', $4, ''fields'', (SELECT coalesce(jsonb_agg(changed_key), ''[]''::jsonb) FROM jsonb_object_keys($1) AS changed(changed_key))))';
   IF NOT is_admin_user THEN
     set_clause := set_clause || ', status = ' || CASE
       WHEN table_name = 'internship_applications' THEN '''pending'''
@@ -108,7 +117,7 @@ BEGIN
     END;
   END IF;
 
-  EXECUTE format('UPDATE public.%I SET %s WHERE id = $2', table_name, set_clause) USING p_changes, record_id, CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END, CASE WHEN is_admin_user THEN 'Application updated by administrator' ELSE 'Application edited and resubmitted' END;
+  EXECUTE format('UPDATE public.%I SET %s WHERE id = $2', table_name, set_clause) USING p_changes, record_id, audit_actor, audit_activity, audit_device;
   EXECUTE format('SELECT to_jsonb(row_data) FROM public.%I row_data WHERE id = $1', table_name) INTO candidate USING record_id;
   type_name := CASE table_name WHEN 'internship_applications' THEN 'Internship Registration' WHEN 'ngo_applications' THEN 'NGO Registration' WHEN 'company_applications' THEN 'Company Registration' WHEN 'business_applications' THEN 'Business Registration' WHEN 'scuml_applications' THEN 'SCUML Registration' WHEN 'nin_applications' THEN 'NIN Verification' WHEN 'nin_name_changes' THEN 'NIN Name Change' ELSE 'NIN Date Change' END;
   application_type := type_name;
@@ -119,8 +128,37 @@ $$;
 
 REVOKE ALL ON FUNCTION public.get_application_for_edit(text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_application_for_edit(text, text) TO anon, authenticated;
-REVOKE ALL ON FUNCTION public.update_application_for_edit(text, text, jsonb, uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.update_application_for_edit(text, text, jsonb, uuid) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.update_application_for_edit(text, text, jsonb, uuid, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.update_application_for_edit(text, text, jsonb, uuid, text, text) TO anon, authenticated;
+
+DROP FUNCTION IF EXISTS public.delete_application_activity(text, uuid, integer);
+CREATE OR REPLACE FUNCTION public.delete_application_activity(p_table text, p_id uuid, p_activity_index integer)
+RETURNS TABLE (application jsonb)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  candidate jsonb;
+  affected_rows integer;
+BEGIN
+  IF NOT public.is_admin() THEN RAISE EXCEPTION 'Administrator access required'; END IF;
+  IF p_table NOT IN ('internship_applications', 'ngo_applications', 'company_applications', 'business_applications', 'scuml_applications', 'nin_applications', 'nin_name_changes', 'nin_date_changes') THEN
+    RAISE EXCEPTION 'Invalid application table';
+  END IF;
+  EXECUTE format('UPDATE public.%I SET edit_history = edit_history - $1, updated_at = now() WHERE id = $2 AND jsonb_typeof(edit_history) = ''array'' AND $1 >= 0 AND $1 < jsonb_array_length(edit_history)', p_table)
+    USING p_activity_index, p_id;
+  GET DIAGNOSTICS affected_rows = ROW_COUNT;
+  IF affected_rows = 0 THEN RAISE EXCEPTION 'Application activity entry not found'; END IF;
+  EXECUTE format('SELECT to_jsonb(row_data) FROM public.%I AS row_data WHERE row_data.id = $1', p_table)
+    INTO candidate USING p_id;
+  application := candidate;
+  RETURN NEXT;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_application_activity(text, uuid, integer) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.delete_application_activity(text, uuid, integer) TO authenticated;
 
 DROP FUNCTION IF EXISTS public.update_payment_slip(text, jsonb);
 CREATE OR REPLACE FUNCTION public.update_payment_slip(p_reference text, p_payment_slip jsonb)

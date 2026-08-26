@@ -43,7 +43,7 @@ function EventRegistrationPage() {
         <p className="event-kicker">PERNEST DIGITAL SERVICES</p>
         <h1>Event Registration</h1>
         <p className="event-intro">Tell us about your event and we will help you plan the right support.</p>
-        <form className="event-form" onSubmit={submit}>
+        <form className="event-form" onSubmit={submit} onKeyDown={(event) => { if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') event.preventDefault(); }}>
           <label>Full name *<input name="name" value={form.name} onChange={update} required /></label>
           <label>Email address *<input name="email" type="email" value={form.email} onChange={update} required /></label>
           <label>Phone number<input name="phone" type="tel" value={form.phone} onChange={update} /></label>

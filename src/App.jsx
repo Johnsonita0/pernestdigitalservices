@@ -86,12 +86,21 @@ function App() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
+    const clickedSubmitButtons = new WeakSet();
+    const rememberSubmitButtonClick = (event) => {
+      const submitButton = event.target.closest?.('button[type="submit"], input[type="submit"]');
+      if (submitButton) clickedSubmitButtons.add(submitButton);
+    };
     const preventImplicitSubmit = (event) => {
-      if (event.submitter?.type === 'submit') return;
+      if (event.submitter?.type === 'submit' && clickedSubmitButtons.has(event.submitter)) {
+        clickedSubmitButtons.delete(event.submitter);
+        return;
+      }
       event.preventDefault();
       event.stopImmediatePropagation();
     };
 
+    document.addEventListener('click', rememberSubmitButtonClick, true);
     document.addEventListener('submit', preventImplicitSubmit, true);
 
     let lastNetworkToast = { message: '', timestamp: 0 };
@@ -148,6 +157,7 @@ function App() {
     setAdminLoading(false);
 
     return () => {
+      document.removeEventListener('click', rememberSubmitButtonClick, true);
       document.removeEventListener('submit', preventImplicitSubmit, true);
       window.removeEventListener('app:toast', handleToast);
       window.removeEventListener('offline', handleOffline);
