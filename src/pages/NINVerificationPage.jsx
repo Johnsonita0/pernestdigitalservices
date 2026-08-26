@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { submitNINApplication } from '../lib/supabaseClient';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { submitNINApplication, updateApplicationForEdit } from '../lib/supabaseClient';
+import { clearApplicationEditSession, readApplicationEditSession } from '../lib/applicationEditSession';
 import { usePersistentDraft } from '../lib/usePersistentDraft';
 import { reportValidationErrors } from '../lib/reportValidationErrors';
 import '../css/pages/NINVerificationPage.css';
@@ -8,12 +9,24 @@ import PaymentSubmissionCard from '../components/PaymentSubmissionCard';
 
 function NINVerificationPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editMode = searchParams.get('edit') === '1';
   const initialForm = { nin: '', phone: '', surname: '', firstName: '', dateOfBirth: '', email: '', address: '' };
   const { form, setForm, step, setStep, clearDraft } = usePersistentDraft('pernestdigitalservices_draft_nin_verification', initialForm);
   const [errors, setErrors] = useState({});
   const [reference, setReference] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!editMode) return;
+    const session = readApplicationEditSession();
+    const application = session?.application;
+    if (!application) return;
+    setForm({ nin: application.nin || '', phone: application.phone || '', surname: application.surname || '', firstName: application.first_name || '', dateOfBirth: application.date_of_birth || '', email: application.email || '', address: application.address || '' });
+    setReference(application.reference_number || '');
+    setStep(1);
+  }, [editMode]);
 
   const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
   const validate = () => {
@@ -32,6 +45,12 @@ function NINVerificationPage() {
     if (busy || !validate()) return;
     setBusy(true);
     try {
+      if (editMode) {
+        const { error } = await updateApplicationForEdit(reference, form.email, { nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address });
+        if (error) setErrors({ submit: error.message });
+        else { clearApplicationEditSession(); setSubmitted(true); }
+        return;
+      }
       const applicationReference = `NIN-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const { error } = await submitNINApplication({ reference_number: applicationReference, nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address, status: 'payment_pending', created_at: new Date().toISOString() });
       if (error) setErrors({ submit: error.message });

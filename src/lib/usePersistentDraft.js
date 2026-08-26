@@ -1,4 +1,11 @@
 import { useEffect, useState } from 'react';
+import { readApplicationEditSession } from './applicationEditSession';
+
+function toFormKeys(value) {
+  if (Array.isArray(value)) return value.map(toFormKeys);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key.replace(/_([a-z])/g, (_, character) => character.toUpperCase()), toFormKeys(item)]));
+}
 
 function readDraft(key) {
   if (typeof window === 'undefined') return null;
@@ -13,7 +20,9 @@ function readDraft(key) {
 
 export function usePersistentDraft(key, initialForm, initialStep = 1) {
   const [draft] = useState(() => readDraft(key));
-  const [form, setForm] = useState(() => draft?.form || initialForm);
+  const [editSession] = useState(() => readApplicationEditSession());
+  const editForm = editSession?.application ? toFormKeys(editSession.application) : null;
+  const [form, setForm] = useState(() => editForm || draft?.form || initialForm);
   const [step, setStep] = useState(() => draft?.step || initialStep);
 
   useEffect(() => {

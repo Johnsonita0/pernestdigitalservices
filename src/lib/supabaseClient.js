@@ -59,6 +59,29 @@ const PAYMENT_LOCAL_KEYS_BY_TABLE = {
   nin_date_changes: LOCAL_NIN_DATE_CHANGES_KEY,
 };
 
+function camelToSnake(value) {
+  if (Array.isArray(value)) return value.map(camelToSnake);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key.replace(/[A-Z]/g, (character) => `_${character.toLowerCase()}`), camelToSnake(item)]));
+}
+
+async function submitEditedApplication(table, application) {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = window.sessionStorage.getItem('pernestdigitalservices_application_edit');
+    const session = stored ? JSON.parse(stored) : null;
+    const typeByTable = { ngo_applications: 'NGO Registration', company_applications: 'Company Registration', business_applications: 'Business Registration', scuml_applications: 'SCUML Registration', nin_applications: 'NIN Verification', nin_name_changes: 'NIN Name Change', nin_date_changes: 'NIN Date Change', internship_applications: 'Internship Registration' };
+    if (!session?.application?.reference_number || (session.applicationType && session.applicationType !== typeByTable[table])) return null;
+    const changes = camelToSnake({ ...application });
+    delete changes.id; delete changes.reference_number; delete changes.status; delete changes.created_at; delete changes.updated_at; delete changes.payment_slip; delete changes.registration_documents; delete changes.edit_history;
+    const result = await updateApplicationForEdit(session.application.reference_number, session.application.email, changes);
+    if (!result.error) window.sessionStorage.removeItem('pernestdigitalservices_application_edit');
+    return result;
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
 export async function saveRegistrationDocuments(tab, recordId, documents, editHistory = null) {
   const table = APPLICATION_TABLES_BY_TAB[tab];
   if (!table) return { error: new Error('Documents are not supported for this record.') };
@@ -281,6 +304,8 @@ export async function saveTrainingRegistration(registration) {
 }
 
 export async function submitNGOApplication(application) {
+  const edited = await submitEditedApplication('ngo_applications', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_NGO_APPLICATIONS_KEY) || '[]');
@@ -328,6 +353,8 @@ export async function updateNGOPaymentSlip(referenceNumber, paymentSlip) {
 }
 
 export async function submitCompanyApplication(application) {
+  const edited = await submitEditedApplication('company_applications', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_COMPANY_APPLICATIONS_KEY) || '[]');
@@ -368,6 +395,8 @@ export async function updateCompanyPaymentSlip(referenceNumber, paymentSlip) {
 }
 
 export async function submitBusinessApplication(application) {
+  const edited = await submitEditedApplication('business_applications', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_BUSINESS_APPLICATIONS_KEY) || '[]');
@@ -408,6 +437,8 @@ export async function updateBusinessPaymentSlip(referenceNumber, paymentSlip) {
 }
 
 export async function submitSCUMLApplication(application) {
+  const edited = await submitEditedApplication('scuml_applications', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_SCUMl_APPLICATIONS_KEY) || '[]');
@@ -448,6 +479,8 @@ export async function updateSCUMLPaymentSlip(referenceNumber, paymentSlip) {
 }
 
 export async function submitNINApplication(application) {
+  const edited = await submitEditedApplication('nin_applications', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_NIN_APPLICATIONS_KEY) || '[]');
@@ -467,6 +500,8 @@ export async function submitNINApplication(application) {
 }
 
 export async function submitNINNameChange(application) {
+  const edited = await submitEditedApplication('nin_name_changes', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_NIN_NAME_CHANGES_KEY) || '[]');
@@ -486,6 +521,8 @@ export async function submitNINNameChange(application) {
 }
 
 export async function submitNINDateChange(application) {
+  const edited = await submitEditedApplication('nin_date_changes', application);
+  if (edited) return { data: edited.data?.application || application, error: edited.error };
   if (missingSupabaseConfig || !supabase) {
     try {
       const stored = JSON.parse(window.localStorage.getItem(LOCAL_NIN_DATE_CHANGES_KEY) || '[]');

@@ -276,7 +276,13 @@ function AdminDashboardPage({ user, onLogout }) {
     } else {
       showStatusToast(`${activeTab.replace('-', ' ')} status updated to ${newStatus.replace(/_/g, ' ')}.`, 'success');
     }
-    setSelectedItem((item) => item?.id === messageId ? { ...item, status: newStatus, updated_at: new Date().toISOString() } : item);
+    if (!statusUpdateError) {
+      const updatedAt = new Date().toISOString();
+      const activity = { timestamp: updatedAt, actor: 'Administrator', activity: `Status changed to ${newStatus.replace(/_/g, ' ')}`, fields: ['status'] };
+      const changes = { status: newStatus, updated_at: updatedAt, edit_history: [...(Array.isArray(selectedItem?.edit_history) ? selectedItem.edit_history : []), activity] };
+      updateActiveTabRecord(messageId, changes);
+      setSelectedItem((item) => item?.id === messageId ? { ...item, ...changes } : item);
+    }
   };
 
   const handleDelete = async (recordId) => {

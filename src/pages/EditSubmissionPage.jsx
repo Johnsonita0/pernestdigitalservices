@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import ApplicationEditForm from '../components/ApplicationEditForm.jsx';
 import { getApplicationForEdit } from '../lib/supabaseClient';
+import { saveApplicationEditSession } from '../lib/applicationEditSession';
 import '../css/pages/VerificationPage.css';
 
 function EditSubmissionPage() {
@@ -22,7 +23,20 @@ function EditSubmissionPage() {
     setBusy(true); setError('');
     const result = await getApplicationForEdit(reference, identifier);
     setBusy(false);
-    if (result.error) setError(result.error.message); else setApplication(result.data);
+    if (result.error) setError(result.error.message);
+    else {
+      saveApplicationEditSession(result.data.application, result.data.application_type);
+      const nativeRoutes = {
+        'NIN Verification': '/nin-verify',
+        'NIN Name Change': '/nin-name-change',
+        'NIN Date Change': '/nin-date-of-birth-change',
+        'NGO Registration': '/ngo-register',
+        'Company Registration': '/company-register',
+        'Business Registration': '/business-register',
+        'SCUML Registration': '/scuml-register',
+      };
+      navigate(`${nativeRoutes[result.data.application_type] || '/edit'}?edit=1`);
+    }
   };
 
   return <main className="verification-page"><Navbar /><section className="verification-card edit-submission-card">

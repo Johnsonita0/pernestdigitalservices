@@ -93,7 +93,7 @@ BEGIN
     set_clause := set_clause || CASE WHEN set_clause = '' THEN '' ELSE ', ' END || format('%I = (jsonb_populate_record(NULL::public.%I, $1)).%I', requested_column, table_name, requested_column);
   END LOOP;
   set_clause := set_clause || CASE WHEN set_clause = '' THEN '' ELSE ', ' END || 'updated_at = now()';
-  set_clause := set_clause || ', edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $3, ''activity'', $4, ''fields'', (SELECT coalesce(jsonb_agg(value), ''[]''::jsonb) FROM jsonb_object_keys($1) AS changed(value))))';
+  set_clause := set_clause || ', edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $3, ''activity'', $4, ''fields'', (SELECT coalesce(jsonb_agg(changed_key), ''[]''::jsonb) FROM jsonb_object_keys($1) AS changed(changed_key))))';
   IF NOT is_admin_user THEN
     set_clause := set_clause || ', status = ' || CASE
       WHEN table_name = 'internship_applications' THEN '''pending'''
@@ -102,11 +102,7 @@ BEGIN
     END;
   END IF;
 
-  EXECUTE format('UPDATE public.%I SET %s WHERE id = $2', table_name, set_clause) USING p_changes, record_id, CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END, CASE WHEN is_admin_user THEN 'Application edited by administrator' ELSE 'Application edited and resubmitted' END;
-  EXECUTE format('UPDATE public.%I SET edit_history = coalesce(edit_history, ''[]''::jsonb) || jsonb_build_array(jsonb_build_object(''timestamp'', now(), ''actor'', $1, ''activity'', $2, ''fields'', (SELECT coalesce(jsonb_agg(value), ''[]''::jsonb) FROM jsonb_object_keys($3) AS changed(value)))) WHERE id = $4', table_name)
-    USING CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END,
-      CASE WHEN is_admin_user THEN 'Application edited by administrator' ELSE 'Application edited and resubmitted' END,
-      p_changes, record_id;
+  EXECUTE format('UPDATE public.%I SET %s WHERE id = $2', table_name, set_clause) USING p_changes, record_id, CASE WHEN is_admin_user THEN 'Administrator' ELSE 'Client' END, CASE WHEN is_admin_user THEN 'Application updated by administrator' ELSE 'Application edited and resubmitted' END;
   EXECUTE format('SELECT to_jsonb(row_data) FROM public.%I row_data WHERE id = $1', table_name) INTO candidate USING record_id;
   type_name := CASE table_name WHEN 'internship_applications' THEN 'Internship Registration' WHEN 'ngo_applications' THEN 'NGO Registration' WHEN 'company_applications' THEN 'Company Registration' WHEN 'business_applications' THEN 'Business Registration' WHEN 'scuml_applications' THEN 'SCUML Registration' WHEN 'nin_applications' THEN 'NIN Verification' WHEN 'nin_name_changes' THEN 'NIN Name Change' ELSE 'NIN Date Change' END;
   application_type := type_name;
@@ -565,14 +561,34 @@ ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS edit_history json
 ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.internship_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.ngo_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.company_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.business_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
-ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS edit_history jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+CREATE OR REPLACE FUNCTION public.log_application_activity()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.edit_history IS NOT DISTINCT FROM OLD.edit_history THEN
+    NEW.edit_history := coalesce(OLD.edit_history, '[]'::jsonb) || jsonb_build_array(jsonb_build_object(
+      'timestamp', now(),
+      'actor', CASE WHEN public.is_admin() THEN 'Administrator' ELSE 'Client' END,
+      'activity', CASE WHEN public.is_admin() THEN 'Application updated by administrator' ELSE 'Application edited and resubmitted' END,
+      'fields', '[]'::jsonb
+    ));
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DO $$
+DECLARE table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY['internship_applications', 'ngo_applications', 'company_applications', 'business_applications', 'scuml_applications', 'nin_applications', 'nin_name_changes', 'nin_date_changes'] LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON public.%I', table_name || '_activity_trigger', table_name);
+    EXECUTE format('CREATE TRIGGER %I BEFORE UPDATE ON public.%I FOR EACH ROW EXECUTE FUNCTION public.log_application_activity()', table_name || '_activity_trigger', table_name);
+  END LOOP;
+END $$;
 
 DO $$
 DECLARE
@@ -585,8 +601,6 @@ BEGIN
   ] LOOP
     EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_registration_documents_check');
     EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(registration_documents) = ''array'')', table_name, table_name || '_registration_documents_check');
-    EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_edit_history_check');
-    EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(edit_history) = ''array'')', table_name, table_name || '_edit_history_check');
     EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_edit_history_check');
     EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(edit_history) = ''array'')', table_name, table_name || '_edit_history_check');
     EXECUTE format('GRANT UPDATE (registration_documents, edit_history, status, updated_at) ON public.%I TO authenticated', table_name);
