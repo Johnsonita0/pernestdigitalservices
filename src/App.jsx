@@ -43,6 +43,16 @@ function AppLoader() {
   );
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function UserWhatsAppButton() {
   const location = useLocation();
   if (location.pathname === '/' || location.pathname.startsWith('/admin')) return null;
@@ -152,6 +162,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
