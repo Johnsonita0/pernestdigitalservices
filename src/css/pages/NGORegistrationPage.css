@@ -75,7 +75,7 @@
   .ngo-step { padding: 20px; }
   .ngo-step-label { padding: 16px 20px 0; }
   .form-grid, .file-grid { grid-template-columns: 1fr; }
-  .form-actions { padding: 18px 20px 24px; }
-  .form-actions button { flex: 1; }
+  .form-actions { position: sticky; bottom: 0; z-index: 5; padding: 12px 20px 18px; background: var(--surface); box-shadow: 0 -8px 18px rgba(0, 40, 80, .1); }
+  .form-actions button { flex: 1; min-height: 52px; padding: 9px 8px; font-size: .82rem; line-height: 1.2; }
   .payment-card { padding: 28px 20px; }
 }

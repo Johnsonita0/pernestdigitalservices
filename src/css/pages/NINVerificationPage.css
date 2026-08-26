@@ -26,4 +26,4 @@
 .nin-success { padding: 44px; text-align: center; }
 .nin-success h1 { color: var(--brand-dark); }
 .nin-success > p { max-width: 650px; margin: 12px auto 24px; }
-@media (max-width: 680px) { .nin-page { padding: 0; } .nin-card { border-radius: 0; min-height: 100vh; } .nin-header { padding: 28px 20px; } .nin-section { padding: 20px; } .nin-step { padding: 16px 20px 0; } .nin-grid { grid-template-columns: 1fr; } .nin-actions { padding: 18px 20px 24px; } .nin-actions button { flex: 1; } .nin-success { padding: 28px 20px; } }
+@media (max-width: 680px) { .nin-page { padding: 0; } .nin-card { border-radius: 0; min-height: 100vh; } .nin-header { padding: 28px 20px; } .nin-section { padding: 20px; } .nin-step { padding: 16px 20px 0; } .nin-grid { grid-template-columns: 1fr; } .nin-actions { position: sticky; bottom: 0; z-index: 5; padding: 12px 20px 18px; background: var(--surface); box-shadow: 0 -8px 18px rgba(0, 40, 80, .1); } .nin-actions button { flex: 1; min-height: 52px; padding: 9px 8px; font-size: .82rem; line-height: 1.2; } .nin-success { padding: 28px 20px; } }

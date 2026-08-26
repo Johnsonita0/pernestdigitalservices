@@ -46,7 +46,8 @@ function NINVerificationPage() {
     setBusy(true);
     try {
       if (editMode) {
-        const { error } = await updateApplicationForEdit(reference, form.email, { nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address });
+        const session = readApplicationEditSession();
+        const { error } = await updateApplicationForEdit(reference, session?.application?.email || form.email, { nin: form.nin, phone: form.phone, surname: form.surname, first_name: form.firstName, date_of_birth: form.dateOfBirth || null, email: form.email, address: form.address });
         if (error) setErrors({ submit: error.message });
         else { clearApplicationEditSession(); setSubmitted(true); }
         return;
