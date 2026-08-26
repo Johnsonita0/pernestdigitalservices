@@ -1204,10 +1204,9 @@
   margin-top: 12px;
 }
 
-.registration-document-list a {
+.registration-document-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 9px 11px;
   border: 1px solid var(--border);
@@ -1217,13 +1216,72 @@
   font-size: 0.82rem;
 }
 
-.registration-document-list a span {
+.registration-document-row > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  flex: 1;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.registration-document-row a span,
+.registration-document-name-input {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.registration-document-list a svg {
+.registration-document-row a svg {
   flex: 0 0 auto;
   color: var(--accent);
+}
+
+.registration-document-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.document-icon-button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--brand);
+  background: #fff;
+  cursor: pointer;
+}
+
+.document-icon-button:hover:not(:disabled),
+.document-icon-button:focus-visible {
+  color: #fff;
+  background: var(--brand);
+}
+
+.document-icon-save { color: #147a46; }
+.document-icon-cancel,
+.document-icon-delete { color: #a43f31; }
+
+.document-icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.registration-document-name-input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid var(--accent);
+  border-radius: 5px;
+  color: var(--brand-dark);
+  background: #fff;
+  font: inherit;
+  font-size: 0.82rem;
 }
 
 .uploaded-images h3 {

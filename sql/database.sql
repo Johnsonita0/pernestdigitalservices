@@ -407,6 +407,8 @@ CREATE INDEX IF NOT EXISTS nin_date_changes_email_idx ON public.nin_date_changes
 
 -- Row-level security
 -- Certificates and official registration documents uploaded by administrators.
+-- Keep document metadata in JSON so each file can carry its storage name, display label,
+-- MIME type, size, and data/storage URL. The array check prevents malformed values.
 ALTER TABLE public.internship_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.ngo_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.company_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
@@ -415,6 +417,21 @@ ALTER TABLE public.scuml_applications ADD COLUMN IF NOT EXISTS registration_docu
 ALTER TABLE public.nin_applications ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.nin_name_changes ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE public.nin_date_changes ADD COLUMN IF NOT EXISTS registration_documents jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+DO $$
+DECLARE
+  table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'internship_applications', 'ngo_applications', 'company_applications',
+    'business_applications', 'scuml_applications', 'nin_applications',
+    'nin_name_changes', 'nin_date_changes'
+  ] LOOP
+    EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT IF EXISTS %I', table_name, table_name || '_registration_documents_check');
+    EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (jsonb_typeof(registration_documents) = ''array'')', table_name, table_name || '_registration_documents_check');
+    EXECUTE format('GRANT UPDATE (registration_documents, status, updated_at) ON public.%I TO authenticated', table_name);
+  END LOOP;
+END $$;
 
 -- Public status lookup returns only non-sensitive tracking details by reference number.
 DROP FUNCTION IF EXISTS public.lookup_application_status(text);

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { getAllContactMessages, updateMessageStatus, getAllTestimonials, updateTestimonialStatus, saveRegistrationDocuments } from '../lib/supabaseClient';
 import { sendInternshipEmail } from '../lib/emailClient';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faDownload, faPen, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import '../css/pages/AdminDashboardPage.css';
 
 const formatRecordValue = (value) => {
@@ -320,11 +320,11 @@ function AdminDashboardPage({ user, onLogout }) {
     setPendingDocuments((documents) => documents.filter((_, documentIndex) => documentIndex !== index));
   };
 
-  const handleSaveDocuments = async () => {
-    if (!selectedItem || !pendingDocuments.length) return;
+  const handleSaveDocuments = async (documentsOverride = null) => {
+    if (!selectedItem || (!pendingDocuments.length && !documentsOverride)) return;
     setDocumentUploadBusy(true);
     const existing = Array.isArray(selectedItem.registration_documents) ? selectedItem.registration_documents : [];
-    const nextDocuments = [...existing, ...pendingDocuments];
+    const nextDocuments = documentsOverride || [...existing, ...pendingDocuments];
     const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments);
     if (!error) {
       const completedStatus = activeTab.startsWith('nin-') || activeTab === 'nin' ? 'completed' : 'approved';
@@ -1403,6 +1403,32 @@ export default AdminDashboardPage;
 
 function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], onUpload, onLabelChange, onRemove, onSave, uploadBusy = false }) {
   const documents = Array.isArray(item.registration_documents) ? item.registration_documents : [];
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editedLabel, setEditedLabel] = useState('');
+
+  const startEditing = (index, document) => {
+    setEditingIndex(index);
+    setEditedLabel(document.label || document.name || '');
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditedLabel('');
+  };
+
+  const saveEditedLabel = () => {
+    const label = editedLabel.trim();
+    if (!label || editingIndex === null) return;
+    const nextDocuments = documents.map((document, index) => index === editingIndex ? { ...document, label } : document);
+    cancelEditing();
+    onSave(nextDocuments);
+  };
+
+  const deleteDocument = (index, document) => {
+    if (!window.confirm(`Delete ${document.label || document.name || 'this document'}?`)) return;
+    onSave(documents.filter((_, documentIndex) => documentIndex !== index));
+  };
+
   return (
     <section className="registration-documents-panel">
       <div className="registration-documents-heading">
@@ -1421,10 +1447,19 @@ function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], o
             <input type="text" value={document.label || ''} onChange={(event) => onLabelChange(index, event.target.value)} placeholder="Name this document (e.g. CAC Certificate)" aria-label={`Label for ${document.name}`} />
             <span title={document.name}>{document.name}</span>
           </div>
-          <button type="button" onClick={() => onRemove(index)} disabled={uploadBusy} aria-label={`Remove ${document.name}`}>Remove</button>
+          <button type="button" className="pending-document-remove" onClick={() => onRemove(index)} disabled={uploadBusy} aria-label={`Remove ${document.name}`} title="Remove file"><FontAwesomeIcon icon={faTrash} aria-hidden="true" /></button>
         </div>)}
       </div>}
-      {documents.length ? <div className="registration-document-list">{documents.map((document, index) => <a href={document.dataUrl} download={document.name || `registration-document-${index + 1}`} target="_blank" rel="noreferrer" key={`${document.name}-${index}`}><span>{document.label || document.name || `Registration document ${index + 1}`}</span><FontAwesomeIcon icon={faDownload} /></a>)}</div> : <p className="registration-documents-empty">No approved documents uploaded yet.</p>}
+      {documents.length ? <div className="registration-document-list">{documents.map((document, index) => <div className="registration-document-row" key={`${document.name}-${index}`}>
+        {editingIndex === index ? <input className="registration-document-name-input" type="text" value={editedLabel} onChange={(event) => setEditedLabel(event.target.value)} aria-label={`Edit name for ${document.name || 'document'}`} autoFocus /> : <a href={document.dataUrl} download={document.name || `registration-document-${index + 1}`} target="_blank" rel="noreferrer"><span>{document.label || document.name || `Registration document ${index + 1}`}</span><FontAwesomeIcon icon={faDownload} aria-hidden="true" /></a>}
+        {isAdmin && <div className="registration-document-actions">
+          {editingIndex === index ? <>
+            <button type="button" className="document-icon-button document-icon-save" onClick={saveEditedLabel} disabled={uploadBusy || !editedLabel.trim()} aria-label="Save file name" title="Save file name"><FontAwesomeIcon icon={faCheck} aria-hidden="true" /></button>
+            <button type="button" className="document-icon-button document-icon-cancel" onClick={cancelEditing} disabled={uploadBusy} aria-label="Cancel file name edit" title="Cancel"><FontAwesomeIcon icon={faXmark} aria-hidden="true" /></button>
+          </> : <button type="button" className="document-icon-button" onClick={() => startEditing(index, document)} disabled={uploadBusy} aria-label={`Edit name of ${document.label || document.name || 'document'}`} title="Edit file name"><FontAwesomeIcon icon={faPen} aria-hidden="true" /></button>}
+          <button type="button" className="document-icon-button document-icon-delete" onClick={() => deleteDocument(index, document)} disabled={uploadBusy} aria-label={`Delete ${document.label || document.name || 'document'}`} title="Delete file"><FontAwesomeIcon icon={faTrash} aria-hidden="true" /></button>
+        </div>}
+      </div>)}</div> : <p className="registration-documents-empty">No approved documents uploaded yet.</p>}
     </section>
   );
 }
