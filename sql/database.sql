@@ -44,8 +44,9 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb, uuid);
 DROP FUNCTION IF EXISTS public.update_application_for_edit(text, text, jsonb);
-CREATE OR REPLACE FUNCTION public.update_application_for_edit(p_reference text, p_email text, p_changes jsonb)
+CREATE OR REPLACE FUNCTION public.update_application_for_edit(p_reference text, p_email text, p_changes jsonb, p_id uuid DEFAULT NULL)
 RETURNS TABLE (application_type text, application jsonb)
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -66,8 +67,13 @@ BEGIN
   END IF;
 
   FOREACH table_name IN ARRAY ARRAY['internship_applications', 'ngo_applications', 'company_applications', 'business_applications', 'scuml_applications', 'nin_applications', 'nin_name_changes', 'nin_date_changes'] LOOP
-    EXECUTE format('SELECT row_data.id FROM public.%I AS row_data WHERE ($2 AND upper(row_data.reference_number) = upper($1)) OR (NOT $2 AND upper(row_data.reference_number) = upper($1)) OR (NOT $2 AND lower(to_jsonb(row_data)->>''email'') = lower($3)) OR (NOT $2 AND nullif(trim($3), '''') IS NOT NULL AND regexp_replace(coalesce(to_jsonb(row_data)->>''phone'', ''''), ''[^0-9]'', '''', ''g'') = regexp_replace($3, ''[^0-9]'', '''', ''g'')) LIMIT 1', table_name)
-      INTO record_id USING p_reference, is_admin_user, p_email;
+    IF p_id IS NOT NULL THEN
+      EXECUTE format('SELECT row_data.id FROM public.%I AS row_data WHERE row_data.id = $1 AND ($2 OR lower(to_jsonb(row_data)->>''email'') = lower($3)) LIMIT 1', table_name)
+        INTO record_id USING p_id, is_admin_user, p_email;
+    ELSE
+      EXECUTE format('SELECT row_data.id FROM public.%I AS row_data WHERE upper(row_data.reference_number) = upper($1) AND ($2 OR lower(to_jsonb(row_data)->>''email'') = lower($3) OR (nullif(trim($3), '''') IS NOT NULL AND regexp_replace(coalesce(to_jsonb(row_data)->>''phone'', ''''), ''[^0-9]'', '''', ''g'') = regexp_replace($3, ''[^0-9]'', '''', ''g''))) LIMIT 1', table_name)
+        INTO record_id USING p_reference, is_admin_user, p_email;
+    END IF;
     IF record_id IS NOT NULL THEN EXIT; END IF;
   END LOOP;
 
@@ -113,8 +119,8 @@ $$;
 
 REVOKE ALL ON FUNCTION public.get_application_for_edit(text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_application_for_edit(text, text) TO anon, authenticated;
-REVOKE ALL ON FUNCTION public.update_application_for_edit(text, text, jsonb) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.update_application_for_edit(text, text, jsonb) TO anon, authenticated;
+REVOKE ALL ON FUNCTION public.update_application_for_edit(text, text, jsonb, uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.update_application_for_edit(text, text, jsonb, uuid) TO anon, authenticated;
 
 DROP FUNCTION IF EXISTS public.update_payment_slip(text, jsonb);
 CREATE OR REPLACE FUNCTION public.update_payment_slip(p_reference text, p_payment_slip jsonb)

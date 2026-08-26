@@ -74,7 +74,7 @@ async function submitEditedApplication(table, application) {
     if (!session?.application?.reference_number || (session.applicationType && session.applicationType !== typeByTable[table])) return null;
     const changes = camelToSnake({ ...application });
     delete changes.id; delete changes.reference_number; delete changes.status; delete changes.created_at; delete changes.updated_at; delete changes.payment_slip; delete changes.registration_documents; delete changes.edit_history;
-    const result = await updateApplicationForEdit(session.application.reference_number, session.application.email, changes);
+    const result = await updateApplicationForEdit(session.application.reference_number, session.application.email, changes, session.application.id);
     if (!result.error) window.sessionStorage.removeItem('pernestdigitalservices_application_edit');
     return result;
   } catch (error) {
@@ -136,7 +136,7 @@ export async function getApplicationForEdit(referenceNumber, identifier) {
   return { data: data?.[0] || null, error: error || (data?.length ? null : new Error('No editable application matched those details.')) };
 }
 
-export async function updateApplicationForEdit(referenceNumber, identifier, changes) {
+export async function updateApplicationForEdit(referenceNumber, identifier, changes, recordId = null) {
   if (missingSupabaseConfig || !supabase) {
     return { error: new Error('Online editing is unavailable while Supabase is not configured.') };
   }
@@ -145,6 +145,7 @@ export async function updateApplicationForEdit(referenceNumber, identifier, chan
     p_reference: String(referenceNumber || '').trim(),
     p_email: String(identifier || '').trim(),
     p_changes: changes,
+    p_id: recordId,
   });
   return { data: data?.[0] || null, error };
 }

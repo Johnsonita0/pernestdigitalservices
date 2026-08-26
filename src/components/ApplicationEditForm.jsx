@@ -32,7 +32,7 @@ function ApplicationEditForm({ application, applicationType, identifier = '', is
       }
       return [key, value];
     }));
-    const result = await updateApplicationForEdit(record.reference_number, identifier, changes);
+    const result = await updateApplicationForEdit(record.reference_number, identifier, changes, record.id);
     setBusy(false);
     if (result.error) {
       setError(result.error.message);
