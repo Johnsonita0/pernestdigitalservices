@@ -86,6 +86,14 @@ function App() {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
+    const preventImplicitSubmit = (event) => {
+      if (event.submitter?.type === 'submit') return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    document.addEventListener('submit', preventImplicitSubmit, true);
+
     let lastNetworkToast = { message: '', timestamp: 0 };
 
     const showNetworkToast = (message, type = 'error') => {
@@ -140,6 +148,7 @@ function App() {
     setAdminLoading(false);
 
     return () => {
+      document.removeEventListener('submit', preventImplicitSubmit, true);
       window.removeEventListener('app:toast', handleToast);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
