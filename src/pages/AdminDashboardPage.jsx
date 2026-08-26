@@ -320,6 +320,20 @@ function AdminDashboardPage({ user, onLogout }) {
     setPendingDocuments((documents) => documents.filter((_, documentIndex) => documentIndex !== index));
   };
 
+  const updateActiveTabRecord = (recordId, changes) => {
+    const setters = {
+      applications: setApplications,
+      ngo: setNgoApplications,
+      company: setCompanyApplications,
+      business: setBusinessApplications,
+      scuml: setSCUMLApplications,
+      nin: setNINApplications,
+      'nin-name': setNINNameChanges,
+      'nin-date': setNINDateChanges,
+    };
+    setters[activeTab]?.((records) => records.map((record) => record.id === recordId ? { ...record, ...changes } : record));
+  };
+
   const handleSaveDocuments = async (documentsOverride = null) => {
     if (!selectedItem || (!pendingDocuments.length && !documentsOverride)) return;
     setDocumentUploadBusy(true);
@@ -328,11 +342,14 @@ function AdminDashboardPage({ user, onLogout }) {
     const { error } = await saveRegistrationDocuments(activeTab, selectedItem.id, nextDocuments);
     if (!error) {
       const completedStatus = activeTab.startsWith('nin-') || activeTab === 'nin' ? 'completed' : 'approved';
-      setSelectedItem((item) => ({ ...item, registration_documents: nextDocuments, status: completedStatus, updated_at: new Date().toISOString() }));
+      const changes = { registration_documents: nextDocuments, status: completedStatus, updated_at: new Date().toISOString() };
+      updateActiveTabRecord(selectedItem.id, changes);
+      setSelectedItem((item) => ({ ...item, ...changes }));
       setPendingDocuments([]);
-      await loadAllData();
+      showStatusToast(documentsOverride ? 'Document changes saved successfully.' : 'Documents uploaded successfully.', 'success');
+    } else {
+      showStatusToast(`Unable to save documents: ${error.message}`, 'error');
     }
-    else window.alert(`Unable to save documents: ${error.message}`);
     setDocumentUploadBusy(false);
   };
 
@@ -1436,7 +1453,7 @@ function RegistrationDocuments({ item, isAdmin = false, pendingDocuments = [], o
         {isAdmin && <div className="document-upload-actions"><label className="document-upload-button">Choose files<input type="file" accept="image/*,.pdf" multiple disabled={uploadBusy} onChange={onUpload} /></label><button type="button" className="document-save-button" disabled={uploadBusy || !pendingDocuments.length} onClick={onSave}>{uploadBusy ? 'Saving...' : 'Save official documents'}</button></div>}
       </div>
       {isAdmin && pendingDocuments.length > 0 && <div className="pending-registration-documents">
-        <p className="registration-documents-note">Name each document before saving. Saving will mark this application approved.</p>
+        <p className="registration-documents-note">Name each document before saving. Saving will update this application.</p>
         {pendingDocuments.map((document, index) => <div className="pending-registration-document" key={`${document.name}-${index}`}>
           <div className="pending-registration-preview">
             {document.dataUrl && (document.type?.startsWith('image/') || document.dataUrl.startsWith('data:image/')) && <img src={document.dataUrl} alt={`Preview of ${document.name}`} />}
